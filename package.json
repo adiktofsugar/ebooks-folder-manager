@@ -8,6 +8,9 @@
   },
   "main": "dist/main/index.mjs",
   "scripts": {
+    "postinstall": "npm run dedrm:install",
+    "dedrm:install": "poetry -P dedrm install",
+    "dedrm": "poetry -P dedrm run",
     "build": "tsc",
     "watch": "tsc -w",
     "test": "node --test",

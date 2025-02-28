@@ -9,7 +9,7 @@ import printMetadata from "./actions/printMetadata.mjs";
 
 export default async function run(
   dirpath: string,
-  options: { dry: boolean; watch: boolean },
+  options: { dry: boolean; watch: boolean, adobeKeyFilepath?: string },
   actions: Action[],
 ) {
   const promises: Promise<unknown>[] = [];
@@ -51,22 +51,27 @@ export default async function run(
 
 async function runOnFile(
   originalFilepath: string,
-  options: { dry: boolean },
+  options: { dry: boolean, adobeKeyFilepath?: string },
   actions: Action[],
 ) {
   let filepath = originalFilepath;
   for (const action of actions) {
     if (action.type === "drm") {
-      filepath = await removeDrm(filepath, options);
+      filepath = await removeDrm(filepath, {
+        dry: options.dry,
+        adobeKeyFilepath: options.adobeKeyFilepath,
+      });
     }
     if (action.type === "print") {
       filepath = await printMetadata(filepath, {
-        ...options,
+        dry: options.dry,
         outputFilepath: action.filename,
       });
     }
     if (action.type === "rename") {
-      filepath = await renameFromMetadata(filepath, options);
+      filepath = await renameFromMetadata(filepath, {
+        dry: options.dry,
+      });
     }
   }
 }

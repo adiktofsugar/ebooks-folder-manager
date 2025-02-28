@@ -8,10 +8,22 @@ authors = [
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "lxml (>=5.3.1,<6.0.0)",
+    "pycryptodomex (>=3.21.0,<4.0.0)",
 ]
 
 [project.scripts]
 dedrm = "dedrm.__main__:main"
+# NOTE: can only be used directly in wine, windows, or macos
+# finds and saves default adobe encryption keys. save to given output directory (optional)
+# [<outputdir>]
+getadobekey = "dedrm.DeDRM_plugin.adobekey:cli_main"
+# given this is an epub, test what type of drm this is (adobe, etc)
+# <key>
+epubtest = "dedrm.DeDRM_plugin.epubtest:main"
+# given this is an epub, and the key, decrypt it
+# <key> <infile> <outfile>
+epubdecrypt = "dedrm.DeDRM_plugin.ineptepub:cli_main"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

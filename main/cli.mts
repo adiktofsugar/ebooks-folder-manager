@@ -1,3 +1,4 @@
+import os from 'node:os';
 import parseArgs from "minimist";
 import Logger from "./logger.mjs";
 import path from "node:path";
@@ -5,11 +6,12 @@ import type { Action } from "./interfaces.mjs";
 import run from "./index.mjs";
 
 const usage = `
-efm [-h][--dry][--watch][--loglevel=debug|info|error] <folder> [<action> ...]
+efm [-h][--dry][--watch][--loglevel=debug|info|error][--adobekey=<adobekey>] <folder> [<action> ...]
 -h        help
 --dry     print what each action would do without actually doing it
 --watch   watch folder for changes
---loglevel  set log level (default: info)
+--loglevel  <loglevel> set log level (default: info)
+--adobekey  <adobekey> path to Adobe key file for use with dedrm of adobe-DRM'd files
 
 <action>  is one of:
   - drm           remove DRM from files
@@ -73,4 +75,14 @@ const actions: Action[] = actionsRaw.map((action) => {
 if (actions.length === 0) {
   actions.push({ type: "print" });
 }
-await run(dirpath, { dry: args.dry, watch: args.watch }, actions);
+await run(dirpath, { dry: args.dry, watch: args.watch, adobeKeyFilepath: expandFilepath(args.adobekey) }, actions);
+
+function expandFilepath(filepath: string | undefined) {
+  if (!filepath) {
+    return undefined;
+  }
+  if (filepath.startsWith("~/")) {
+    return path.resolve(os.homedir(), filepath.slice(2));
+  }
+  return path.resolve(filepath);
+}

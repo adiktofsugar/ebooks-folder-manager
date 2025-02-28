@@ -1,2 +1,3 @@
+import os
 def main():
-  print("hello world")
+  print("hello world", os.getcwd())

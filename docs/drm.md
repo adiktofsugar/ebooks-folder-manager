@@ -14,6 +14,7 @@ Adobe Digital Editions only works on windows or mac. There are scripts in DeDRM 
 
 - install wine
 - install ADE via wine (open .exe file)
+  - wine ADE_installer.exe (can get it from "Manually install Adobe Digital Editions for Windows" section of website)
 - activate ADE
 - install python 3 via wine (open .msi file)
 - install pycryptodome library via wine `wine pip install pycryptodome`
