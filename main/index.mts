@@ -4,6 +4,8 @@ import walkdir from "walkdir";
 import type { Action } from "./interfaces.mjs";
 import Logger from "./logger.mjs";
 import removeDrm from "./actions/removeDrm.mjs";
+import renameFromMetadata from "./actions/renameFromMetadata.mjs";
+import printMetadata from "./actions/printMetadata.mjs";
 
 export default async function run(
   dirpath: string,
@@ -48,19 +50,23 @@ export default async function run(
 }
 
 async function runOnFile(
-  filepath: string,
+  originalFilepath: string,
   options: { dry: boolean },
   actions: Action[],
 ) {
+  let filepath = originalFilepath;
   for (const action of actions) {
     if (action.type === "drm") {
-      await removeDrm(filepath, options);
-    }
-    if (action.type === "rename") {
-      await runRename(filepath, options);
+      filepath = await removeDrm(filepath, options);
     }
     if (action.type === "print") {
-      await runPrint(filepath, options, action.filename);
+      filepath = await printMetadata(filepath, {
+        ...options,
+        outputFilepath: action.filename,
+      });
+    }
+    if (action.type === "rename") {
+      filepath = await renameFromMetadata(filepath, options);
     }
   }
 }

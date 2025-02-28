@@ -70,5 +70,7 @@ const actions: Action[] = actionsRaw.map((action) => {
   }
   throw new Error(`Unknown action: ${action}`);
 });
-
+if (actions.length === 0) {
+  actions.push({ type: "print" });
+}
 await run(dirpath, { dry: args.dry, watch: args.watch }, actions);
