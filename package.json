@@ -1,12 +1,32 @@
 {
   "name": "ebooks-folder-manager",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Management tools for your ebooks folder",
+  "cli": "dist/main/cli.mjs",
+  "main": "dist/main/index.mjs",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test",
+    "test-epub-fixtures": "bin/validate-epub-fixtures",
+    "lint": "biome lint",
+    "fix": "biome lint --fix"
   },
-  "keywords": [],
+  "keywords": [
+    "ebooks"
+  ],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "date-fns": "^3.3.1",
+    "fast-xml-parser": "^4.3.5",
+    "fflate": "^0.8.2",
+    "js-logger": "^1.6.1",
+    "minimist": "^1.2.8",
+    "walkdir": "^0.4.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/minimist": "^1.2.5",
+    "@types/node": "^20.17.7",
+    "typescript": "^5.7.3"
+  }
 }

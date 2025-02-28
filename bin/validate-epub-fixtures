@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -eu
+
+current_dirpath="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PATH="$PATH:$current_dirpath"
+root_dirpath="$(cd "$current_dirpath/.." && pwd)"
+errors=()
+
+for fixture in $root_dirpath/main/books/epub/__test__/fixtures/epub*; do
+  echo "Validating $fixture"
+  if ! epubcheck --mode exp -q "$fixture"; then
+    errors+=("Failed to validate $fixture")
+  fi
+done
+
+if [[ ${#errors[@]} -eq 0 ]]; then
+  echo "All fixtures passed"
+  exit 0
+fi
+
+for error in "${errors[@]}"; do
+  echo "$error" >&2
+done
+exit 1

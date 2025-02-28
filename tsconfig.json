@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "module": "NodeNext",
+    "target": "ESNext",
+    "esModuleInterop": true,
+    "outDir": "dist"
+  },
+  "include": ["./main/**/*"]
+}

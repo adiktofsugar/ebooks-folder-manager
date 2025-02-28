@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -eu
+
+current_dirpath="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+url="https://github.com/w3c/epubcheck/releases/download/v5.1.0/epubcheck-5.1.0.zip"
+tmp_dirpath="$current_dirpath/.epubcheck"
+
+if ! [[ -e "$tmp_dirpath" ]]; then
+  mkdir "$tmp_dirpath"
+  curl -L "$url" -o "$tmp_dirpath/epubcheck.zip"
+  unzip "$tmp_dirpath/epubcheck.zip" -d "$tmp_dirpath"
+fi
+
+java -jar "$tmp_dirpath/epubcheck-5.1.0/epubcheck.jar" "$@"
