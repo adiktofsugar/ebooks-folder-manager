@@ -1,8 +1,9 @@
 import { promises as fs } from "node:fs";
-import { unzipSync, strFromU8 } from "fflate";
+import { unzipSync, strFromU8, type Unzipped } from "fflate";
 import { XMLParser } from "fast-xml-parser";
 import _ from "lodash";
 import type { XmlNode, XmlNodeValue } from "./interfaces.mjs";
+import Logger from "../logger.mjs";
 
 export default async function getMetadata(filepath: string) {
   try {
@@ -10,12 +11,20 @@ export default async function getMetadata(filepath: string) {
     const data = await fs.readFile(filepath);
 
     // Unzip the EPUB file
-    const unzipped = unzipSync(new Uint8Array(data));
+    let unzipped: Unzipped;
+    try {
+      unzipped = unzipSync(new Uint8Array(data));
+    } catch (e) {
+      // I've only seen this happen when the file is not a valid zip file
+      throw new Error(
+        `Failed to unzip EPUB file. This likely means it's an invalid zip archive. - ${e}`,
+      );
+    }
 
     // Find the container.xml file
     const containerFile = unzipped["META-INF/container.xml"];
     if (!containerFile) {
-      throw new Error(`container.xml not found in EPUB file - ${filepath}`);
+      throw new Error("container.xml not found in EPUB file");
     }
 
     // Parse the container.xml file
@@ -34,13 +43,13 @@ export default async function getMetadata(filepath: string) {
         .rootfile as XmlNodeValue
     ).attributes?.["full-path"];
     if (!rootfilePath) {
-      throw new Error(`Rootfile path not found in container.xml - ${filepath}`);
+      throw new Error("Rootfile path not found in container.xml");
     }
 
     // Find the rootfile
     const rootfile = unzipped[rootfilePath];
     if (!rootfile) {
-      throw new Error(`Rootfile not found in EPUB file - ${filepath}`);
+      throw new Error("Rootfile not found in EPUB file");
     }
 
     // Parse the rootfile
@@ -53,29 +62,29 @@ export default async function getMetadata(filepath: string) {
       "opf",
     ) as XmlNode;
     if (!packageNode) {
-      throw new Error(`Invalid rootfile - no "package" - ${filepath}`);
+      throw new Error(`Invalid rootfile - no "package"`);
     }
     const uniqueId = packageNode.attributes?.["unique-identifier"];
     if (!uniqueId) {
-      throw new Error(`Unique identifier not found in rootfile - ${filepath}`);
+      throw new Error("Unique identifier not found in rootfile");
     }
 
     // Determine the EPUB version
     const version = packageNode.attributes?.version;
     if (!version) {
-      throw new Error(`EPUB version not found in rootfile - ${filepath}`);
+      throw new Error("EPUB version not found in rootfile");
     }
 
     // Return the major version as a number
     const epubVersion = Number.parseInt(version.split(".")[0], 10);
     if (Number.isNaN(epubVersion)) {
-      throw new Error(`Invalid EPUB version - ${filepath}`);
+      throw new Error("Invalid EPUB version");
     }
 
     // Extract metadata
     const metadata = getPrefixedNode(packageNode, "metadata", "opf") as XmlNode;
     if (!metadata) {
-      throw new Error(`Metadata not found in rootfile - ${filepath}`);
+      throw new Error("Metadata not found in rootfile");
     }
     const dcData = getDcNodesOpf(metadata);
     assertRequiredDcNodes(dcData, filepath);
@@ -181,6 +190,6 @@ function assertRequiredDcNodes(
     missing.push("language");
   }
   if (missing.length > 0) {
-    throw new Error(`Missing metadata: ${missing.join(", ")} - ${filepath}`);
+    throw new Error(`Missing metadata: ${missing.join(", ")}`);
   }
 }
