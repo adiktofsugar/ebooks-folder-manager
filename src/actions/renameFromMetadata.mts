@@ -1,5 +1,5 @@
 import fs from "node:fs";
-import getMetadata from "../epub/getMetadata.mjs";
+import getMetadata from "../lib/getMetadata.mjs";
 import Logger from "../logger.mjs";
 import path from "node:path";
 
@@ -7,8 +7,14 @@ export default async function renameFromMetadata(
   filepath: string,
   options: { dry: boolean },
 ): Promise<string> {
-  if (filepath.endsWith(".epub")) {
-    const { title, author } = await getMetadata(filepath, options);
+  const metadata = await getMetadata(filepath);
+  if (metadata) {
+    const { title, creators } = metadata;
+    const author = creators
+      ? Array.isArray(creators)
+        ? creators[0]
+        : creators
+      : "Unknown";
     const newFilepath = path.join(
       path.dirname(filepath),
       `${author} - ${title}.epub`,
@@ -20,6 +26,5 @@ export default async function renameFromMetadata(
     fs.renameSync(filepath, newFilepath);
     return newFilepath;
   }
-  Logger.error("can't get metadata for", filepath);
   return filepath;
 }

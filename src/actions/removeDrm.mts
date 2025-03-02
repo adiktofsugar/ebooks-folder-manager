@@ -39,7 +39,7 @@ export default function removeDrm(
     }
     throw new Error(`Unknown DRM kind: ${drmKind}`);
   }
-  Logger.error("can't remove drm for", filepath);
+  Logger.error("unknown file extension", filepath);
   return filepath;
 }
 

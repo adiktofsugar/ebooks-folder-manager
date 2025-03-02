@@ -1,13 +1,12 @@
 import fs from "node:fs";
-import getMetadata from "../epub/getMetadata.mjs";
-import Logger from "../logger.mjs";
+import getMetadata from "../lib/getMetadata.mjs";
 
 export default async function printMetadata(
   filepath: string,
   options: { dry: boolean; outputFilepath?: string },
 ): Promise<string> {
-  if (filepath.endsWith(".epub")) {
-    const metadata = await getMetadata(filepath, options);
+  const metadata = await getMetadata(filepath);
+  if (metadata) {
     if (options.outputFilepath) {
       if (options.dry) {
         console.log("write metadata to", options.outputFilepath);
@@ -20,8 +19,6 @@ export default async function printMetadata(
     } else {
       console.log(JSON.stringify(metadata, null, 2));
     }
-    return filepath;
   }
-  Logger.error("can't get metadata for", filepath);
   return filepath;
 }
