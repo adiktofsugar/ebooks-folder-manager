@@ -1,9 +1,11 @@
-import os from 'node:os';
+import os from "node:os";
 import parseArgs from "minimist";
 import Logger from "./logger.mjs";
 import path from "node:path";
 import type { Action } from "./interfaces.mjs";
 import run from "./index.mjs";
+import { fileURLToPath } from "node:url";
+import { execSync, spawn } from "node:child_process";
 
 const usage = `
 efm [-h][--dry][--watch][--loglevel=debug|info|error][--adobekey=<adobekey>] <folder> [<action> ...]
@@ -16,7 +18,7 @@ efm [-h][--dry][--watch][--loglevel=debug|info|error][--adobekey=<adobekey>] <fo
 <action>  is one of:
   - drm           remove DRM from files
   - rename        rename files based on metadata
-  - print         print metadata to console (can't be combined with --watch)
+  - print         print metadata to console
   - print:<file>  print metadata to file
 
 Run efm on folder. This will walk that folder recursively and perform all actions you specify.
@@ -75,7 +77,43 @@ const actions: Action[] = actionsRaw.map((action) => {
 if (actions.length === 0) {
   actions.push({ type: "print" });
 }
-await run(dirpath, { dry: args.dry, watch: args.watch, adobeKeyFilepath: expandFilepath(args.adobekey) }, actions);
+await run(
+  dirpath,
+  {
+    dry: args.dry,
+    watch: args.watch,
+    adobeKeyFilepath: expandFilepath(args.adobekey),
+  },
+  actions,
+);
+if (args.watch) {
+  const watchExecFilepath = fileURLToPath(
+    new URL("../bin/watchexec", import.meta.url),
+  );
+  console.log(
+    "should run ",
+    "bash",
+
+    watchExecFilepath,
+    "-r",
+    dirpath,
+    "--",
+    ...process.argv.filter((entry) => entry !== "--watch"),
+  );
+  spawn(
+    "bash",
+    [
+      watchExecFilepath,
+      "-w",
+      dirpath,
+      "--",
+      ...process.argv.filter((entry) => entry !== "--watch"),
+    ],
+    {
+      stdio: "inherit",
+    },
+  );
+}
 
 function expandFilepath(filepath: string | undefined) {
   if (!filepath) {

@@ -26,16 +26,16 @@ export default async function getMetadataV3(
   const metadata = parsedXml.package.metadata;
   // const series = metadata['meta']?.find((meta: any) => meta.name === 'calibre:series')?.content;
 
-    const title: string = metadata["dc:title"]["#text"];
-    const author: string = metadata["dc:creator"]["#text"];
-    const identifiers: string[] = _.castArray(metadata["dc:identifier"]).map(
-      (node: Record<string, string>) => {
-        const scheme = node["@_opf:scheme"];
-        return [scheme, node["#text"]].filter(Boolean).join(": ");
-      },
-    );
-    const language: string = metadata["dc:language"]?.["#text"];
-    const publisher: string = metadata["dc:publisher"]?.["#text"];
+  const title: string = metadata["dc:title"]["#text"];
+  const author: string = metadata["dc:creator"]["#text"];
+  const identifiers: string[] = _.castArray(metadata["dc:identifier"]).map(
+    (node: Record<string, string>) => {
+      const scheme = node["@_opf:scheme"];
+      return [scheme, node["#text"]].filter(Boolean).join(": ");
+    },
+  );
+  const language: string = metadata["dc:language"]?.["#text"];
+  const publisher: string = metadata["dc:publisher"]?.["#text"];
 
   return { title, author, identifiers, language, publisher };
 }

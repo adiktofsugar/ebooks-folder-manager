@@ -1,11 +1,11 @@
 export interface DrmAction {
-  type: 'drm';
+  type: "drm";
 }
 export interface RenameAction {
-  type: 'rename';
+  type: "rename";
 }
 export interface PrintAction {
-  type: 'print';
+  type: "print";
   filename?: string;
 }
 export type Action = DrmAction | RenameAction | PrintAction;

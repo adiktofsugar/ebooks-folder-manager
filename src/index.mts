@@ -2,14 +2,13 @@ import fs from "node:fs";
 import path from "node:path";
 import walkdir from "walkdir";
 import type { Action } from "./interfaces.mjs";
-import Logger from "./logger.mjs";
 import removeDrm from "./actions/removeDrm.mjs";
 import renameFromMetadata from "./actions/renameFromMetadata.mjs";
 import printMetadata from "./actions/printMetadata.mjs";
 
 export default async function run(
   dirpath: string,
-  options: { dry: boolean; watch: boolean, adobeKeyFilepath?: string },
+  options: { dry: boolean; watch: boolean; adobeKeyFilepath?: string },
   actions: Action[],
 ) {
   const promises: Promise<unknown>[] = [];
@@ -51,7 +50,7 @@ export default async function run(
 
 async function runOnFile(
   originalFilepath: string,
-  options: { dry: boolean, adobeKeyFilepath?: string },
+  options: { dry: boolean; adobeKeyFilepath?: string },
   actions: Action[],
 ) {
   let filepath = originalFilepath;

@@ -15,10 +15,12 @@ tasks:
       - tsc
   lint:
     cmds:
-      - biome format lint
+      - biome format
+      - biome lint
   fix:
     cmds:
-      - biome format lint --fix
+      - biome format --fix
+      - biome lint --fix
   test:
     cmds:
-      - node --test
+      - node --test --experimental-test-module-mocks

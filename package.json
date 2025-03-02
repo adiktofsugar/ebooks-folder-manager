@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "Management tools for your ebooks folder",
   "bin": {
-    "efm": "dist/main/cli.mjs",
-    "ebooks-folder-manager": "dist/main/cli.mjs"
+    "efm": "dist/cli.mjs",
+    "ebooks-folder-manager": "dist/cli.mjs"
   },
-  "main": "dist/main/index.mjs",
+  "main": "dist/index.mjs",
   "scripts": {
     "dev": "task dev",
     "build": "task build",
@@ -31,7 +31,8 @@
     "@go-task/cli": "^3.41.0",
     "@types/lodash": "^4.17.15",
     "@types/minimist": "^1.2.5",
-    "@types/node": "^20.17.7",
+    "@types/node": "^22.13.8",
+    "memfs": "^4.17.0",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3"
   }
