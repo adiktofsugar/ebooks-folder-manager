@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -eu
+set -o pipefail
+
+if ! command -v poetry &> /dev/null; then
+  if ! command -v python3 &> /dev/null; then
+    echo "python3 is required to install poetry"
+    exit 1
+  fi
+  curl -sSL https://install.python-poetry.org | python3 -
+fi
+
+poetry "$@"

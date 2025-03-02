@@ -1,0 +1,24 @@
+version: '3'
+
+tasks:
+  dev:
+    deps: [build-watch, lint-watch]
+  build-watch:
+    cmds:
+      # tsc has its own cache so I don't want to use watchexec
+      - tsc -w --preserveWatchOutput
+  lint-watch:
+    cmds:
+      - ./bin/watchexec -e ts,mts -i "node_modules/**" -- task lint      
+  build:
+    cmds:
+      - tsc
+  lint:
+    cmds:
+      - biome format lint
+  fix:
+    cmds:
+      - biome format lint --fix
+  test:
+    cmds:
+      - node --test

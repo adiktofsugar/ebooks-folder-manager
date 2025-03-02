@@ -1,0 +1,26 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space"
+  },
+  "organizeImports": {
+    "enabled": true
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "style": {
+        "useNodejsImportProtocol": {
+          "fix": "unsafe",
+          "level": "error"
+        },
+        "noUnusedTemplateLiteral": {
+          "fix": "unsafe",
+          "level": "error"
+        }
+      }
+    }
+  }
+}
