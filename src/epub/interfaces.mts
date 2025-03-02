@@ -1,5 +1,5 @@
 export interface XmlNodeValue {
-  attributes: Record<string, string>;
+  attributes?: Record<string, string>;
   "#text": string;
 }
 
