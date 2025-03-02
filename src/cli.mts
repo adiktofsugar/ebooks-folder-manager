@@ -20,6 +20,7 @@ efm [-h][--dry][--watch][--loglevel=debug|info|error][--adobekey=<adobekey>] <fo
   - rename        rename files based on metadata
   - print         print metadata to console
   - print:<file>  print metadata to file
+  - none          do nothing (useful for testing to see if we don't throw any errors)
 
 Run efm on folder. This will walk that folder recursively and perform all actions you specify.
 If no actions are specified, will use any efm.(yaml|yml|json|jsonc) files in the folder.
@@ -71,6 +72,9 @@ const actions: Action[] = actionsRaw.map((action) => {
   }
   if (action.startsWith("print:")) {
     return { type: "print", filename: action.slice(6) };
+  }
+  if (action === "none") {
+    return { type: "none" };
   }
   throw new Error(`Unknown action: ${action}`);
 });

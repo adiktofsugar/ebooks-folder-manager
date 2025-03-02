@@ -8,4 +8,7 @@ export interface PrintAction {
   type: "print";
   filename?: string;
 }
-export type Action = DrmAction | RenameAction | PrintAction;
+export interface NoneAction {
+  type: "none";
+}
+export type Action = DrmAction | RenameAction | PrintAction | NoneAction;

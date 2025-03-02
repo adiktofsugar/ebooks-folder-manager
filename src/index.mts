@@ -5,6 +5,7 @@ import type { Action } from "./interfaces.mjs";
 import removeDrm from "./actions/removeDrm.mjs";
 import renameFromMetadata from "./actions/renameFromMetadata.mjs";
 import printMetadata from "./actions/printMetadata.mjs";
+import getMetadata from "./lib/getMetadata.mjs";
 
 export default async function run(
   dirpath: string,
@@ -55,11 +56,16 @@ async function runOnFile(
 ) {
   let filepath = originalFilepath;
   for (const action of actions) {
+    // Need to do drm first if we're going to do anything else after...
     if (action.type === "drm") {
       filepath = await removeDrm(filepath, {
         dry: options.dry,
         adobeKeyFilepath: options.adobeKeyFilepath,
       });
+    }
+    if (action.type === "none") {
+      // just verify we can get metadata
+      await getMetadata(filepath);
     }
     if (action.type === "print") {
       filepath = await printMetadata(filepath, {
