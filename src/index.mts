@@ -6,6 +6,7 @@ import removeDrm from "./actions/removeDrm.mjs";
 import renameFromMetadata from "./actions/renameFromMetadata.mjs";
 import printMetadata from "./actions/printMetadata.mjs";
 import getMetadata from "./lib/getMetadata.mjs";
+import convertPdf from "./actions/convertPdf.mjs";
 
 export default async function run(
   dirpath: string,
@@ -54,6 +55,10 @@ async function runOnFile(
   options: { dry: boolean; adobeKeyFilepath?: string },
   actions: Action[],
 ) {
+  if (originalFilepath.endsWith(".bak")) {
+    // we don't want to process backup files
+    return;
+  }
   let filepath = originalFilepath;
   for (const action of actions) {
     // Need to do drm first if we're going to do anything else after...
@@ -75,6 +80,11 @@ async function runOnFile(
     }
     if (action.type === "rename") {
       filepath = await renameFromMetadata(filepath, {
+        dry: options.dry,
+      });
+    }
+    if (action.type === "pdf") {
+      filepath = await convertPdf(filepath, {
         dry: options.dry,
       });
     }

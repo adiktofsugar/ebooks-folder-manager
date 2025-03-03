@@ -26,10 +26,7 @@ test("normal", async (t) => {
 test("opf prefixed elements", async (t) => {
   const realFs = await import("node:fs");
   const book = realFs.readFileSync(
-    new URL(
-      "../../../sample-books/Interesting Times - Terry Pratchett.epub",
-      import.meta.url,
-    ),
+    new URL("../../../sample-books/InterestingTimes.epub", import.meta.url),
   );
   t.mock.module("node:fs", {
     namedExports: fs,

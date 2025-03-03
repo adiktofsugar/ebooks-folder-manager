@@ -8,7 +8,15 @@ export interface PrintAction {
   type: "print";
   filename?: string;
 }
+export interface PdfAction {
+  type: "pdf";
+}
 export interface NoneAction {
   type: "none";
 }
-export type Action = DrmAction | RenameAction | PrintAction | NoneAction;
+export type Action =
+  | DrmAction
+  | RenameAction
+  | PrintAction
+  | PdfAction
+  | NoneAction;

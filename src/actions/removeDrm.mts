@@ -1,13 +1,12 @@
-import path from "node:path";
+import fs from "node:fs";
 import { execSync } from "node:child_process";
 import Logger from "../logger.mjs";
 import { fileURLToPath } from "node:url";
+import getBackupFilepath from "../lib/getBackupFilepath.mjs";
+import PoetryRunner from "../lib/PoetryRunner.mjs";
 
-const poetryFilepath = fileURLToPath(
-  new URL("../../bin/poetry", import.meta.url),
-);
-const dedrmProjectDirpath = fileURLToPath(
-  new URL("../../dedrm", import.meta.url),
+const poetryRunner = new PoetryRunner(
+  fileURLToPath(new URL("../../dedrm", import.meta.url)),
 );
 
 export default function removeDrm(
@@ -19,7 +18,8 @@ export default function removeDrm(
     return filepath;
   }
   if (filepath.endsWith(".epub")) {
-    const drmKind = runDeDrmScript("epubtest", [filepath])
+    const drmKind = poetryRunner
+      .run("epubtest", [filepath])
       .toString()
       .trim()
       .toLowerCase();
@@ -29,9 +29,21 @@ export default function removeDrm(
       if (!keyFilepath) {
         throw new Error("No Adobe key file specified");
       }
-      const newFilepath = filepath.replace(/\.epub$/, ".nodrm.epub");
-      runDeDrmScript("epubdecrypt", [keyFilepath, filepath, newFilepath]);
-      return newFilepath;
+
+      const nextFilepath = `${filepath.replace(/\.epub$/, "-dedrm.epub")}`;
+      poetryRunner.run("epubdecrypt", [keyFilepath, filepath, nextFilepath]);
+
+      const backupFilepath = getBackupFilepath(filepath);
+      Logger.info(
+        "removed DRM from",
+        filepath,
+        "backing up to",
+        backupFilepath,
+      );
+      fs.renameSync(filepath, backupFilepath);
+      fs.renameSync(nextFilepath, filepath);
+
+      return filepath;
     }
     if (drmKind === "unencrypted") {
       Logger.debug("no DRM to remove for", filepath);
@@ -41,15 +53,4 @@ export default function removeDrm(
   }
   Logger.error("unknown file extension", filepath);
   return filepath;
-}
-
-let hasRunInstall = false;
-function runDeDrmScript(scriptName: string, args: string[]) {
-  if (!hasRunInstall) {
-    execSync(`${poetryFilepath} -P "${dedrmProjectDirpath}" install`);
-    hasRunInstall = true;
-  }
-  return execSync(
-    `${poetryFilepath} -P "${dedrmProjectDirpath}" run "${scriptName}" ${args.map((a) => `"${a}"`).join(" ")}`,
-  );
 }

@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -eu
+set -o pipefail
+
+python_cmd=python3
+if ! command -v python3 &> /dev/null; then
+  python_cmd=python
+  if ! command -v python &> /dev/null; then
+    echo "python 3 is required to install poetry (couldn't find python or python3 in PATH)" >&2
+    exit 1
+  fi
+  version="$(python --version 2>&1)"
+  if ! [[ "$version" == "Python 3."* ]]; then
+    echo "python 3 is required to install poetry (found $version)" >&2
+    exit 1
+  fi
+fi
+# Maybe I should do this locally somehow?
+curl -sSL https://install.python-poetry.org | $python_cmd -

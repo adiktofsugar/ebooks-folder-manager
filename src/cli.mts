@@ -6,6 +6,8 @@ import type { Action } from "./interfaces.mjs";
 import run from "./index.mjs";
 import { fileURLToPath } from "node:url";
 import { execSync, spawn } from "node:child_process";
+import ensurePoetry from "./env/ensurePoetry.mjs";
+import ensureK2pdfopt from "./env/ensureK2pdfopt.mjs";
 
 const usage = `
 efm [-h][--dry][--watch][--loglevel=debug|info|error][--adobekey=<adobekey>] <folder> [<action> ...]
@@ -16,10 +18,11 @@ efm [-h][--dry][--watch][--loglevel=debug|info|error][--adobekey=<adobekey>] <fo
 --adobekey  <adobekey> path to Adobe key file for use with dedrm of adobe-DRM'd files
 
 <action>  is one of:
-  - drm           remove DRM from files
+  - drm           remove DRM from files (backs up original as .bak)
   - rename        rename files based on metadata
   - print         print metadata to console
   - print:<file>  print metadata to file
+  - pdf           reformat a PDF via k2pdfopt (backs up original as .bak)
   - none          do nothing (useful for testing to see if we don't throw any errors)
 
 Run efm on folder. This will walk that folder recursively and perform all actions you specify.
@@ -43,7 +46,7 @@ if (!dirpathRaw) {
 }
 
 Logger.useDefaults();
-const loglevel = args.loglevel || "info";
+const loglevel = (args.loglevel || "info").toLowerCase();
 switch (loglevel) {
   case "debug":
     Logger.setLevel(Logger.DEBUG);
@@ -60,8 +63,11 @@ switch (loglevel) {
 }
 
 const dirpath = path.resolve(dirpathRaw);
+
+const commandsRequired = new Set<string>();
 const actions: Action[] = actionsRaw.map((action) => {
   if (action === "drm") {
+    commandsRequired.add("poetry");
     return { type: "drm" };
   }
   if (action === "rename") {
@@ -73,6 +79,11 @@ const actions: Action[] = actionsRaw.map((action) => {
   if (action.startsWith("print:")) {
     return { type: "print", filename: action.slice(6) };
   }
+  if (action === "pdf") {
+    commandsRequired.add("k2pdfopt");
+    commandsRequired.add("poetry");
+    return { type: "pdf" };
+  }
   if (action === "none") {
     return { type: "none" };
   }
@@ -81,6 +92,17 @@ const actions: Action[] = actionsRaw.map((action) => {
 if (actions.length === 0) {
   actions.push({ type: "print" });
 }
+
+for (const command of commandsRequired) {
+  if (command === "poetry") {
+    await ensurePoetry();
+  } else if (command === "k2pdfopt") {
+    await ensureK2pdfopt();
+  } else {
+    throw new Error(`Unknown required command: ${command}`);
+  }
+}
+
 await run(
   dirpath,
   {
