@@ -5,6 +5,5 @@ export default async function getMetadata(filepath: string) {
   if (filepath.endsWith(".epub")) {
     return getEpubMetadata(filepath);
   }
-  Logger.error("unknown file extension", filepath);
   return null;
 }

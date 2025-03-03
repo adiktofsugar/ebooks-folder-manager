@@ -14,7 +14,9 @@
     "lint": "task lint",
     "fix": "task fix"
   },
-  "keywords": ["ebooks"],
+  "keywords": [
+    "ebooks"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {

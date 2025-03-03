@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import getMetadata from "../lib/getMetadata.mjs";
+import Logger from "../logger.mjs";
 
 export default async function printMetadata(
   filepath: string,
@@ -20,5 +21,6 @@ export default async function printMetadata(
       console.log(JSON.stringify(metadata, null, 2));
     }
   }
+  Logger.error("print - can't get metadata for", filepath);
   return filepath;
 }

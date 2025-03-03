@@ -26,5 +26,6 @@ export default async function renameFromMetadata(
     fs.renameSync(filepath, newFilepath);
     return newFilepath;
   }
+  Logger.error("rename - can't get metadata for", filepath);
   return filepath;
 }

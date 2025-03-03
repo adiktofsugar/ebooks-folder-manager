@@ -3,6 +3,7 @@ import { execSync } from "node:child_process";
 import Logger from "../logger.mjs";
 import getBackupFilepath from "../lib/getBackupFilepath.mjs";
 import Metadata from "../pdf/Metadata.mjs";
+import path from "node:path";
 
 export default function convertPdf(
   filepath: string,
@@ -13,30 +14,46 @@ export default function convertPdf(
     return filepath;
   }
   if (filepath.endsWith(".pdf")) {
+    Logger.debug("pdf - getting metadata for", filepath);
     const metadata = new Metadata(filepath);
     const { isK2pdfoptVersion } = metadata.getMetadata();
     if (isK2pdfoptVersion) {
-      Logger.debug("this is the converted version. Skipping.");
+      Logger.debug("pdf - this is the converted version. Skipping.");
       return filepath;
     }
-    const nextFilepath = `${filepath.replace(/\.pdf$/, "-k2pdfopt.pdf")}`;
+    // This outFilepath has to be in the same directory to avoid "cross-device link" errors
+    let outFilepath: string;
+    do {
+      outFilepath = path.join(
+        path.dirname(filepath),
+        `${crypto.randomUUID()}-k2pdfopt.pdf`,
+      );
+    } while (fs.existsSync(outFilepath));
+    Logger.info(
+      "pdf - running k2pdfopt on",
+      filepath,
+      "output to",
+      outFilepath,
+    );
     execSync(
       // -om = output margin
       // -ds = document scale
       // -w = width of reader
       // -h = height of reader
       // -o = output file
-      `k2pdfopt -om 0.1 -ds 0.5 -w 1264 -h 1680 -o "${nextFilepath}" "${filepath}"`,
+      `k2pdfopt -om 0.1 -ds 0.5 -w 1264 -h 1680 -o "${outFilepath}" "${filepath}"`,
       // need to ignore stdin so it doesn't go into interactive mode
-      { stdio: ["ignore", "inherit", "inherit"] },
+      { stdio: ["ignore", "ignore", "inherit"] },
     );
-    const nextMetadata = new Metadata(nextFilepath);
-    nextMetadata.setMetadata({ isK2pdfoptVersion: true });
+    Logger.debug("pdf - ran k2pdfopt on", filepath, "output to", outFilepath);
+    const outMetadata = new Metadata(outFilepath);
+    outMetadata.setMetadata({ isK2pdfoptVersion: true });
     const backupFilepath = getBackupFilepath(filepath);
-    Logger.info("converted", filepath, "backing up to", backupFilepath);
+    Logger.info("pdf - converted", filepath, "backed up to", backupFilepath);
     fs.renameSync(filepath, backupFilepath);
-    fs.renameSync(nextFilepath, filepath);
+    fs.renameSync(outFilepath, filepath);
+    return filepath;
   }
-  Logger.debug("skip non pdf file", filepath);
+  Logger.debug("pdf - skipping non-pdf", filepath);
   return filepath;
 }

@@ -113,18 +113,9 @@ await run(
   actions,
 );
 if (args.watch) {
+  console.log("done - watching for changes");
   const watchExecFilepath = fileURLToPath(
     new URL("../bin/watchexec", import.meta.url),
-  );
-  console.log(
-    "should run ",
-    "bash",
-
-    watchExecFilepath,
-    "-r",
-    dirpath,
-    "--",
-    ...process.argv.filter((entry) => entry !== "--watch"),
   );
   spawn(
     "bash",
@@ -132,6 +123,8 @@ if (args.watch) {
       watchExecFilepath,
       "-w",
       dirpath,
+      // using a shell causes quoting issues
+      "-n",
       "--",
       ...process.argv.filter((entry) => entry !== "--watch"),
     ],
