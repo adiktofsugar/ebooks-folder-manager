@@ -2,23 +2,24 @@ import fs from "node:fs";
 import path from "node:path";
 import walkdir from "walkdir";
 import type { Action } from "./interfaces.mjs";
-import removeDrm from "./actions/removeDrm.mjs";
-import renameFromMetadata from "./actions/renameFromMetadata.mjs";
-import printMetadata from "./actions/printMetadata.mjs";
-import getMetadata from "./lib/getMetadata.mjs";
-import convertPdf from "./actions/convertPdf.mjs";
+import Book from "./Book.mjs";
 
 export default async function run(
   dirpath: string,
   options: { dry: boolean; watch: boolean; adobeKeyFilepath?: string },
   actions: Action[],
 ) {
-  const promises: Promise<unknown>[] = [];
   const foundDirpaths: string[] = [];
+  const books: Book[] = [];
   await new Promise((resolve, reject) => {
     walkdir(dirpath)
       .on("file", (filepath: string) => {
-        promises.push(runOnFile(filepath, options, actions));
+        books.push(
+          new Book(filepath, {
+            adobeKeyFilepath: options.adobeKeyFilepath,
+            dry: options.dry,
+          }),
+        );
       })
       .on("directory", (dirpath: string) => {
         foundDirpaths.push(dirpath);
@@ -30,8 +31,11 @@ export default async function run(
         reject(err);
       });
   });
-  await Promise.all(promises);
+  for (const book of books) {
+    await processBook(book, actions);
+  }
   if (options.watch) {
+    console.error("done. watching.");
     for (const foundDirpath of foundDirpaths) {
       console.error("watching", foundDirpath);
       fs.watch(foundDirpath, (event, filename) => {
@@ -41,7 +45,15 @@ export default async function run(
           // rename is usually when a file is added or removed
           // change is usually when a file is modified
           if (fs.existsSync(filepath)) {
-            runOnFile(foundDirpath, options, actions);
+            let book = books.find((book) => book.sourceFilepath === filepath);
+            if (!book) {
+              book = new Book(filepath, {
+                adobeKeyFilepath: options.adobeKeyFilepath,
+                dry: options.dry,
+              });
+              books.push(book);
+            }
+            processBook(book, actions);
           }
         }
       });
@@ -50,43 +62,24 @@ export default async function run(
   }
 }
 
-async function runOnFile(
-  originalFilepath: string,
-  options: { dry: boolean; adobeKeyFilepath?: string },
-  actions: Action[],
-) {
-  if (originalFilepath.endsWith(".bak")) {
-    // we don't want to process backup files
-    return;
-  }
-  let filepath = originalFilepath;
+async function processBook(book: Book, actions: Action[]) {
   for (const action of actions) {
     // Need to do drm first if we're going to do anything else after...
     if (action.type === "drm") {
-      filepath = await removeDrm(filepath, {
-        dry: options.dry,
-        adobeKeyFilepath: options.adobeKeyFilepath,
-      });
+      await book.removeDrm();
     }
     if (action.type === "none") {
-      // just verify we can get metadata
-      await getMetadata(filepath);
+      await book.getMetadata();
     }
     if (action.type === "print") {
-      filepath = await printMetadata(filepath, {
-        dry: options.dry,
-        outputFilepath: action.filename,
-      });
+      await book.printMetadata();
     }
     if (action.type === "rename") {
-      filepath = await renameFromMetadata(filepath, {
-        dry: options.dry,
-      });
+      await book.renameFromMetadata();
     }
     if (action.type === "pdf") {
-      filepath = await convertPdf(filepath, {
-        dry: options.dry,
-      });
+      await book.convertPdf();
     }
   }
+  await book.save();
 }

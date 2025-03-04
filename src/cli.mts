@@ -5,7 +5,7 @@ import path from "node:path";
 import type { Action } from "./interfaces.mjs";
 import run from "./index.mjs";
 import { fileURLToPath } from "node:url";
-import { execSync, spawn } from "node:child_process";
+import { spawn } from "node:child_process";
 import ensurePoetry from "./env/ensurePoetry.mjs";
 import ensureK2pdfopt from "./env/ensureK2pdfopt.mjs";
 
@@ -21,7 +21,6 @@ efm [-h][--dry][--watch][--loglevel=debug|info|error][--adobekey=<adobekey>] <fo
   - drm           remove DRM from files (backs up original as .bak)
   - rename        rename files based on metadata
   - print         print metadata to console
-  - print:<file>  print metadata to file
   - pdf           reformat a PDF via k2pdfopt (backs up original as .bak)
   - none          do nothing (useful for testing to see if we don't throw any errors)
 
@@ -76,9 +75,6 @@ const actions: Action[] = actionsRaw.map((action) => {
   if (action === "print") {
     return { type: "print" };
   }
-  if (action.startsWith("print:")) {
-    return { type: "print", filename: action.slice(6) };
-  }
   if (action === "pdf") {
     commandsRequired.add("k2pdfopt");
     commandsRequired.add("poetry");
@@ -112,27 +108,27 @@ await run(
   },
   actions,
 );
-if (args.watch) {
-  console.log("done - watching for changes");
-  const watchExecFilepath = fileURLToPath(
-    new URL("../bin/watchexec", import.meta.url),
-  );
-  spawn(
-    "bash",
-    [
-      watchExecFilepath,
-      "-w",
-      dirpath,
-      // using a shell causes quoting issues
-      "-n",
-      "--",
-      ...process.argv.filter((entry) => entry !== "--watch"),
-    ],
-    {
-      stdio: "inherit",
-    },
-  );
-}
+// if (args.watch) {
+//   console.log("done - watching for changes");
+//   const watchExecFilepath = fileURLToPath(
+//     new URL("../bin/watchexec", import.meta.url),
+//   );
+//   spawn(
+//     "bash",
+//     [
+//       watchExecFilepath,
+//       "-w",
+//       dirpath,
+//       // using a shell causes quoting issues
+//       "-n",
+//       "--",
+//       ...process.argv.filter((entry) => entry !== "--watch"),
+//     ],
+//     {
+//       stdio: "inherit",
+//     },
+//   );
+// }
 
 function expandFilepath(filepath: string | undefined) {
   if (!filepath) {

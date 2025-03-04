@@ -4,23 +4,23 @@ import PoetryRunner from "../lib/PoetryRunner.mjs";
 const poetryRunner = new PoetryRunner(
   fileURLToPath(new URL("../../pdfmeta", import.meta.url)),
 );
-export interface MetadataValue {
+export interface PdfMetadataValue {
   /**
    * is this the k2pdfopt version?
    */
   isK2pdfoptVersion: boolean;
 }
 
-export default class Metadata {
+export default class PdfMetadata {
   filepath;
   constructor(filepath: string) {
     this.filepath = filepath;
   }
-  async setMetadata(value: Partial<MetadataValue>) {
+  setMetadata(value: Partial<PdfMetadataValue>) {
     poetryRunner.run("pdfmeta", [this.filepath, JSON.stringify(value)]);
   }
-  getMetadata(): MetadataValue {
+  getMetadata(): PdfMetadataValue {
     const val = poetryRunner.run("pdfmeta", [this.filepath]);
-    return JSON.parse(val.toString()) as MetadataValue;
+    return JSON.parse(val.toString()) as PdfMetadataValue;
   }
 }

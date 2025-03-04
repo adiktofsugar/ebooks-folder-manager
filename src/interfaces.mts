@@ -6,7 +6,6 @@ export interface RenameAction {
 }
 export interface PrintAction {
   type: "print";
-  filename?: string;
 }
 export interface PdfAction {
   type: "pdf";
