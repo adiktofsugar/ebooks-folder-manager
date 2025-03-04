@@ -2,7 +2,6 @@ from argparse import ArgumentParser
 import shutil
 import tempfile
 import pymupdf
-import json
 
 def main():
     parser = ArgumentParser()
