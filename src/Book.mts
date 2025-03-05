@@ -9,6 +9,7 @@ import runK2PdfOpt from "./pdf/runK2PdfOpt.mjs";
 import detectDrm from "./epub/detectDrm.mjs";
 import removeAdobeDrm from "./epub/removeAdobeDrm.mjs";
 import getBackupFilepath from "./lib/getBackupFilepath.mjs";
+import prettyMilliseconds from "pretty-ms";
 
 /**
  * Represents a book. Could be an epub, mobi, pdf, etc.
@@ -123,14 +124,20 @@ export default class Book {
     const filename = metadata.getFilename(extension);
     const newFilepath = path.join(path.dirname(this.sourceFilepath), filename);
     if (newFilepath === this.sourceFilepath) {
-      Logger.debug("renameFromMetadata - no new filepath", this.sourceFilepath);
+      Logger.debug("renameFromMetadata - no change", this.sourceFilepath);
       return;
     }
+    Logger.debug(
+      "renameFromMetadata - change from",
+      this.sourceFilepath,
+      "to",
+      newFilepath,
+    );
     this.newFilepath = newFilepath;
   }
   async removeDrm() {
     if (!this.sourceFilepath.endsWith(".epub")) {
-      Logger.error("removeDrm - not an epub", this.sourceFilepath);
+      Logger.debug("removeDrm - not an epub", this.sourceFilepath);
       return;
     }
     const tmpFilepath = this.getTmpFilepath();
@@ -152,13 +159,27 @@ export default class Book {
   }
   async convertPdf() {
     if (!this.sourceFilepath.endsWith(".pdf")) {
-      Logger.error("convertPdf - not a pdf", this.sourceFilepath);
+      Logger.debug("convertPdf - not a pdf", this.sourceFilepath);
       return;
     }
+    const metadata = await this.getMetadata();
+    if (!metadata) {
+      Logger.debug("convertPdf - no metadata", this.sourceFilepath);
+      return;
+    }
+    if (metadata.isK2pdfoptVersion) {
+      Logger.debug("convertPdf - already k2pdfopt", this.sourceFilepath);
+      return;
+    }
+    const start = Date.now();
+    Logger.debug("convertPdf - running k2pdfopt on", this.sourceFilepath);
     const inFilepath = this.getTmpFilepath();
     const outFilepath = tmp.tmpNameSync({ postfix: ".pdf" });
     runK2PdfOpt(inFilepath, outFilepath);
     fs.renameSync(outFilepath, inFilepath);
+    Logger.debug(
+      `convertPdf - finished in ${prettyMilliseconds(Date.now() - start)}`,
+    );
     // indicates we've done some operation
     this.newFilepath = this.sourceFilepath;
   }
