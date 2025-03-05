@@ -29,3 +29,10 @@ epubdecrypt = "efm.DeDRM_plugin.ineptepub:cli_main"
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.9.9"
+debugpy = "^1.8.13"
+
+[tool.ruff]
+exclude = ["DeDRM_plugin"]
