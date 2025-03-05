@@ -1,5 +1,5 @@
 [project]
-name = "dedrm"
+name = "efm"
 version = "0.1.0"
 description = ""
 authors = [
@@ -13,17 +13,17 @@ dependencies = [
 ]
 
 [project.scripts]
-dedrm = "dedrm.__main__:main"
+efm = "efm.__main__:main"
 # NOTE: can only be used directly in wine, windows, or macos
 # finds and saves default adobe encryption keys. save to given output directory (optional)
 # [<outputdir>]
-getadobekey = "dedrm.DeDRM_plugin.adobekey:cli_main"
+getadobekey = "efm.DeDRM_plugin.adobekey:cli_main"
 # given this is an epub, test what type of drm this is (adobe, etc)
 # <key>
-epubtest = "dedrm.DeDRM_plugin.epubtest:main"
+epubtest = "efm.DeDRM_plugin.epubtest:main"
 # given this is an epub, and the key, decrypt it
 # <key> <infile> <outfile>
-epubdecrypt = "dedrm.DeDRM_plugin.ineptepub:cli_main"
+epubdecrypt = "efm.DeDRM_plugin.ineptepub:cli_main"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
