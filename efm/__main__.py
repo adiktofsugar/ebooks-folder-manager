@@ -1,19 +1,31 @@
 import argparse
+import glob
 import logging
 import os
 import textwrap
-import time
-from watchdog.events import FileSystemEventHandler
-from watchdog.observers import Observer
 from efm.book import Book
+from efm.config import get_closest_config
 
 
 def main():
     argparser = argparse.ArgumentParser(
         add_help=True,
         usage="""
-      Run efm on folder. This will walk that folder recursively and perform all actions you specify.
-      If no actions are specified, will use any efm.(yaml|yml|json|jsonc) files in the folder.
+      Run efm on file / folder / glob. 
+      If a file, it will perform all actions you specify.
+      If a folder, it will walk that folder recursively run on all files that do not end in ".bak".
+      If a glob, it will run on all files that match the glob. Folders that match the glob will be ignored.
+
+      Actions are (specified below) are resolved in the following order:
+      - set on command line
+      - set in config file
+      - default to "print"
+
+      Config files are resolved relative to each file, and must be in a file named "efm.toml", "efm.yaml", "efm.yml", or "efm.json".
+      Config files can have the following keys:
+      - actions: a list of actions to perform
+      - adobe_key_file: path to Adobe key file
+
     """,
         epilog=textwrap.dedent("""
       <action>  is one of:
@@ -21,13 +33,14 @@ def main():
         - rename        rename files based on metadata
         - print         print metadata to console
         - pdf           reformat a PDF via k2pdfopt (backs up original as .bak)
-        - none          do nothing (useful for testing to see if we don't throw any errors)
+        - none          get the metadata, but print nothing (useful for testing to see if we don't throw any errors)
     """),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    argparser.add_argument("folder", help="folder to process")
+    argparser.add_argument("spec", nargs="+", help="file, folder, or glob to process")
     argparser.add_argument(
-        "action",
+        "-a",
+        "--action",
         metavar="action",
         nargs="*",
         choices=["drm", "rename", "print", "pdf", "none"],
@@ -61,42 +74,55 @@ def main():
 
     logging.basicConfig(level=loglevel)
 
-    for root, dirs, files in os.walk(args.folder):
+    files = args.spec
+    all_files: list[str] = []
+
+    for file in files:
+        logging.debug(f"Processing {file}")
+        if os.path.isdir(file):
+            logging.debug(f"{file} is directory")
+            all_files.extend(get_files_from_dirpath(file))
+        elif os.path.isfile(file):
+            logging.debug(f"{file} is file")
+            all_files.append(file)
+        else:
+            expanded = glob.glob(file)
+            logging.debug(f"{file} is glob, expanded to {expanded}")
+            all_files.extend(expanded)
+
+    for file in all_files:
+        if file.endswith(".bak"):
+            logging.debug(f"Skipping {file} because it's a backup file.")
+            continue
+        logging.debug(f"Processing {file} - getting config")
+        config = get_closest_config(os.path.dirname(file))
+        actions = (
+            args.action
+            if args.action is not None
+            else config.actions
+            if config is not None
+            else ["print"]
+        )
+        adobekey = (
+            args.adobekey
+            if args.adobekey is not None
+            else config.adobe_key_file
+            if config is not None
+            else None
+        )
+        logging.debug(
+            f"Processing {file} - actions: {actions}, adobe_key_file: {adobekey}"
+        )
+        book = Book(file, adobe_key_file=adobekey)
+        process_book(book, actions)
+
+
+def get_files_from_dirpath(dirpath: str) -> list[str]:
+    all_files: list[str] = []
+    for root, dirs, files in os.walk(dirpath):
         for file in files:
-            if file.endswith(".bak"):
-                continue
-            process_book(
-                Book(
-                    os.path.join(root, file), adobe_key_file=args.adobekey, dry=args.dry
-                ),
-                args.action,
-            )
-
-    if args.watch:
-        event_handler = OnBookChangeAdd(adobe_key_file=args.adobekey, dry=args.dry)
-        observer = Observer()
-        observer.schedule(event_handler, path=args.folder, recursive=True)
-        observer.start()
-        try:
-            while True:
-                time.sleep(1)
-        finally:
-            observer.stop()
-            observer.join()
-
-
-class OnBookChangeAdd(FileSystemEventHandler):
-    def __init__(self, adobe_key_file=str | None, dry=bool | None):
-        self.adobe_key_file = adobe_key_file
-        self.dry = dry
-
-    def on_created(self, event):
-        if event.is_file:
-            book = Book(event.src_path)
-            process_book(book, args.action)
-
-    def on_modified(self, event):
-        return super().on_modified(event)
+            all_files.append(os.path.join(root, file))
+    return all_files
 
 
 def process_book(book: Book, actions: list[str]):

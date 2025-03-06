@@ -222,7 +222,7 @@ class Book(object):
                     self.get_tmp_file(),
                 ],
                 # need to ignore stdin so it doesn't go into interactive mode
-                stdin=None,
+                stdin=subprocess.DEVNULL,
             )
             f = pymupdf.open(tmp.file.name)
             f.embfile_add("__ebooks-folder-manager.json", b'{"k2pdfopt_version": true}')
