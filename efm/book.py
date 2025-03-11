@@ -6,9 +6,9 @@ import tempfile
 from typing import Union
 import pymupdf
 
-from efm.DeDRM_plugin import DeDRM
 from efm.DeDRM_plugin.epubtest import encryption
 from efm.DeDRM_plugin.ineptepub import decryptBook
+from efm.config import Config, get_closest_config
 from efm.env import ensure_k2pdfopt
 
 
@@ -42,15 +42,15 @@ class BookMetadata(object):
 
 class Book(object):
     file: str
-    adobe_key_file: str | None
     dry: bool
+    config: Config | None
     metadata: Union[BookMetadata, None, False]
     new_file: str | None
     tmp_file: str | None
 
-    def __init__(self, file: str, adobe_key_file: str = None, dry: bool = False):
+    def __init__(self, file: str, dry: bool = False):
+        self.config = get_closest_config(os.path.dirname(file))
         self.file = file
-        self.adobe_key_file = adobe_key_file
         self.dry = dry
         self.metadata = None
         self.new_file = None
@@ -151,7 +151,10 @@ class Book(object):
                 logging.debug(f"Skipping {self.file} because it's already unencrypted.")
                 return
             if encryption_type == "Adobe":
-                if self.adobe_key_file is None:
+                adobe_key_file = (
+                    self.config.adobe_key_file if self.config is not None else None
+                )
+                if adobe_key_file is None:
                     logging.error(
                         f"Cannot remove DRM from {self.file} because no Adobe key file was provided."
                     )
@@ -227,6 +230,21 @@ class Book(object):
             f = pymupdf.open(tmp.file.name)
             f.embfile_add("__ebooks-folder-manager.json", b'{"k2pdfopt_version": true}')
             f.save(self.get_tmp_file())
+
+    def process(self, actions: list[str]):
+        logging.debug(f"Processing {self.file} - actions: {actions}")
+        # Note: this order has significance
+        if "drm" in actions:
+            self.remove_drm()
+        if "rename" in actions:
+            self.rename()
+        if "print" in actions:
+            self.print_metadata()
+        if "pdf" in actions:
+            self.reformat_pdf()
+        if "none" in actions:
+            self.get_metadata()
+        self.save()
 
     def save(self):
         if self.new_file is not None:

@@ -53,7 +53,6 @@ def main():
     argparser.add_argument(
         "--loglevel", choices=["debug", "info", "error"], help="log level"
     )
-    argparser.add_argument("--adobekey", help="path to Adobe key file")
     args = argparser.parse_args()
     loglevel = logging.ERROR
     if args.loglevel:
@@ -103,18 +102,7 @@ def main():
             if config is not None
             else ["print"]
         )
-        adobekey = (
-            args.adobekey
-            if args.adobekey is not None
-            else config.adobe_key_file
-            if config is not None
-            else None
-        )
-        logging.debug(
-            f"Processing {file} - actions: {actions}, adobe_key_file: {adobekey}"
-        )
-        book = Book(file, adobe_key_file=adobekey)
-        process_book(book, actions)
+        Book(file).process(actions)
 
 
 def get_files_from_dirpath(dirpath: str) -> list[str]:
@@ -123,21 +111,6 @@ def get_files_from_dirpath(dirpath: str) -> list[str]:
         for file in files:
             all_files.append(os.path.join(root, file))
     return all_files
-
-
-def process_book(book: Book, actions: list[str]):
-    # Note: this order has significance
-    if "drm" in actions:
-        book.remove_drm()
-    if "rename" in actions:
-        book.rename()
-    if "print" in actions:
-        book.print_metadata()
-    if "pdf" in actions:
-        book.reformat_pdf()
-    if "none" in actions:
-        book.get_metadata()
-    book.save()
 
 
 if __name__ == "__main__":
