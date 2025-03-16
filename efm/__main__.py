@@ -4,6 +4,7 @@ import logging
 import os
 import textwrap
 from efm.book import Book
+from efm.book_exceptions import BookError
 from efm.config import get_closest_config
 
 
@@ -102,7 +103,11 @@ def main():
             if config is not None
             else ["print"]
         )
-        Book(file).process(actions)
+        try:
+            Book(file, dry=args.dry).process(actions)
+        except BookError as e:
+            # Log the error but continue processing other files
+            logging.error(str(e))
 
 
 def get_files_from_dirpath(dirpath: str) -> list[str]:

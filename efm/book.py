@@ -10,6 +10,13 @@ from efm.DeDRM_plugin.epubtest import encryption
 from efm.DeDRM_plugin.ineptepub import decryptBook
 from efm.config import Config, get_closest_config
 from efm.env import ensure_k2pdfopt
+from efm.book_exceptions import (
+    GetMetadataError,
+    UnsupportedFormatError,
+    DetectEncryptionError,
+    MissingDrmKeyFileError,
+    UnsupportedEncryptionError,
+)
 
 
 class BookMetadata(object):
@@ -86,8 +93,7 @@ class Book(object):
                         ),
                     )
             except pymupdf.FileDataError as e:
-                logging.error(f"Error reading metadata from {self.file}: {e}")
-                self.metadata = False
+                raise GetMetadataError(self, original_error=e)
         return self.metadata
 
     def get_tmp_file(self):
@@ -146,34 +152,52 @@ class Book(object):
         # if decrypted_file is not None:
         #     self.tmp_file = decrypted_file
         if self.file.lower().endswith(".epub"):
+            logging.debug(f"Removing DRM from epub file {self.file}...")
             encryption_type = encryption(self.file)
+            logging.debug(f"Encryption type: {encryption_type}")
+            if encryption_type == "Error":
+                raise DetectEncryptionError(self)
             if encryption_type == "Unencrypted":
                 logging.debug(f"Skipping {self.file} because it's already unencrypted.")
                 return
+
             if encryption_type == "Adobe":
                 adobe_key_file = (
                     self.config.adobe_key_file if self.config is not None else None
                 )
                 if adobe_key_file is None:
-                    logging.error(
-                        f"Cannot remove DRM from {self.file} because no Adobe key file was provided."
-                    )
-                    return
+                    raise MissingDrmKeyFileError(self, key_type="Adobe")
+                logging.debug(f"Removing Adobe DRM from {self.file}...")
                 filename, ext = os.path.splitext(self.file)
+                logging.debug(f"filename: {filename}, ext: {ext}")
                 with tempfile.NamedTemporaryFile(
                     prefix=filename, suffix=ext, delete=False
                 ) as tmp:
-                    decryptBook(self.adobe_key_file, self.get_tmp_file(), tmp.file.name)
+                    logging.debug(f"Decrypted file will be saved to {tmp.name}")
+                    decryptBook(adobe_key_file, self.get_tmp_file(), tmp.file.name)
+                    logging.info(
+                        f"Decrypted {self.file} with Adobe key file {adobe_key_file}"
+                    )
                     shutil.move(tmp.file.name, self.get_tmp_file())
-        logging.error(
-            f"Cannot remove DRM from {self.file} because that file type is unsupported."
-        )
+                logging.debug(f"Removed Adobe DRM from {self.file}.")
+                return
+
+            if (
+                encryption_type == "Readium LCP"
+                or encryption_type == "Apple"
+                or encryption_type == "Kobo"
+                or encryption_type == "B&N"
+            ):
+                raise UnsupportedEncryptionError(self, encryption_type=encryption_type)
+
+        raise UnsupportedFormatError(self, format_type=os.path.splitext(self.file)[1])
 
     def rename(self):
         metadata = self.get_metadata()
         if metadata is False:
-            logging.error(f"Cannot rename {self.file} because it has no metadata.")
-            return
+            raise GetMetadataError(
+                self, message=f"Cannot rename {self.file} because it has no metadata."
+            )
         ext = os.path.splitext(self.file)[1]  # includes .
         new_name = f"{metadata.author} - {metadata.title}{ext}"
         new_path = os.path.join(os.path.dirname(self.file), new_name)
@@ -185,8 +209,9 @@ class Book(object):
     def reformat_pdf(self):
         metadata = self.get_metadata()
         if metadata is False:
-            logging.error(f"Cannot reformat {self.file} because it has no metadata.")
-            return
+            raise GetMetadataError(
+                self, message=f"Cannot reformat {self.file} because it has no metadata."
+            )
         if metadata.is_k2pdfopt_version:
             logging.debug(f"Skipping {self.file} because it's already reformatted.")
             return
