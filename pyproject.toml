@@ -36,6 +36,14 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.9.9"
 debugpy = "^1.8.13"
+pytest = "^8.0.0"
 
 [tool.ruff]
 exclude = ["DeDRM_plugin"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = "-v"

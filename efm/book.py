@@ -10,12 +10,12 @@ from efm.DeDRM_plugin.epubtest import encryption
 from efm.DeDRM_plugin.ineptepub import decryptBook
 from efm.config import Config, get_closest_config
 from efm.env import ensure_k2pdfopt
-from efm.book_exceptions import (
-    GetMetadataError,
-    UnsupportedFormatError,
+from efm.exceptions import (
     DetectEncryptionError,
+    GetMetadataError,
     MissingDrmKeyFileError,
     UnsupportedEncryptionError,
+    UnsupportedFormatError,
 )
 
 
@@ -258,17 +258,22 @@ class Book(object):
 
     def process(self, actions: list[str]):
         logging.debug(f"Processing {self.file} - actions: {actions}")
-        # Note: this order has significance
-        if "drm" in actions:
-            self.remove_drm()
-        if "rename" in actions:
-            self.rename()
-        if "print" in actions:
-            self.print_metadata()
-        if "pdf" in actions:
-            self.reformat_pdf()
-        if "none" in actions:
-            self.get_metadata()
+        try:
+            # Note: this order has significance
+            if "drm" in actions:
+                self.remove_drm()
+            if "rename" in actions:
+                self.rename()
+            if "print" in actions:
+                self.print_metadata()
+            if "pdf" in actions:
+                self.reformat_pdf()
+            if "none" in actions:
+                self.get_metadata()
+        except Exception:
+            if self.tmp_file is not None:
+                shutil.rmtree(self.tmp_file, ignore_errors=True)
+            raise
         self.save()
 
     def save(self):

@@ -2,9 +2,10 @@ import argparse
 import glob
 import logging
 import os
+import sys
 import textwrap
 from efm.book import Book
-from efm.book_exceptions import BookError
+from efm.exceptions import BookError, DeDrmError
 from efm.config import get_closest_config
 
 
@@ -90,9 +91,18 @@ def main():
             logging.debug(f"{file} is glob, expanded to {expanded}")
             all_files.extend(expanded)
 
+    has_error = False
     for file in all_files:
         if file.endswith(".bak"):
-            logging.debug(f"Skipping {file} because it's a backup file.")
+            logging.info(f"Skipping {file} because it's a backup file.")
+            continue
+        if (
+            os.path.basename(file) == "efm.toml"
+            or os.path.basename(file) == "efm.yaml"
+            or os.path.basename(file) == "efm.yml"
+            or os.path.basename(file) == "efm.json"
+        ):
+            logging.info(f"Skipping {file} because it's a config file.")
             continue
         logging.debug(f"Processing {file} - getting config")
         config = get_closest_config(os.path.dirname(file))
@@ -105,9 +115,17 @@ def main():
         )
         try:
             Book(file, dry=args.dry).process(actions)
-        except BookError as e:
-            # Log the error but continue processing other files
-            logging.error(str(e))
+        except Exception as e:
+            if isinstance(e, BookError) or isinstance(e, DeDrmError):
+                logging.error(str(e))
+                has_error = True
+            else:
+                raise
+
+    if has_error:
+        logging.error("Errors occurred during processing. Exiting with status 1.")
+        return 1
+    return 0
 
 
 def get_files_from_dirpath(dirpath: str) -> list[str]:
@@ -119,4 +137,4 @@ def get_files_from_dirpath(dirpath: str) -> list[str]:
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

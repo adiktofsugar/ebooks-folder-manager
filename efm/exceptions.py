@@ -1,0 +1,71 @@
+class BookError(Exception):
+    """Base exception class for all Book-related errors."""
+
+    def __init__(self, file_path: str, message=None):
+        super().__init__(
+            f"Error with book: {file_path}{f' - {message}' if message else ''}"
+        )
+
+
+class GetMetadataError(BookError):
+    """Error related to book metadata operations."""
+
+    def __init__(self, file_path: str, message=None, original_error=None):
+        super().__init__(
+            file_path,
+            f"Error reading metadata from {file_path}{f' - {message}' if message else ''}{f' - {original_error}' if original_error else ''}",
+        )
+
+
+class DeDrmError(Exception):
+    """Base exception for DeDRM-related errors."""
+
+    pass
+
+
+class UnsupportedFormatError(DeDrmError):
+    """Error related to unsupported file formats."""
+
+    def __init__(self, file_path: str, format_type: str):
+        super().__init__(
+            f"Unsupported format {format_type or 'unknown'} for {file_path}",
+        )
+
+
+class RemoveDrmError(DeDrmError):
+    """Error related to DRM operations."""
+
+    def __init__(self, file_path: str, message=None):
+        super().__init__(
+            f"Error removing DRM from {file_path}{f' - {message}' if message else ''}",
+        )
+
+
+class DetectEncryptionError(RemoveDrmError):
+    """Error related to encryption/decryption operations."""
+
+    def __init__(self, file_path: str, message=None):
+        super().__init__(
+            file_path,
+            f"Error detecting DRM type from {file_path}{f' - {message}' if message else ''}",
+        )
+
+
+class MissingDrmKeyFileError(RemoveDrmError):
+    """Error when a required key file is missing."""
+
+    def __init__(self, file_path: str, encryption_type: str, message=None):
+        super().__init__(
+            file_path,
+            f"Error decrypting {file_path} with {encryption_type} encryption because required key is missing. Add to your config file.{f' - {message}' if message else ''}",
+        )
+
+
+class UnsupportedEncryptionError(RemoveDrmError):
+    """Error when the encryption type is not supported."""
+
+    def __init__(self, file_path: str, encryption_type: str, message=None):
+        super().__init__(
+            file_path,
+            f"Error decrypting {file_path} because {encryption_type} encryption is not supported.{f' - {message}' if message else ''}",
+        )
