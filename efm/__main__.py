@@ -5,7 +5,6 @@ import os
 import sys
 import textwrap
 from efm.exceptions import BookError, DeDrmError
-from efm.config import get_closest_config
 from efm.transaction import Transaction
 
 logger = logging.getLogger(__name__)
@@ -107,10 +106,9 @@ def main():
             logger.info(f"Skipping {original_filepath} because it's a config file.")
             continue
 
-        logger.debug(f"Processing {original_filepath} - getting config")
-        config = get_closest_config(os.path.dirname(original_filepath))
+        logger.debug(f"Processing {original_filepath}")
         try:
-            Transaction(original_filepath, args.action, config, args.dry).perform()
+            Transaction(original_filepath, args.action, args.dry).perform()
         except Exception as e:
             if isinstance(e, BookError) or isinstance(e, DeDrmError):
                 logger.error(str(e))

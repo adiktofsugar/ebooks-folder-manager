@@ -7,8 +7,9 @@ import subprocess
 import pymupdf
 from efm.DeDRM_plugin.epubtest import encryption as detect_epub_encryption
 from efm.DeDRM_plugin.ineptepub import decryptBook as decrypt_inept_epub
+from efm.config import Config
 from efm.env import ensure_k2pdfopt
-from efm.book import Book
+from efm.metadata import Metadata
 from efm.exceptions import (
     DetectEncryptionError,
     GetMetadataError,
@@ -21,19 +22,60 @@ logger = logging.getLogger(__name__)
 
 
 class BaseAction(object):
-    def __init__(self, filepath: str, temp_dirpath: str, dry: bool):
+    def __init__(
+        self,
+        config: Config | None,
+        metadata: Metadata | None,
+        filepath: str,
+        temp_dirpath: str,
+        dry: bool,
+    ):
         self.dry = dry
-        self.book = Book(filepath)
+        self.config = config
+        self.metadata = metadata
         self.filepath = filepath
         self.temp_dirpath = temp_dirpath
 
     def perform(self) -> str:
         raise NotImplementedError
 
+    def get_metadata(self) -> Metadata:
+        if self.metadata is None:
+            try:
+                f = pymupdf.open(self.filepath)
+                if f.metadata is None:
+                    self.metadata = False
+                else:
+                    # https://pymupdf.readthedocs.io/en/latest/document.html#Document.metadata
+                    # Contains the document’s meta data as a Python dictionary or None (if is_encrypted=True and needPass=True).
+                    # Keys are format, encryption, title, author, subject, keywords, creator, producer, creationDate, modDate, trapped. All item values are strings or None.
+                    format = f.metadata.get("format")
+                    self.metadata = Metadata(
+                        format=format,
+                        encryption=f.metadata.get("encryption"),
+                        title=f.metadata.get("title"),
+                        author=f.metadata.get("author"),
+                        subject=f.metadata.get("subject"),
+                        keywords=f.metadata.get("keywords").split(",")
+                        if f.metadata.get("keywords")
+                        else [],
+                        creator=f.metadata.get("creator"),
+                        producer=f.metadata.get("producer"),
+                        creation_date=f.metadata.get("creationDate"),
+                        mod_date=f.metadata.get("modDate"),
+                        is_k2pdfopt_version=(
+                            format.lower().startswith("pdf")
+                            and "__ebooks-folder-manager.json" in f.embfile_names()
+                        ),
+                    )
+            except pymupdf.FileDataError as e:
+                raise GetMetadataError(self, original_error=e)
+        return self.metadata
+
 
 class RenameAction(BaseAction):
     def perform(self):
-        metadata = self.book.get_metadata()
+        metadata = self.get_metadata()
         if metadata is False:
             raise GetMetadataError(
                 self.filepath,
@@ -41,6 +83,11 @@ class RenameAction(BaseAction):
             )
         ext = os.path.splitext(self.filepath)[1]  # includes .
         new_name = f"{metadata.author or 'unknown'} - {metadata.title}{ext}"
+        if new_name == os.path.basename(self.filepath):
+            logger.debug(
+                f"Skipping {self.filepath} because it's already named correctly."
+            )
+            return self.filepath
         temp_filepath = os.path.join(self.temp_dirpath, new_name)
         shutil.copy(self.filepath, temp_filepath)
         return temp_filepath
@@ -68,9 +115,7 @@ class DeDrmAction(BaseAction):
 
         if encryption_type == "Adobe":
             adobe_key_filepath = (
-                self.book.config.adobe_key_file
-                if self.book.config is not None
-                else None
+                self.config.adobe_key_file if self.config is not None else None
             )
             if adobe_key_filepath is None:
                 raise MissingDrmKeyFileError(self.filepath, encryption_type="Adobe")
@@ -107,7 +152,7 @@ class DeDrmAction(BaseAction):
 
 class ReformatPdfAction(BaseAction):
     def perform(self):
-        metadata = self.book.get_metadata()
+        metadata = self.get_metadata()
         if metadata is False:
             raise GetMetadataError(
                 self.filepath,
@@ -159,12 +204,14 @@ class ReformatPdfAction(BaseAction):
             self.temp_dirpath, "post_reformat_pdf_metadata.pdf"
         )
         f.save(temp_filepath_metadata)
+
+        self.get_metadata().is_k2pdfopt_version = True
         return temp_filepath_metadata
 
 
 class PrintAction(BaseAction):
     def perform(self):
-        metadata = self.book.get_metadata()
+        metadata = self.get_metadata()
         if metadata is False:
             print(
                 f"File {self.filepath} has no metadata for one reason or another. It could be encrypted."

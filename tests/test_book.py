@@ -4,7 +4,7 @@ import pytest
 import tempfile
 import shutil
 
-from efm.book import Book, BookMetadata
+from efm.metadata import Book, Metadata
 from efm.exceptions import (
     DetectEncryptionError,
     UnsupportedEncryptionError,
@@ -51,7 +51,7 @@ def test_get_metadata_epub(sample_paths):
     metadata = book.get_metadata()
 
     # Verify metadata is retrieved and has the expected structure
-    assert isinstance(metadata, BookMetadata)
+    assert isinstance(metadata, Metadata)
     assert metadata.format is not None
     assert metadata.title is not None
 
@@ -65,7 +65,7 @@ def test_get_metadata_pdf(sample_paths):
     metadata = book.get_metadata()
 
     # Verify metadata is retrieved and has the expected structure
-    assert isinstance(metadata, BookMetadata)
+    assert isinstance(metadata, Metadata)
     assert metadata.format is not None
 
     # Format should be PDF for this file
