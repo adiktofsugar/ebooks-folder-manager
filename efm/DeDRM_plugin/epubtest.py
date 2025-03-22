@@ -179,42 +179,39 @@ def encryption(infile):
     encryption = "Error"
     try:
         with open(infile,'rb') as infileobject:
-            bookdata = infileobject.read(58)
-            # Check for Zip
-            if bookdata[0:0+2] == b"PK":
-                inzip = zipfile.ZipFile(infile,'r')
-                namelist = set(inzip.namelist())
-                if (
-                    'META-INF/encryption.xml' in namelist and
-                    'META-INF/license.lcpl' in namelist and
-                    b"EncryptedContentKey" in inzip.read("META-INF/encryption.xml")):
-                    encryption = "Readium LCP"
+            inzip = zipfile.ZipFile(infile,'r')
+            namelist = set(inzip.namelist())
+            if (
+                'META-INF/encryption.xml' in namelist and
+                'META-INF/license.lcpl' in namelist and
+                b"EncryptedContentKey" in inzip.read("META-INF/encryption.xml")):
+                encryption = "Readium LCP"
 
-                elif 'META-INF/sinf.xml' in namelist and b"fairplay" in inzip.read("META-INF/sinf.xml"):
-                    # Untested, just found this info on Google
-                    encryption = "Apple"
+            elif 'META-INF/sinf.xml' in namelist and b"fairplay" in inzip.read("META-INF/sinf.xml"):
+                # Untested, just found this info on Google
+                encryption = "Apple"
 
-                elif 'META-INF/rights.xml' in namelist and b"<kdrm>" in inzip.read("META-INF/rights.xml"):
-                    # Untested, just found this info on Google
-                    encryption = "Kobo"
-                
-                elif 'META-INF/rights.xml' not in namelist or 'META-INF/encryption.xml' not in namelist:
-                    encryption = "Unencrypted"
-                else:
-                    try: 
-                        rights = etree.fromstring(inzip.read('META-INF/rights.xml'))
-                        adept = lambda tag: '{%s}%s' % (NSMAP['adept'], tag)
-                        expr = './/%s' % (adept('encryptedKey'),)
-                        bookkey = ''.join(rights.findtext(expr))
-                        if len(bookkey) >= 172:
-                            encryption = "Adobe"
-                        elif len(bookkey) == 64:
-                            encryption = "B&N"
-                        else:
-                            encryption = "Unknown (key len " + str(len(bookkey)) + ")"
-                    except: 
-                        encryption = "Unknown"
-    except:
+            elif 'META-INF/rights.xml' in namelist and b"<kdrm>" in inzip.read("META-INF/rights.xml"):
+                # Untested, just found this info on Google
+                encryption = "Kobo"
+            
+            elif 'META-INF/rights.xml' not in namelist or 'META-INF/encryption.xml' not in namelist:
+                encryption = "Unencrypted"
+            else:
+                try: 
+                    rights = etree.fromstring(inzip.read('META-INF/rights.xml'))
+                    adept = lambda tag: '{%s}%s' % (NSMAP['adept'], tag)
+                    expr = './/%s' % (adept('encryptedKey'),)
+                    bookkey = ''.join(rights.findtext(expr))
+                    if len(bookkey) >= 172:
+                        encryption = "Adobe"
+                    elif len(bookkey) == 64:
+                        encryption = "B&N"
+                    else:
+                        encryption = "Unknown (key len " + str(len(bookkey)) + ")"
+                except: 
+                    encryption = "Unknown"
+    except Exception as e:
         traceback.print_exc()
     return encryption
 
