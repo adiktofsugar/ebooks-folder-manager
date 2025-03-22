@@ -2,8 +2,17 @@ import argparse
 import glob
 import logging
 import os
+import shutil
 import sys
+import tempfile
 import textwrap
+from efm.action import (
+    BaseAction,
+    DeDrmAction,
+    PrintAction,
+    ReformatPdfAction,
+    RenameAction,
+)
 from efm.book import Book
 from efm.exceptions import BookError, DeDrmError
 from efm.config import get_closest_config
@@ -31,10 +40,10 @@ def main():
     """,
         epilog=textwrap.dedent("""
       <action>  is one of:
-        - drm           remove DRM from files (backs up original as .bak)
+        - drm           remove DRM from files
         - rename        rename files based on metadata
         - print         print metadata to console
-        - pdf           reformat a PDF via k2pdfopt (backs up original as .bak)
+        - pdf           reformat a PDF via k2pdfopt
         - none          get the metadata, but print nothing (useful for testing to see if we don't throw any errors)
     """),
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -78,43 +87,74 @@ def main():
     files = args.spec
     all_files: list[str] = []
 
-    for file in files:
-        logging.debug(f"Processing {file}")
-        if os.path.isdir(file):
-            logging.debug(f"{file} is directory")
-            all_files.extend(get_files_from_dirpath(file))
-        elif os.path.isfile(file):
-            logging.debug(f"{file} is file")
-            all_files.append(file)
+    for original_filepath in files:
+        logging.debug(f"Processing {original_filepath}")
+        if os.path.isdir(original_filepath):
+            logging.debug(f"{original_filepath} is directory")
+            all_files.extend(get_files_from_dirpath(original_filepath))
+        elif os.path.isfile(original_filepath):
+            logging.debug(f"{original_filepath} is file")
+            all_files.append(original_filepath)
         else:
-            expanded = glob.glob(file)
-            logging.debug(f"{file} is glob, expanded to {expanded}")
+            expanded = glob.glob(original_filepath)
+            logging.debug(f"{original_filepath} is glob, expanded to {expanded}")
             all_files.extend(expanded)
 
     has_error = False
-    for file in all_files:
-        if file.endswith(".bak"):
-            logging.info(f"Skipping {file} because it's a backup file.")
+    for original_filepath in all_files:
+        if original_filepath.endswith(".bak"):
+            logging.info(f"Skipping {original_filepath} because it's a backup file.")
             continue
         if (
-            os.path.basename(file) == "efm.toml"
-            or os.path.basename(file) == "efm.yaml"
-            or os.path.basename(file) == "efm.yml"
-            or os.path.basename(file) == "efm.json"
+            os.path.basename(original_filepath) == "efm.toml"
+            or os.path.basename(original_filepath) == "efm.yaml"
+            or os.path.basename(original_filepath) == "efm.yml"
+            or os.path.basename(original_filepath) == "efm.json"
         ):
-            logging.info(f"Skipping {file} because it's a config file.")
+            logging.info(f"Skipping {original_filepath} because it's a config file.")
             continue
-        logging.debug(f"Processing {file} - getting config")
-        config = get_closest_config(os.path.dirname(file))
-        actions = (
-            args.action
-            if args.action is not None
-            else config.actions
-            if config is not None
-            else ["print"]
-        )
+
+        logging.debug(f"Processing {original_filepath} - getting config")
+        config = get_closest_config(os.path.dirname(original_filepath))
         try:
-            Book(file, dry=args.dry).process(actions)
+            temp_dirpath = tempfile.mkdtemp(prefix=original_filepath)
+            action_ids = (
+                args.action
+                if args.action is not None
+                else config.actions
+                if config.actions is not None
+                else ["print"]
+            )
+            filename, ext = os.path.splitext(original_filepath)
+            current_filepath = original_filepath
+            # order matters. drm has to come first for any metadata to work
+            for action_id in ["drm", "pdf", "rename", "print"]:
+                if action_id in action_ids:
+                    action = get_action_from_str(
+                        action_id, current_filepath, temp_dirpath, args.dry
+                    )
+                    after_filepath = action.perform()
+                    if after_filepath != current_filepath:
+                        old_filepath = os.path.join(
+                            temp_dirpath, f"before_{action_id}{ext}"
+                        )
+                        if current_filepath == original_filepath:
+                            # don't delete the original file
+                            shutil.copy(current_filepath, old_filepath)
+                        else:
+                            shutil.move(current_filepath, old_filepath)
+
+                        current_filepath = os.path.join(
+                            temp_dirpath, f"{filename}{ext}"
+                        )
+                        shutil.move(after_filepath, current_filepath)
+
+            if current_filepath != original_filepath:
+                logging.info(
+                    f"{original_filepath} changed. Backup files are in {temp_dirpath}"
+                )
+                shutil.copy(current_filepath, original_filepath)
+
         except Exception as e:
             if isinstance(e, BookError) or isinstance(e, DeDrmError):
                 logging.error(str(e))
@@ -134,6 +174,22 @@ def get_files_from_dirpath(dirpath: str) -> list[str]:
         for file in files:
             all_files.append(os.path.join(root, file))
     return all_files
+
+
+def get_action_from_str(
+    action: str, filepath: str, temp_dirpath: str, dry: bool
+) -> BaseAction:
+    match action:
+        case "drm":
+            return DeDrmAction(filepath, temp_dirpath, dry)
+        case "rename":
+            return RenameAction(filepath, temp_dirpath, dry)
+        case "print":
+            return PrintAction(filepath, temp_dirpath, dry)
+        case "pdf":
+            return ReformatPdfAction(filepath, temp_dirpath, dry)
+        case _:
+            raise ValueError(f"Unknown action {action}")
 
 
 if __name__ == "__main__":

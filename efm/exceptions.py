@@ -47,7 +47,7 @@ class DetectEncryptionError(RemoveDrmError):
     def __init__(self, file_path: str, message=None):
         super().__init__(
             file_path,
-            f"Error detecting DRM type from {file_path}{f' - {message}' if message else ''}",
+            f"Couldn't detect DRM type{f' - {message}' if message else ''}",
         )
 
 
@@ -57,7 +57,7 @@ class MissingDrmKeyFileError(RemoveDrmError):
     def __init__(self, file_path: str, encryption_type: str, message=None):
         super().__init__(
             file_path,
-            f"Error decrypting {file_path} with {encryption_type} encryption because required key is missing. Add to your config file.{f' - {message}' if message else ''}",
+            f"Missing required key for {encryption_type}, add to your config file{f' - {message}' if message else ''}",
         )
 
 
@@ -67,5 +67,5 @@ class UnsupportedEncryptionError(RemoveDrmError):
     def __init__(self, file_path: str, encryption_type: str, message=None):
         super().__init__(
             file_path,
-            f"Error decrypting {file_path} because {encryption_type} encryption is not supported.{f' - {message}' if message else ''}",
+            f"{encryption_type} encryption is not supported{f' - {message}' if message else ''}",
         )

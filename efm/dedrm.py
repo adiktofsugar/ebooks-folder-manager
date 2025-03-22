@@ -1,6 +1,6 @@
-import logging
 import os
-from efm.book_exceptions import UnsupportedFormatError
+
+from efm.exceptions import UnsupportedFormatError
 
 """
 I have one of 2 choices here, I think:
@@ -41,7 +41,7 @@ def decrypt(path_to_ebook: str) -> str:
         # Adobe Adept, PassHash (B&N) or LCP ePub
         return decrypt_epub(path_to_ebook)
     raise UnsupportedFormatError(
-        None, format_type=booktype, message=f"Unknown book type: {booktype}"
+        path_to_ebook, format_type=booktype, message="Unknown book type"
     )
 
 
