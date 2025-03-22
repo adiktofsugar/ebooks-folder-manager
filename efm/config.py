@@ -1,17 +1,9 @@
 from pathlib import Path
 from typing import Literal
-from schema import Schema, SchemaError, Optional
+from schema import Schema, Optional
 
 valid_actions = ["drm", "rename", "print", "pdf", "none"]
 type Action = Literal["drm", "rename", "print", "pdf", "none"]
-
-
-# class ValidatableAction(list):
-#     def validate(self):
-#         if self not in valid_actions:
-#             raise SchemaError(
-#                 f"Invalid action: {self}. Must be one of {', '.join(valid_actions)}"
-#             )
 
 
 schema = Schema(

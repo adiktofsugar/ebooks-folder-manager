@@ -1,5 +1,6 @@
 import logging
 import os
+import pathlib
 import shutil
 import subprocess
 
@@ -15,6 +16,8 @@ from efm.exceptions import (
     UnsupportedEncryptionError,
     UnsupportedFormatError,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class BaseAction(object):
@@ -53,29 +56,40 @@ class DeDrmAction(BaseAction):
         )
 
     def _perform_epub(self):
-        logging.debug(f"Removing DRM from epub file {self.filepath}...")
+        logger.debug(f"Removing DRM from epub file {self.filepath}...")
         encryption_type = detect_epub_encryption(self.filepath)
-        logging.debug(f"Encryption type: {encryption_type}")
+        logger.debug(f"Encryption type: {encryption_type}")
         if encryption_type == "Error":
             raise DetectEncryptionError(self.filepath)
 
         if encryption_type == "Unencrypted":
-            logging.debug(f"Skipping {self.filepath} because it's already unencrypted.")
+            logger.debug(f"Skipping {self.filepath} because it's already unencrypted.")
             return self.filepath
 
         if encryption_type == "Adobe":
-            adobe_key_file = (
+            adobe_key_filepath = (
                 self.book.config.adobe_key_file
                 if self.book.config is not None
                 else None
             )
-            if adobe_key_file is None:
-                raise MissingDrmKeyFileError(self.filepath, key_type="Adobe")
+            if adobe_key_filepath is None:
+                raise MissingDrmKeyFileError(self.filepath, encryption_type="Adobe")
 
-            logging.debug(f"Removing Adobe DRM from {self.filepath}...")
+            adobe_key_file = pathlib.Path(adobe_key_filepath).expanduser()
+            if not adobe_key_file.exists():
+                raise MissingDrmKeyFileError(
+                    self.filepath,
+                    encryption_type="Adobe",
+                    message=f"Key file {adobe_key_file} not found",
+                )
+
+            logger.debug(f"Removing Adobe DRM from {self.filepath}...")
             output_filepath = os.path.join(self.temp_dirpath, "post_drdrm.epub")
-            decrypt_inept_epub(adobe_key_file, self.filepath, output_filepath)
-            logging.info(
+            decrypt_inept_epub(
+                adobe_key_file.read_bytes(), self.filepath, output_filepath
+            )
+
+            logger.info(
                 f"Decrypted {self.filepath} with Adobe key file {adobe_key_file} to {output_filepath}"
             )
             return output_filepath
@@ -101,17 +115,17 @@ class ReformatPdfAction(BaseAction):
             )
 
         if metadata.is_k2pdfopt_version:
-            logging.debug(f"Skipping {self.filepath} because it's already reformatted.")
+            logger.debug(f"Skipping {self.filepath} because it's already reformatted.")
             return self.filepath
 
         if not metadata.format.lower().startswith("pdf"):
-            logging.debug(
+            logger.debug(
                 f"Skipping {self.filepath} because it's not a PDF. Format is {metadata.format}."
             )
             return self.filepath
 
         ensure_k2pdfopt()
-        logging.info(f"Reformatting {self.filepath} with k2pdfopt...")
+        logger.info(f"Reformatting {self.filepath} with k2pdfopt...")
         temp_filepath_k2pdfopt = os.path.join(
             self.temp_dirpath, "post_reformat_pdf_k2pdfopt.pdf"
         )

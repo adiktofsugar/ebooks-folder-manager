@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Union
 import pymupdf
@@ -6,6 +7,8 @@ from efm.config import Config, get_closest_config
 from efm.exceptions import (
     GetMetadataError,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class BookMetadata(object):

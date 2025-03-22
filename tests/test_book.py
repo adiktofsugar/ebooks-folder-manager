@@ -188,7 +188,7 @@ def test_save_with_rename(sample_paths, temp_dir):
     new_file = os.path.join(temp_dir, "New Name.epub")
     book.new_file = new_file
 
-    with patch("logging.info") as mock_log:
+    with patch("logger.info") as mock_log:
         book.save()
 
         # Verify logging occurred with the expected message
@@ -210,7 +210,7 @@ def test_save_with_tmp_file(sample_paths, temp_dir):
     # Force creation of a tmp_file
     tmp_file = book.get_tmp_file()
 
-    with patch("logging.info") as mock_log:
+    with patch("logger.info") as mock_log:
         book.save()
 
         # Verify logging occurred with the expected message

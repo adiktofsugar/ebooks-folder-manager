@@ -9,6 +9,8 @@ local_dirpath="$1"
 remote_spec="$2"
 
 set -x
-rclone copy --progress "$remote_spec" "$local_dirpath" 
+
+# we want to make local the same as remote first, so we don't upload random local files
+rclone sync --progress "$remote_spec" "$local_dirpath" --exclude "efm.yaml"
 poetry run efm --loglevel=debug "$local_dirpath"
 rclone sync --progress "$local_dirpath" "$remote_spec" --exclude "efm.yaml"
