@@ -1,0 +1,3 @@
+[submodule "adl"]
+	path = adl
+	url = https://github.com/adrienmetais/adl.git
