@@ -4,6 +4,10 @@ import logging
 import os
 import sys
 import textwrap
+
+# the dedrm plugin has absolute imports that assume it's the root, so I'm adding it the path
+sys.path.append(os.path.join(os.path.dirname(__file__), "DeDRM_tools", "DeDRM_plugin"))
+
 from efm.exceptions import BookError, DeDrmError
 from efm.transaction import Transaction
 
