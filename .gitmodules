@@ -5,3 +5,4 @@
 [submodule "efm/DeDRM_tools"]
 	path = efm/DeDRM_tools
 	url = git@github.com:adiktofsugar/DeDRM_tools.git
+	branch = master
