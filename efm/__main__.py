@@ -36,17 +36,16 @@ def main():
         - rename        rename files based on metadata
         - print         print metadata to console
         - pdf           reformat a PDF via k2pdfopt
+        - download      download an ACSM file
         - none          get the metadata, but print nothing (useful for testing to see if we don't throw any errors)
     """),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    argparser.add_argument("spec", nargs="+", help="file, folder, or glob to process")
     argparser.add_argument(
         "-a",
         "--action",
-        metavar="action",
-        nargs="*",
-        choices=["drm", "rename", "print", "pdf", "none"],
+        action="append",
+        choices=["drm", "rename", "print", "pdf", "download", "none"],
         help="action to perform - see below for description",
     )
     argparser.add_argument("--dry", action="store_true", help="dry run")
@@ -56,6 +55,8 @@ def main():
     argparser.add_argument(
         "--loglevel", choices=["debug", "info", "error"], help="log level"
     )
+    argparser.add_argument("spec", nargs="+", help="file, folder, or glob to process")
+
     args = argparser.parse_args()
     loglevel = logging.ERROR
     if args.loglevel:
@@ -69,7 +70,7 @@ def main():
             case _:
                 raise ValueError(f"Unknown log level {args.loglevel}")
     else:
-        loglevel = logging.ERROR
+        loglevel = logging.INFO
 
     if args.dry and loglevel < logging.INFO:
         loglevel = logging.INFO

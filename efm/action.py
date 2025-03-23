@@ -7,10 +7,14 @@ import subprocess
 import pymupdf
 from efm.DeDRM_plugin.epubtest import encryption as detect_epub_encryption
 from efm.DeDRM_plugin.ineptepub import decryptBook as decrypt_inept_epub
+from efm.adl.adl.epub_get import get_ebook
+from efm.adl.adl.exceptions import GetEbookException
+from efm.adl.adl.login import login
 from efm.config import Config
 from efm.env import ensure_k2pdfopt
 from efm.metadata import Metadata
 from efm.exceptions import (
+    BookError,
     DetectEncryptionError,
     GetMetadataError,
     MissingDrmKeyFileError,
@@ -245,4 +249,30 @@ class PrintAction(BaseAction):
                     ],
                 )
             )
+        return self.filepath
+
+
+class DownloadAction(BaseAction):
+    def perform(self):
+        if self.filepath.lower().endswith(".acsm"):
+            if not self.config:
+                raise BookError(
+                    self.filepath,
+                    message="Can not download ACSM file - no config found",
+                )
+            user = self.config.adobe_user
+            password = self.config.adobe_password
+            if not user or not password:
+                raise BookError(
+                    self.filepath,
+                    message="Can not download ACSM file - no user or password found - add adobe_user and adobe_password to config file",
+                )
+            login(user, password)
+            try:
+                return get_ebook(self.filepath)
+            except Exception as e:
+                if isinstance(e, GetEbookException):
+                    raise BookError(self.filepath, message=str(e))
+                raise
+        logger.debug(f"Skipping {self.filepath} because it's not an ACSM file.")
         return self.filepath

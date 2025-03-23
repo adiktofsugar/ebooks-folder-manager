@@ -6,6 +6,7 @@ import tempfile
 from efm.action import (
     BaseAction,
     DeDrmAction,
+    DownloadAction,
     PrintAction,
     ReformatPdfAction,
     RenameAction,
@@ -39,10 +40,12 @@ class Transaction:
 
     def perform(self):
         try:
-            filename, ext = os.path.splitext(self.filename)
+            logger.info(
+                f"Processing {self.original_filepath} with actions {self.action_ids}"
+            )
             temp_dirpath = tempfile.mkdtemp(prefix=self.filename)
             # order matters. drm has to come first for any metadata to work
-            for action_id in ["drm", "pdf", "rename", "print"]:
+            for action_id in ["download", "drm", "pdf", "rename", "print"]:
                 if action_id in self.action_ids:
                     action = get_action_from_str(
                         action_id,
@@ -62,8 +65,10 @@ class Transaction:
                     # save metadata for next action
                     self.metadata = action.metadata
                     if after_filepath != self.current_filepath:
+                        old_ext = os.path.splitext(self.current_filepath)[1]
+                        after_ext = os.path.splitext(after_filepath)[1]
                         old_filepath = os.path.join(
-                            temp_dirpath, f"before_{action_id}{ext}"
+                            temp_dirpath, f"before_{action_id}{old_ext}"
                         )
                         if self.current_filepath == self.original_filepath:
                             logger.debug(
@@ -80,6 +85,11 @@ class Transaction:
                         if action_id == "rename":
                             self.filename = os.path.basename(after_filepath)
                             logger.debug(f"Renamed to {self.filename}")
+                        elif after_ext != old_ext:
+                            self.filename = (
+                                f"{os.path.splitext(self.filename)[0]}{after_ext}"
+                            )
+                            logger.debug(f"Changed extension to {after_ext}")
 
                         self.current_filepath = os.path.join(
                             temp_dirpath, self.filename
@@ -130,5 +140,7 @@ def get_action_from_str(
             return PrintAction(config, metadata, filepath, temp_dirpath, dry)
         case "pdf":
             return ReformatPdfAction(config, metadata, filepath, temp_dirpath, dry)
+        case "download":
+            return DownloadAction(config, metadata, filepath, temp_dirpath, dry)
         case _:
             raise ValueError(f"Unknown action {action}")
