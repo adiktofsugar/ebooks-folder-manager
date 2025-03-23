@@ -175,7 +175,7 @@ class ReformatPdfAction(BaseAction):
             logger.debug(f"Skipping {self.filepath} because it's already reformatted.")
             return self.filepath
 
-        if metadata.is_pdf:
+        if not metadata.is_pdf:
             logger.debug(
                 f"Skipping {self.filepath} because it's not a PDF. Format is {metadata.format}."
             )
@@ -207,6 +207,7 @@ class ReformatPdfAction(BaseAction):
             ],
             # need to ignore stdin so it doesn't go into interactive mode
             stdin=subprocess.DEVNULL,
+            check=True,
         )
         logger.debug(
             f"Reformated {self.filepath} with k2pdfopt to {temp_filepath_k2pdfopt}"
