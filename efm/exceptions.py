@@ -17,18 +17,22 @@ class GetMetadataError(BookError):
         )
 
 
-class DeDrmError(Exception):
-    """Base exception for DeDRM-related errors."""
-
-    pass
-
-
-class RemoveDrmError(DeDrmError):
+class RemoveDrmError(BookError):
     """Error related to DRM operations."""
 
-    def __init__(self, file_path: str, message=None):
+    def __init__(self, file_path: str, message=None, original_error=None):
         super().__init__(
-            f"Error removing DRM from {file_path}{f' - {message}' if message else ''}",
+            f"Error removing DRM from {file_path}{f' - {message}' if message else ''}{f' - {original_error}' if original_error else ''}",
+        )
+
+
+class ZipFixError(RemoveDrmError):
+    """Error related to fixing a zip file."""
+
+    def __init__(self, file_path: str):
+        super().__init__(
+            file_path,
+            f"Error fixing zip file {file_path}",
         )
 
 

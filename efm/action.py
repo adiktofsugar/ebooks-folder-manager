@@ -1,14 +1,12 @@
 import logging
 import os
-import pathlib
 import shutil
 import subprocess
 from typing import Literal
-
 import pymupdf
-from efm.DeDRM_tools.DeDRM_plugin.epubtest import encryption as detect_epub_encryption
-from efm.DeDRM_tools.DeDRM_plugin.ineptepub import decryptBook as decrypt_inept_epub
+import dedrm
 
+from efm import config
 from efm.adl.adl.epub_get import get_ebook
 from efm.adl.adl.exceptions import GetEbookException
 from efm.adl.adl.login import login
@@ -19,16 +17,23 @@ from efm.env import ensure_k2pdfopt
 from efm.metadata import Metadata
 from efm.exceptions import (
     BookError,
-    DetectEncryptionError,
     GetMetadataError,
     MissingDrmKeyFileError,
-    UnsupportedEncryptionError,
+    RemoveDrmError,
 )
 
 logger = logging.getLogger(__name__)
 
 
 class BaseAction(object):
+    @classmethod
+    def description(cls) -> str:
+        raise NotImplementedError
+
+    @classmethod
+    def id(cls) -> str:
+        raise NotImplementedError
+
     config: Config | None
     metadata: Metadata | None | Literal[False]
     filepath: str
@@ -91,6 +96,14 @@ class BaseAction(object):
 
 
 class RenameAction(BaseAction):
+    @classmethod
+    def description(cls) -> str:
+        return "rename files based on metadata"
+
+    @classmethod
+    def id(cls) -> str:
+        return "rename"
+
     def perform(self):
         metadata = self.get_metadata()
         if metadata is False:
@@ -113,55 +126,114 @@ class RenameAction(BaseAction):
 
 
 class DeDrmAction(BaseAction):
+    @classmethod
+    def description(cls) -> str:
+        return "remove DRM from files"
+
+    @classmethod
+    def id(cls) -> str:
+        return "drm"
+
     def perform(self):
-        ext = os.path.splitext(self.filepath)[1].lower()
-        if ext == ".epub":
+        booktype = os.path.splitext(self.filepath)[1].lower()[:1]
+        if booktype in [
+            "prc",
+            "mobi",
+            "pobi",
+            "azw",
+            "azw1",
+            "azw3",
+            "azw4",
+            "tpz",
+            "kfx-zip",
+        ]:
+            # Kindle/Mobipocket
+            return self._perform_k4mobi()
+        elif booktype == "pdb":
+            # eReader
+            return self._perform_pdb()
+            pass
+        elif booktype == "pdf":
+            # Adobe PDF (hopefully) or LCP PDF
+            return self._perform_pdf()
+            pass
+        elif booktype == "epub":
+            # Adobe Adept, PassHash (B&N) or LCP ePub
             return self._perform_epub()
 
-        logger.info(f"No DeDRM support for {ext} files.")
+        logger.info(f"No DeDRM support for format {booktype} files.")
         return self.filepath
+
+    def _perform_k4mobi(self) -> str:
+        if not self.config:
+            raise RemoveDrmError(
+                self.filepath,
+                message="No config found, but kindle_* config keys are required to decrypt Kindle files.",
+            )
+        logger.debug(f"Removing DRM from k4mobi file {self.filepath}...")
+        return dedrm.decryptk4mobi(
+            self.filepath,
+            outdir=self.temp_dirpath,
+            kindle_android_files=self.config.kindle_android_files or [],
+            kindle_db_files=self.config.kindle_database_files or [],
+            kindle_pids=self.config.kindle_pidnums or [],
+            kindle_serials=self.config.kindle_serialnums or [],
+        )
+
+    def _perform_pdb(self) -> str:
+        logger.debug(f"Removing DRM from pdb file {self.filepath}...")
+        social_drm_file = self.config.ereader_social_drm_file if self.config else None
+        if not social_drm_file:
+            raise RemoveDrmError(
+                self.filepath,
+                message="No social DRM file found. Add ereader_social_drm_file to config file.",
+            )
+        return dedrm.decryptpdb(
+            self.filepath,
+            outdir=self.temp_dirpath,
+            social_drm_file=social_drm_file,
+        )
+
+    def _perform_pdf(self) -> str:
+        logger.debug(f"Removing DRM from pdf file {self.filepath}...")
+        return dedrm.decryptpdf(
+            self.filepath,
+            outdir=self.temp_dirpath,
+            key_files=(
+                [
+                    *(self.config.adobe_key_files or []),
+                    *(self.config.b_and_n_key_files or []),
+                ]
+                if self.config
+                else []
+            ),
+        )
 
     def _perform_epub(self) -> str:
         logger.debug(f"Removing DRM from epub file {self.filepath}...")
-        encryption_type = detect_epub_encryption(self.filepath)
-        logger.debug(f"Encryption type: {encryption_type}")
-        if encryption_type == "Error":
-            raise DetectEncryptionError(self.filepath)
-
-        if encryption_type == "Unencrypted":
-            logger.debug(f"Skipping {self.filepath} because it's already unencrypted.")
-            return self.filepath
-
-        if encryption_type == "Adobe":
-            adobe_key_filepath = (
-                self.config.adobe_key_file if self.config is not None else None
-            )
-            if adobe_key_filepath is None:
-                raise MissingDrmKeyFileError(self.filepath, encryption_type="Adobe")
-
-            adobe_key_file = pathlib.Path(adobe_key_filepath).expanduser()
-            if not adobe_key_file.exists():
-                raise MissingDrmKeyFileError(
-                    self.filepath,
-                    encryption_type="Adobe",
-                    message=f"Key file {adobe_key_file} not found",
-                )
-
-            logger.debug(f"Removing Adobe DRM from {self.filepath}...")
-            output_filepath = os.path.join(self.temp_dirpath, "post_dedrm.epub")
-            decrypt_inept_epub(
-                adobe_key_file.read_bytes(), self.filepath, output_filepath
-            )
-
-            logger.info(
-                f"Decrypted {self.filepath} with Adobe key file {adobe_key_file}"
-            )
-            return output_filepath
-
-        raise UnsupportedEncryptionError(self.filepath, encryption_type=encryption_type)
+        return dedrm.decryptepub(
+            self.filepath,
+            outdir=self.temp_dirpath,
+            key_files=(
+                [
+                    *(self.config.adobe_key_files or []),
+                    *(self.config.b_and_n_key_files or []),
+                ]
+                if self.config
+                else []
+            ),
+        )
 
 
 class ReformatPdfAction(BaseAction):
+    @classmethod
+    def description(cls) -> str:
+        return "reformat a PDF via k2pdfopt"
+
+    @classmethod
+    def id(cls) -> str:
+        return "pdf"
+
     def perform(self):
         metadata = self.get_metadata()
         if metadata is False:
@@ -230,6 +302,14 @@ class ReformatPdfAction(BaseAction):
 
 
 class PrintAction(BaseAction):
+    @classmethod
+    def description(cls) -> str:
+        return "print metadata to console"
+
+    @classmethod
+    def id(cls) -> str:
+        return "print"
+
     def perform(self):
         metadata = self.get_metadata()
         if metadata is False:
@@ -269,6 +349,14 @@ class PrintAction(BaseAction):
 
 
 class DownloadAction(BaseAction):
+    @classmethod
+    def description(cls) -> str:
+        return "download an ACSM file"
+
+    @classmethod
+    def id(cls) -> str:
+        return "download"
+
     def perform(self):
         if self.filepath.lower().endswith(".acsm"):
             if not self.config:

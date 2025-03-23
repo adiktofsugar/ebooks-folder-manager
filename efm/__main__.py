@@ -8,8 +8,16 @@ import textwrap
 # the dedrm plugin has absolute imports that assume it's the root, so I'm adding it the path
 sys.path.append(os.path.join(os.path.dirname(__file__), "DeDRM_tools", "DeDRM_plugin"))
 
-from efm.exceptions import BookError, DeDrmError
+from efm.exceptions import BookError
 from efm.transaction import Transaction
+from efm.action import (
+    DeDrmAction,
+    RenameAction,
+    PrintAction,
+    ReformatPdfAction,
+    DownloadAction,
+)
+
 
 logger = logging.getLogger(__name__)
 
@@ -34,15 +42,22 @@ def main():
       - adobe_key_file: path to Adobe key file
 
     """,
-        epilog=textwrap.dedent("""
-      <action>  is one of:
-        - drm           remove DRM from files
-        - rename        rename files based on metadata
-        - print         print metadata to console
-        - pdf           reformat a PDF via k2pdfopt
-        - download      download an ACSM file
-        - none          get the metadata, but print nothing (useful for testing to see if we don't throw any errors)
-    """),
+        epilog="<action>  is one of:"
+        + "\n".join(
+            [
+                *[
+                    f"{a.id():<10} - {a.description()}"
+                    for a in [
+                        DeDrmAction,
+                        RenameAction,
+                        PrintAction,
+                        ReformatPdfAction,
+                        DownloadAction,
+                    ]
+                ],
+                "none       - do nothing",
+            ]
+        ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     argparser.add_argument(
@@ -115,7 +130,7 @@ def main():
         try:
             Transaction(original_filepath, args.action, args.dry).perform()
         except Exception as e:
-            if isinstance(e, BookError) or isinstance(e, DeDrmError):
+            if isinstance(e, BookError):
                 logger.error(str(e))
                 has_error = True
             else:
