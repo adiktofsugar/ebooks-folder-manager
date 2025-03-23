@@ -86,14 +86,16 @@ class RenameAction(BaseAction):
                 message="Cannot rename",
             )
         ext = os.path.splitext(self.filepath)[1]  # includes .
-        new_name = f"{metadata.author or 'unknown'} - {metadata.title}{ext}"
-        if new_name == os.path.basename(self.filepath):
+        filename = os.path.basename(self.filepath)
+        new_filename = f"{metadata.author or 'unknown'} - {metadata.title}{ext}"
+        if new_filename == filename:
             logger.debug(
                 f"Skipping {self.filepath} because it's already named correctly."
             )
             return self.filepath
-        temp_filepath = os.path.join(self.temp_dirpath, new_name)
+        temp_filepath = os.path.join(self.temp_dirpath, new_filename)
         shutil.copy(self.filepath, temp_filepath)
+        logger.info(f"Renamed {self.filepath} to {new_filename}")
         return temp_filepath
 
 
@@ -133,13 +135,13 @@ class DeDrmAction(BaseAction):
                 )
 
             logger.debug(f"Removing Adobe DRM from {self.filepath}...")
-            output_filepath = os.path.join(self.temp_dirpath, "post_drdrm.epub")
+            output_filepath = os.path.join(self.temp_dirpath, "post_dedrm.epub")
             decrypt_inept_epub(
                 adobe_key_file.read_bytes(), self.filepath, output_filepath
             )
 
             logger.info(
-                f"Decrypted {self.filepath} with Adobe key file {adobe_key_file} to {output_filepath}"
+                f"Decrypted {self.filepath} with Adobe key file {adobe_key_file}"
             )
             return output_filepath
 
@@ -174,7 +176,6 @@ class ReformatPdfAction(BaseAction):
             return self.filepath
 
         ensure_k2pdfopt()
-        logger.info(f"Reformatting {self.filepath} with k2pdfopt...")
         temp_filepath_k2pdfopt = os.path.join(
             self.temp_dirpath, "post_reformat_pdf_k2pdfopt.pdf"
         )
@@ -201,6 +202,10 @@ class ReformatPdfAction(BaseAction):
             # need to ignore stdin so it doesn't go into interactive mode
             stdin=subprocess.DEVNULL,
         )
+        logger.debug(
+            f"Reformated {self.filepath} with k2pdfopt to {temp_filepath_k2pdfopt}"
+        )
+
         f = pymupdf.open(temp_filepath_k2pdfopt)
         f.embfile_add("__ebooks-folder-manager.json", b'{"k2pdfopt_version": true}')
 
@@ -208,8 +213,13 @@ class ReformatPdfAction(BaseAction):
             self.temp_dirpath, "post_reformat_pdf_metadata.pdf"
         )
         f.save(temp_filepath_metadata)
+        logger.debug(
+            f"Added metadata to {temp_filepath_k2pdfopt} and saved to {temp_filepath_metadata}"
+        )
 
         self.get_metadata().is_k2pdfopt_version = True
+
+        logger.info(f"Reformatted {self.filepath} with k2pdfopt")
         return temp_filepath_metadata
 
 
@@ -269,7 +279,9 @@ class DownloadAction(BaseAction):
                 )
             login(user, password)
             try:
-                return get_ebook(self.filepath)
+                new_filepath = get_ebook(self.filepath)
+                logging.info(f"Downloaded {self.filepath}")
+                return new_filepath
             except Exception as e:
                 if isinstance(e, GetEbookException):
                     raise BookError(self.filepath, message=str(e))
