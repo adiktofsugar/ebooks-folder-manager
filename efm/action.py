@@ -7,9 +7,12 @@ import subprocess
 import pymupdf
 from efm.DeDRM_plugin.epubtest import encryption as detect_epub_encryption
 from efm.DeDRM_plugin.ineptepub import decryptBook as decrypt_inept_epub
+
 from efm.adl.adl.epub_get import get_ebook
 from efm.adl.adl.exceptions import GetEbookException
 from efm.adl.adl.login import login
+from efm.adl.adl import account, data
+
 from efm.config import Config
 from efm.env import ensure_k2pdfopt
 from efm.metadata import Metadata
@@ -270,14 +273,28 @@ class DownloadAction(BaseAction):
                     self.filepath,
                     message="Can not download ACSM file - no config found",
                 )
-            user = self.config.adobe_user
+            username = self.config.adobe_user
             password = self.config.adobe_password
-            if not user or not password:
+            if not username or not password:
                 raise BookError(
                     self.filepath,
                     message="Can not download ACSM file - no user or password found - add adobe_user and adobe_password to config file",
                 )
-            login(user, password)
+
+            current_user = None
+            user = None
+            for a in data.accounts:
+                if a.urn == data.config.current_user:
+                    current_user = a
+                if a.sign_id == username:
+                    user = a
+
+            if not user:
+                # login sets the default user to this one
+                login(username, password)
+            elif current_user != user:
+                account.set_default_account(user.urn)
+
             try:
                 new_filepath = get_ebook(self.filepath)
                 logging.info(f"Downloaded {self.filepath}")
