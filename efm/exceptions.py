@@ -23,15 +23,6 @@ class DeDrmError(Exception):
     pass
 
 
-class UnsupportedFormatError(DeDrmError):
-    """Error related to unsupported file formats."""
-
-    def __init__(self, file_path: str, format_type: str):
-        super().__init__(
-            f"Unsupported format {format_type or 'unknown'} for {file_path}",
-        )
-
-
 class RemoveDrmError(DeDrmError):
     """Error related to DRM operations."""
 

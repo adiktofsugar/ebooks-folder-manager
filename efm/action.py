@@ -23,7 +23,6 @@ from efm.exceptions import (
     GetMetadataError,
     MissingDrmKeyFileError,
     UnsupportedEncryptionError,
-    UnsupportedFormatError,
 )
 
 logger = logging.getLogger(__name__)
@@ -115,12 +114,12 @@ class RenameAction(BaseAction):
 
 class DeDrmAction(BaseAction):
     def perform(self):
-        if self.filepath.lower().endswith(".epub"):
+        ext = os.path.splitext(self.filepath)[1].lower()
+        if ext == ".epub":
             return self._perform_epub()
 
-        raise UnsupportedFormatError(
-            self.filepath, format_type=os.path.splitext(self.filepath)[1]
-        )
+        logger.info(f"No DeDRM support for {ext} files.")
+        return self.filepath
 
     def _perform_epub(self) -> str:
         logger.debug(f"Removing DRM from epub file {self.filepath}...")

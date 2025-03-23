@@ -45,6 +45,7 @@ class Transaction:
             logger.info(
                 f"Processing {self.original_filepath} with actions {self.action_ids}"
             )
+            action_ids_run = []
             # order matters. drm has to come first for any metadata to work
             for action_id in ["download", "drm", "pdf", "rename", "print"]:
                 if action_id in self.action_ids:
@@ -66,6 +67,7 @@ class Transaction:
                     # save metadata for next action
                     self.metadata = action.metadata
                     if after_filepath != self.current_filepath:
+                        action_ids_run.append(action_id)
                         old_ext = os.path.splitext(self.current_filepath)[1]
                         after_ext = os.path.splitext(after_filepath)[1]
                         old_filepath = os.path.join(
@@ -114,11 +116,11 @@ class Transaction:
                 logger.debug(f"Moving {self.current_filepath} to {new_filepath}")
                 shutil.copy(self.current_filepath, new_filepath)
                 logger.info(
-                    f"All actions succeeded for {new_filepath}. Intermediate files are in {temp_dirpath}. {self.original_filepath} has been backed up to {bak_filepath}."
+                    f"Successfully executed {', '.join(action_ids_run)} for {new_filepath}. Intermediate files are in {temp_dirpath}. {self.original_filepath} has been backed up to {bak_filepath}."
                 )
             else:
                 logger.info(
-                    f"All actions succeeded for {self.original_filepath}. Intermediate files are in {temp_dirpath}."
+                    f"Skipped all actions for {self.original_filepath}. Intermediate files are in {temp_dirpath}."
                 )
 
         except:
