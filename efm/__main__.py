@@ -3,7 +3,6 @@ import glob
 import logging
 import os
 import sys
-import textwrap
 
 # the dedrm plugin has absolute imports that assume it's the root, so I'm adding it the path
 sys.path.append(os.path.join(os.path.dirname(__file__), "DeDRM_tools", "DeDRM_plugin"))
@@ -77,7 +76,7 @@ def main():
     argparser.add_argument("spec", nargs="+", help="file, folder, or glob to process")
 
     args = argparser.parse_args()
-    loglevel = logging.ERROR
+    loglevel = logging.INFO
     if args.loglevel:
         match args.loglevel.lower():
             case "debug":
@@ -88,13 +87,11 @@ def main():
                 loglevel = logging.ERROR
             case _:
                 raise ValueError(f"Unknown log level {args.loglevel}")
-    else:
+
+    if args.dry and loglevel > logging.INFO:
         loglevel = logging.INFO
 
-    if args.dry and loglevel < logging.INFO:
-        loglevel = logging.INFO
-
-    logging.basicConfig(level=loglevel)
+    logging.basicConfig(level=logging.DEBUG)
 
     files = args.spec
     all_files: list[str] = []

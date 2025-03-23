@@ -2,13 +2,14 @@ import logging
 import os
 import time
 from typing import TypeGuard
-from DeDRM_tools.DeDRM_plugin import ineptepub
-from DeDRM_tools.DeDRM_plugin import epubtest
-from DeDRM_tools.DeDRM_plugin import zipfix
-from DeDRM_tools.DeDRM_plugin import ineptpdf
-from DeDRM_tools.DeDRM_plugin import erdr2pml
-from DeDRM_tools.DeDRM_plugin import k4mobidedrm
-from DeDRM_tools.DeDRM_plugin.topazextract import TopazBook
+
+from efm.DeDRM_tools.DeDRM_plugin import ineptepub
+from efm.DeDRM_tools.DeDRM_plugin import epubtest
+from efm.DeDRM_tools.DeDRM_plugin import zipfix
+from efm.DeDRM_tools.DeDRM_plugin import ineptpdf
+from efm.DeDRM_tools.DeDRM_plugin import erdr2pml
+from efm.DeDRM_tools.DeDRM_plugin import k4mobidedrm
+from efm.DeDRM_tools.DeDRM_plugin.topazextract import TopazBook
 
 from efm.exceptions import (
     RemoveDrmError,
@@ -118,7 +119,7 @@ def decryptk4mobi(
     if len(errors) > 0:
         message = "Error collecting database files:"
         for dbfile, e in errors:
-            message += f"\{dbfile}: {e}"
+            message += f"{dbfile}: {e}"
         raise RemoveDrmError(infile, message)
 
     try:

@@ -4,9 +4,8 @@ import shutil
 import subprocess
 from typing import Literal
 import pymupdf
-import dedrm
 
-from efm import config
+from efm import dedrm
 from efm.adl.adl.epub_get import get_ebook
 from efm.adl.adl.exceptions import GetEbookException
 from efm.adl.adl.login import login
@@ -18,7 +17,6 @@ from efm.metadata import Metadata
 from efm.exceptions import (
     BookError,
     GetMetadataError,
-    MissingDrmKeyFileError,
     RemoveDrmError,
 )
 
@@ -135,7 +133,7 @@ class DeDrmAction(BaseAction):
         return "drm"
 
     def perform(self):
-        booktype = os.path.splitext(self.filepath)[1].lower()[:1]
+        booktype = os.path.splitext(self.filepath)[1].lower()[1:]
         if booktype in [
             "prc",
             "mobi",
