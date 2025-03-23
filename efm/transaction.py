@@ -99,9 +99,6 @@ class Transaction:
                         )
                         shutil.move(after_filepath, self.current_filepath)
 
-            logger.info(
-                f"All actions succeeded for {self.original_filepath}. Intermediate files are in {temp_dirpath}."
-            )
             if self.current_filepath != self.original_filepath:
                 bak_filepath = f"{self.original_filepath}.bak"
                 i = 0
@@ -115,6 +112,13 @@ class Transaction:
                 )
                 logger.debug(f"Moving {self.current_filepath} to {new_filepath}")
                 shutil.copy(self.current_filepath, new_filepath)
+                logger.info(
+                    f"All actions succeeded for {new_filepath}. Intermediate files are in {temp_dirpath}. {self.original_filepath} has been backed up to {bak_filepath}."
+                )
+            else:
+                logger.info(
+                    f"All actions succeeded for {self.original_filepath}. Intermediate files are in {temp_dirpath}."
+                )
 
         except:
             logger.error(
