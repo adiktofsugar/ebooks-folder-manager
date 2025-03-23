@@ -2,6 +2,7 @@ import logging
 import os
 import shutil
 import tempfile
+from typing import Literal
 
 from efm.action import (
     BaseAction,
@@ -39,11 +40,11 @@ class Transaction:
         self.dry = dry
 
     def perform(self):
+        temp_dirpath = tempfile.mkdtemp(prefix=self.filename)
         try:
             logger.info(
                 f"Processing {self.original_filepath} with actions {self.action_ids}"
             )
-            temp_dirpath = tempfile.mkdtemp(prefix=self.filename)
             # order matters. drm has to come first for any metadata to work
             for action_id in ["download", "drm", "pdf", "rename", "print"]:
                 if action_id in self.action_ids:
@@ -129,8 +130,8 @@ class Transaction:
 
 def get_action_from_str(
     action: str,
-    config: Config,
-    metadata: Metadata,
+    config: Config | None,
+    metadata: Metadata | None | Literal[False],
     filepath: str,
     temp_dirpath: str,
     dry: bool,

@@ -1,5 +1,5 @@
 import logging
-from typing import Union
+from typing import LiteralString
 
 
 logger = logging.getLogger(__name__)
@@ -8,19 +8,20 @@ logger = logging.getLogger(__name__)
 class Metadata(object):
     def __init__(
         self,
-        format: str,
-        encryption: str,
-        title: str,
-        author: str,
-        subject: str,
-        keywords: list[str],
-        creator: str,
-        producer: str,
-        creation_date: str,
-        mod_date: str,
+        format: str | None,
+        encryption: str | None,
+        title: str | None,
+        author: str | None,
+        subject: str | None,
+        keywords: list[LiteralString] | None,
+        creator: str | None,
+        producer: str | None,
+        creation_date: str | None,
+        mod_date: str | None,
         is_k2pdfopt_version: bool,
     ):
         self.format = format
+        self.is_pdf = format is not None and format.lower() == "pdf"
         self.encryption = encryption
         self.title = title
         self.author = author

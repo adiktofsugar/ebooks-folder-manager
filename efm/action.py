@@ -3,10 +3,11 @@ import os
 import pathlib
 import shutil
 import subprocess
+from typing import Literal
 
 import pymupdf
-from efm.DeDRM_plugin.epubtest import encryption as detect_epub_encryption
-from efm.DeDRM_plugin.ineptepub import decryptBook as decrypt_inept_epub
+from efm.DeDRM_tools.DeDRM_plugin.epubtest import encryption as detect_epub_encryption
+from efm.DeDRM_tools.DeDRM_plugin.ineptepub import decryptBook as decrypt_inept_epub
 
 from efm.adl.adl.epub_get import get_ebook
 from efm.adl.adl.exceptions import GetEbookException
@@ -29,10 +30,16 @@ logger = logging.getLogger(__name__)
 
 
 class BaseAction(object):
+    config: Config | None
+    metadata: Metadata | None | Literal[False]
+    filepath: str
+    temp_dirpath: str
+    dry: bool
+
     def __init__(
         self,
         config: Config | None,
-        metadata: Metadata | None,
+        metadata: Metadata | None | Literal[False],
         filepath: str,
         temp_dirpath: str,
         dry: bool,
@@ -46,7 +53,7 @@ class BaseAction(object):
     def perform(self) -> str:
         raise NotImplementedError
 
-    def get_metadata(self) -> Metadata:
+    def get_metadata(self) -> Metadata | Literal[False]:
         if self.metadata is None:
             try:
                 f = pymupdf.open(self.filepath)
@@ -57,15 +64,17 @@ class BaseAction(object):
                     # Contains the document’s meta data as a Python dictionary or None (if is_encrypted=True and needPass=True).
                     # Keys are format, encryption, title, author, subject, keywords, creator, producer, creationDate, modDate, trapped. All item values are strings or None.
                     format = f.metadata.get("format")
+                    keywords_raw = f.metadata.get("keywords")
+                    keywords = (
+                        keywords_raw.split(",") if keywords_raw is not None else []
+                    )
                     self.metadata = Metadata(
                         format=format,
                         encryption=f.metadata.get("encryption"),
                         title=f.metadata.get("title"),
                         author=f.metadata.get("author"),
                         subject=f.metadata.get("subject"),
-                        keywords=f.metadata.get("keywords").split(",")
-                        if f.metadata.get("keywords")
-                        else [],
+                        keywords=keywords,
                         creator=f.metadata.get("creator"),
                         producer=f.metadata.get("producer"),
                         creation_date=f.metadata.get("creationDate"),
@@ -73,10 +82,12 @@ class BaseAction(object):
                         is_k2pdfopt_version=(
                             format.lower().startswith("pdf")
                             and "__ebooks-folder-manager.json" in f.embfile_names()
+                            if format is not None
+                            else False
                         ),
                     )
             except pymupdf.FileDataError as e:
-                raise GetMetadataError(self, original_error=e)
+                raise GetMetadataError(self.filepath, original_error=e)
         return self.metadata
 
 
@@ -111,7 +122,7 @@ class DeDrmAction(BaseAction):
             self.filepath, format_type=os.path.splitext(self.filepath)[1]
         )
 
-    def _perform_epub(self):
+    def _perform_epub(self) -> str:
         logger.debug(f"Removing DRM from epub file {self.filepath}...")
         encryption_type = detect_epub_encryption(self.filepath)
         logger.debug(f"Encryption type: {encryption_type}")
@@ -148,15 +159,7 @@ class DeDrmAction(BaseAction):
             )
             return output_filepath
 
-        if (
-            encryption_type == "Readium LCP"
-            or encryption_type == "Apple"
-            or encryption_type == "Kobo"
-            or encryption_type == "B&N"
-        ):
-            raise UnsupportedEncryptionError(
-                self.filepath, encryption_type=encryption_type
-            )
+        raise UnsupportedEncryptionError(self.filepath, encryption_type=encryption_type)
 
 
 class ReformatPdfAction(BaseAction):
@@ -172,7 +175,7 @@ class ReformatPdfAction(BaseAction):
             logger.debug(f"Skipping {self.filepath} because it's already reformatted.")
             return self.filepath
 
-        if not metadata.format.lower().startswith("pdf"):
+        if metadata.is_pdf:
             logger.debug(
                 f"Skipping {self.filepath} because it's not a PDF. Format is {metadata.format}."
             )
@@ -220,7 +223,7 @@ class ReformatPdfAction(BaseAction):
             f"Added metadata to {temp_filepath_k2pdfopt} and saved to {temp_filepath_metadata}"
         )
 
-        self.get_metadata().is_k2pdfopt_version = True
+        metadata.is_k2pdfopt_version = True
 
         logger.info(f"Reformatted {self.filepath} with k2pdfopt")
         return temp_filepath_metadata
@@ -255,7 +258,7 @@ class PrintAction(BaseAction):
                             f"  Creation Date: {metadata.creation_date}",
                             f"  Mod Date: {metadata.mod_date}",
                             f"  Is k2pdfopt version: {metadata.is_k2pdfopt_version}"
-                            if metadata.format.lower().startswith("pdf")
+                            if metadata.is_pdf
                             else None,
                         ]
                         if s is not None
@@ -284,7 +287,7 @@ class DownloadAction(BaseAction):
             current_user = None
             user = None
             for a in data.accounts:
-                if a.urn == data.config.current_user:
+                if data.config and a.urn == data.config.current_user:
                     current_user = a
                 if a.sign_id == username:
                     user = a
@@ -297,6 +300,8 @@ class DownloadAction(BaseAction):
 
             try:
                 new_filepath = get_ebook(self.filepath)
+                if new_filepath is None:
+                    raise GetEbookException(self.filepath, "No file downloaded")
                 logging.info(f"Downloaded {self.filepath}")
                 return new_filepath
             except Exception as e:

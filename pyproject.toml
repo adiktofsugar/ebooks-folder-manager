@@ -41,6 +41,7 @@ ruff = "^0.9.9"
 debugpy = "^1.8.13"
 pytest = "^8.0.0"
 mock = "^5.2.0"
+pyright = "^1.1.397"
 
 [tool.ruff]
 exclude = ["DeDRM_plugin"]
@@ -51,3 +52,7 @@ python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
 addopts = "-v"
+
+[tool.pyright]
+include = ["efm"]
+exclude=["efm/DeDRM_tools", "efm/DeDRM_plugin--released", "efm/adl"]
