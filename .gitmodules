@@ -1,3 +1,4 @@
 [submodule "adl"]
 	path = efm/adl
 	url = git@github.com:adiktofsugar/adl.git
+	branch = master
