@@ -2,3 +2,6 @@
 	path = efm/adl
 	url = git@github.com:adiktofsugar/adl.git
 	branch = master
+[submodule "efm/DeDRM_tools"]
+	path = efm/DeDRM_tools
+	url = git@github.com:adiktofsugar/DeDRM_tools.git
