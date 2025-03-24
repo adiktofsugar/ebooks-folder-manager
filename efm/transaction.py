@@ -2,6 +2,7 @@ import logging
 import os
 import shutil
 import tempfile
+import traceback
 from typing import Literal
 
 from efm.action import (
@@ -124,6 +125,7 @@ class Transaction:
                 )
 
         except:
+            traceback.print_exc()
             logger.error(
                 f"Failed to complete all actions for {self.original_filepath}. Intermediate files are in {temp_dirpath}"
             )

@@ -57,39 +57,57 @@ class BaseAction(object):
 
     def get_metadata(self) -> Metadata | Literal[False]:
         if self.metadata is None:
-            try:
-                f = pymupdf.open(self.filepath)
-                if f.metadata is None:
-                    self.metadata = False
-                else:
-                    # https://pymupdf.readthedocs.io/en/latest/document.html#Document.metadata
-                    # Contains the document’s meta data as a Python dictionary or None (if is_encrypted=True and needPass=True).
-                    # Keys are format, encryption, title, author, subject, keywords, creator, producer, creationDate, modDate, trapped. All item values are strings or None.
-                    format = f.metadata.get("format")
-                    keywords_raw = f.metadata.get("keywords")
-                    keywords = (
-                        keywords_raw.split(",") if keywords_raw is not None else []
-                    )
-                    self.metadata = Metadata(
-                        format=format,
-                        encryption=f.metadata.get("encryption"),
-                        title=f.metadata.get("title"),
-                        author=f.metadata.get("author"),
-                        subject=f.metadata.get("subject"),
-                        keywords=keywords,
-                        creator=f.metadata.get("creator"),
-                        producer=f.metadata.get("producer"),
-                        creation_date=f.metadata.get("creationDate"),
-                        mod_date=f.metadata.get("modDate"),
-                        is_k2pdfopt_version=(
-                            format.lower().startswith("pdf")
-                            and "__ebooks-folder-manager.json" in f.embfile_names()
-                            if format is not None
-                            else False
-                        ),
-                    )
-            except pymupdf.FileDataError as e:
-                raise GetMetadataError(self.filepath, original_error=e)
+            # https://pymupdf.readthedocs.io/en/latest/how-to-open-a-file.html#supported-file-types
+            supported_formats = [
+                "PDF",
+                "XPS",
+                "EPUB",
+                "MOBI",
+                "FB2",
+                "CBZ",
+                "SVG",
+                "TXT",
+            ]
+            ext = os.path.splitext(self.filepath)[1][1:].upper()
+            if ext not in supported_formats:
+                logger.info(
+                    f"Setting metadata for {self.filepath} to False because it's not a supported format. Format is {ext}."
+                )
+                self.metadata = False
+            else:
+                try:
+                    f = pymupdf.open(self.filepath)
+                    if f.metadata is None:
+                        self.metadata = False
+                    else:
+                        # https://pymupdf.readthedocs.io/en/latest/document.html#Document.metadata
+                        # Contains the document’s meta data as a Python dictionary or None (if is_encrypted=True and needPass=True).
+                        # Keys are format, encryption, title, author, subject, keywords, creator, producer, creationDate, modDate, trapped. All item values are strings or None.
+                        format = f.metadata.get("format")
+                        keywords_raw = f.metadata.get("keywords")
+                        keywords = (
+                            keywords_raw.split(",") if keywords_raw is not None else []
+                        )
+                        self.metadata = Metadata(
+                            format=format,
+                            encryption=f.metadata.get("encryption"),
+                            title=f.metadata.get("title"),
+                            author=f.metadata.get("author"),
+                            subject=f.metadata.get("subject"),
+                            keywords=keywords,
+                            creator=f.metadata.get("creator"),
+                            producer=f.metadata.get("producer"),
+                            creation_date=f.metadata.get("creationDate"),
+                            mod_date=f.metadata.get("modDate"),
+                            is_k2pdfopt_version=(
+                                format.lower().startswith("pdf")
+                                and "__ebooks-folder-manager.json" in f.embfile_names()
+                                if format is not None
+                                else False
+                            ),
+                        )
+                except pymupdf.FileDataError as e:
+                    raise GetMetadataError(self.filepath, original_error=e)
         return self.metadata
 
 
@@ -235,10 +253,8 @@ class ReformatPdfAction(BaseAction):
     def perform(self):
         metadata = self.get_metadata()
         if metadata is False:
-            raise GetMetadataError(
-                self.filepath,
-                message="Cannot reformat",
-            )
+            logger.debug(f"Skipping {self.filepath} because no metadata.")
+            return self.filepath
 
         if metadata.is_k2pdfopt_version:
             logger.debug(f"Skipping {self.filepath} because it's already reformatted.")

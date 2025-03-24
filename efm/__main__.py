@@ -3,6 +3,7 @@ import glob
 import logging
 import os
 import sys
+import traceback
 
 # the dedrm plugin has absolute imports that assume it's the root, so I'm adding it the path
 sys.path.append(os.path.join(os.path.dirname(__file__), "DeDRM_tools", "DeDRM_plugin"))
@@ -109,7 +110,7 @@ def main():
             logger.debug(f"{original_filepath} is glob, expanded to {expanded}")
             all_files.extend(expanded)
 
-    has_error = False
+    errors = list[tuple[str, BookError]]()
     for original_filepath in all_files:
         if original_filepath.endswith(".bak"):
             logger.info(f"Skipping {original_filepath} because it's a backup file.")
@@ -128,13 +129,16 @@ def main():
             Transaction(original_filepath, args.action, args.dry).perform()
         except Exception as e:
             if isinstance(e, BookError):
-                logger.error(str(e))
-                has_error = True
+                errors.append((original_filepath, e))
             else:
                 raise
 
-    if has_error:
-        logger.error("Errors occurred during processing. Exiting with status 1.")
+    if len(errors) > 0:
+        logger.error("Errors occurred during processing:")
+        for filepath, error in errors:
+            logger.error(
+                f"> {filepath}:{os.linesep}{''.join(traceback.format_exception(error)[1:])}"
+            )
         return 1
     return 0
 

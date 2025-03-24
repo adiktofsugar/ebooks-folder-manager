@@ -13,7 +13,7 @@ class GetMetadataError(BookError):
     def __init__(self, file_path: str, message=None, original_error=None):
         super().__init__(
             file_path,
-            f"Error reading metadata from {file_path}{f' - {message}' if message else ''}{f' - {original_error}' if original_error else ''}",
+            f"Couldn't get metadata{f' - {message}' if message else ''}{f' - {original_error}' if original_error else ''}",
         )
 
 
@@ -22,7 +22,7 @@ class RemoveDrmError(BookError):
 
     def __init__(self, file_path: str, message=None, original_error=None):
         super().__init__(
-            f"Error removing DRM from {file_path}{f' - {message}' if message else ''}{f' - {original_error}' if original_error else ''}",
+            f"Couldn't remove DRM{f' - {message}' if message else ''}{f' - {original_error}' if original_error else ''}",
         )
 
 
@@ -32,7 +32,7 @@ class ZipFixError(RemoveDrmError):
     def __init__(self, file_path: str):
         super().__init__(
             file_path,
-            f"Error fixing zip file {file_path}",
+            "Couldn't fix zip file",
         )
 
 
