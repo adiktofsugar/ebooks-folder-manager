@@ -223,6 +223,15 @@ class DeDrmAction(BaseAction):
                 if self.config
                 else []
             ),
+            passwords=(
+                (
+                    [self.config.adobe_password]
+                    if self.config.adobe_password
+                    else [] + (self.config.pdf_passwords or [])
+                )
+                if self.config
+                else []
+            ),
         )
 
     def _perform_epub(self) -> str:

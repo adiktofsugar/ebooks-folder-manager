@@ -1,5 +1,6 @@
 import logging
 import os
+from textwrap import dedent
 import time
 from typing import TypeGuard
 
@@ -51,19 +52,53 @@ def decryptepub(infile: str, outdir: str, key_files: list[str]) -> str:
         os.remove(zippath)
 
 
-def decryptpdf(infile: str, outdir: str, key_files: list[str]) -> str:
+def decryptpdf(
+    infile: str, outdir: str, key_files: list[str], passwords: list[str]
+) -> str:
     filename = os.path.splitext(os.path.basename(infile))[0]
-    outfile = os.path.join(outdir, filename + "_nodrm.pdf")
-    for key_file in key_files:
-        userkey = open(key_file, "rb").read()
-        try:
-            rv = ineptpdf.decryptBook(userkey, infile, outfile)
-            if rv == 0:
-                logger.info(f"Decrypted {infile} with {key_file}")
-                return outfile
-        except Exception as e:
-            raise RemoveDrmError(infile, original_error=e)
-    raise RemoveDrmError(infile, message="No valid key file found")
+
+    pdf_encryption = ineptpdf.getPDFencryptionType(infile)
+    if pdf_encryption is None:
+        logger.debug(f"Skipping {infile}. has no drm")
+        return infile
+
+    logger.debug(f"PDF encryption type for {infile}: {pdf_encryption}")
+
+    keys: list[tuple[str, bytearray | bytes]] | None = None
+    if pdf_encryption == "EBX_HANDLER":
+        # Adobe eBook / ADEPT (normal or B&N)
+        keys = [(key_file, open(key_file, "rb").read()) for key_file in key_files]
+    elif pdf_encryption == "Standard" or pdf_encryption == "Adobe.APS":
+        keys = [
+            (password, bytearray(password, "utf-8")) for password in [""] + passwords
+        ]
+
+    if keys is not None:
+        outfile = os.path.join(outdir, filename + "_nodrm.pdf")
+        for key_name, key in keys:
+            try:
+                rv = ineptpdf.decryptBook(key, infile, outfile)
+                if rv == 0:
+                    logger.info(f"Decrypted {infile} with {key_name}")
+                    return outfile
+            except ineptpdf.ADEPTInvalidPasswordError:
+                logger.debug(f"Invalid password for {infile}: '{key_name}'")
+            except Exception as e:
+                raise RemoveDrmError(infile, original_error=e)
+        raise RemoveDrmError(infile, message="No valid key file found")
+
+    if pdf_encryption == "FOPN_fLock" or pdf_encryption == "FOPN_foweb":
+        raise RemoveDrmError(
+            infile,
+            message=dedent("""
+                FileOpen encryption is unsupported.
+                Try the standalone script from the 'Tetrachroma_FileOpen_ineptpdf' folder in the Github repo.
+            """),
+        )
+    raise RemoveDrmError(
+        infile,
+        message=f"Unsupported encryption type '{pdf_encryption}'",
+    )
 
 
 def decryptpdb(infile: str, outdir: str, social_drm_file: str) -> str:
@@ -88,20 +123,43 @@ def decryptpdb(infile: str, outdir: str, social_drm_file: str) -> str:
                 logger.info(f"Decrypted {infile} with key {name}")
                 return outpath
         except Exception as e:
-            logger.debug(f"Failed decryptinh with key {name} - {e}")
+            logger.debug(f"Failed decrypting with key {name} - {e}")
     raise RemoveDrmError(infile, message="No valid key file found")
 
 
 """
-This takes a bunch of config options I'm not totally sure we really need. In the end, it seems to only
-really need the "pids", which it extracts from the various other sources.
+Config options to descriptions (based on DeDRM_tools/DeDRM_plugin/config.py):
+    pids (list)
+        d = ManageKeysDialog(self,"Mobipocket PID",self.tempdedrmprefs['pids'], AddPIDDialog)
+        aska for a Mobipocket PID, described as
+            > Mobipocket PIDs are 8 or 10 characters long. Mobipocket PIDs are case-sensitive, so be sure to enter the upper and lower case letters unchanged.
+        ...I don't know what this is. Mobipocket was a French software company amazon bought in 2005, and they invented
+            the mobi file format. They did have an online website, so maybe it's from that?
 
-The way it gets the keys _seems_ to be in efm/DeDRM_tools/DeDRM_plugin/config.py
+    serials (list)
+        d = ManageKeysDialog(self,"EInk Kindle Serial Number",self.tempdedrmprefs['serials'], AddSerialDialog)
+        asks for an EInk Kindle serial number, described as 
+            > 16 characters long and usually start with a 'B' or a '9'. Kindle Serial Numbers are case-sensitive, so be sure to enter the upper and lower case letters unchanged.
+        I think this is literally the serial number of the Kindle device
+    
+    androidkeys (dict)
+        d = ManageKeysDialog(self,"Kindle for Android Key",self.tempdedrmprefs['androidkeys'], AddAndroidDialog, 'k4a')
+        asks for a "Kindle for Android backup file" that ends in 'db','ab','xml'
+            then uses androidkindlekey.get_serials(fpath) (DeDRM_tools/DeDRM_plugin/androidkindlekey.py)
+            > get serials from files in from android backup.ab
+                backup.ab can be get using adb command:
+                shell> adb backup com.amazon.kindle
+                or from individual files if they're passed.
+    
+    kindlekeys (dict)
+        d = ManageKeysDialog(self,"Kindle for Mac and PC Key",self.tempdedrmprefs['kindlekeys'], AddKindleDialog, 'k4i')
+        asks for a name and finds the default key (using DeDRM_tools/DeDRM_plugin/kindlekey.py) that it finds from
+            the Kindle App on your computer
 
-This will _probably_ be a big part of the "setup" process...or some way of defining a keystore. I'm not sure
-I really want this part to just be config file entries. Maybe it'll point to a keystore or something.
+The final thing, kDatabases, is probably from the DeDRM plugin
+> kDatabaseFiles is a list of files created by kindlekey
+But I see no reference to that variable name, so :shrug:
 
-Much of this seems to be kindlekey.py
 """
 
 

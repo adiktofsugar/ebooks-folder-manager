@@ -16,6 +16,7 @@ schema = Schema(
         Optional("ereader_social_drm_file"): str,
         Optional("adobe_user"): str,
         Optional("adobe_password"): str,
+        Optional("pdf_passwords"): list[str],
         Optional("kindle_pidnums"): list[str],
         Optional("kindle_serialnums"): list[str],
         # kindle_database_files is a list of files created by kindlekey
@@ -37,46 +38,45 @@ class Config(object):
     kindle_android_files: list[str] | None
     adobe_user: str | None
     adobe_password: str | None
+    pdf_passwords: list[str] | None
 
     def __init__(self, filepath: Path):
         data = schema.validate(load_config(filepath))
         extends = data.get("extends")
         parent = Config(extends) if extends else None
-        self.actions = data.get("actions", parent.actions if parent else None)
-        self.adobe_key_files = (
-            data.get("adobe_key_files", []) + parent.adobe_key_files if parent else []
+        self.actions = optional_list_value(data, "actions", parent)
+        self.adobe_key_files = optional_list_value(data, "adobe_key_files", parent)
+        self.b_and_n_key_files = optional_list_value(data, "b_and_n_key_files", parent)
+        self.ereader_social_drm_file = optional_value(
+            data, "ereader_social_drm_file", parent
         )
-        self.b_and_n_key_files = (
-            data.get("b_and_n_key_files", []) + parent.b_and_n_key_files
-            if parent
-            else []
+        self.kindle_pidnums = optional_list_value(data, "kindle_pidnums", parent)
+        self.kindle_serialnums = optional_list_value(data, "kindle_serialnums", parent)
+        self.kindle_database_files = optional_list_value(
+            data, "kindle_database_files", parent
         )
-        self.ereader_social_drm_file = data.get(
-            "ereader_social_drm_file",
-            parent.ereader_social_drm_file if parent else None,
+        self.kindle_android_files = optional_list_value(
+            data, "kindle_android_files", parent
         )
-        self.kindle_pidnums = (
-            data.get("kindle_pidnums", []) + parent.kindle_pidnums if parent else []
-        )
-        self.kindle_serialnums = (
-            data.get("kindle_serialnums", []) + parent.kindle_serialnums
-            if parent
-            else []
-        )
-        self.kindle_database_files = (
-            data.get("kindle_database_files", []) + parent.kindle_database_files
-            if parent
-            else []
-        )
-        self.kindle_android_files = (
-            data.get("kindle_android_files", []) + parent.kindle_android_files
-            if parent
-            else []
-        )
-        self.adobe_user = data.get("adobe_user", parent.adobe_user if parent else None)
+        self.adobe_user = optional_value(data, "adobe_user", parent)
         self.adobe_password = data.get(
             "adobe_password", parent.adobe_password if parent else None
         )
+        self.pdf_passwords = optional_list_value(data, "pdf_passwords", parent)
+
+
+def optional_value(d: dict[str, str], key: str, parent: Config | None) -> str | None:
+    return d.get(key, getattr(parent, key) if parent else None)
+
+
+def optional_list_value(
+    d: dict[str, list[str]], key: str, parent: Config | None
+) -> list[str] | None:
+    value = d.get(key)
+    parent_value = getattr(parent, key) if parent else None
+    if value is None:
+        return parent_value
+    return value + parent_value if parent_value else []
 
 
 def load_config(filepath: Path):
