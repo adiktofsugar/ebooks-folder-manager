@@ -6,10 +6,10 @@ from typing import Literal, Sequence
 import pymupdf
 
 from efm import dedrm, kfxconvert
-from efm.adl.adl.epub_get import get_ebook
-from efm.adl.adl.exceptions import GetEbookException
-from efm.adl.adl.login import login
-from efm.adl.adl import account, data
+from adl.adl.epub_get import get_ebook
+from adl.adl.exceptions import GetEbookException
+from adl.adl.login import login
+from adl.adl import account, data
 
 from efm.config import Config
 from efm.env import ensure_k2pdfopt

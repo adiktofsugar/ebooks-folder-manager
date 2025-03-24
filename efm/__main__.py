@@ -5,11 +5,12 @@ import os
 import sys
 import traceback
 
-# the dedrm plugin has absolute imports that assume it's the root, so I'm adding it the path
-sys.path.append(os.path.join(os.path.dirname(__file__), "DeDRM_tools", "DeDRM_plugin"))
+sys.path.append(
+    os.path.join(os.path.dirname(__file__), "..", "DeDRM_tools", "DeDRM_plugin")
+)
 
-# the KFX_Input plugin has absolute imports that assume it's the root, so I'm adding it the path
-sys.path.append(os.path.join(os.path.dirname(__file__), "kfxlib"))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "kfxlib"))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "adl"))
 
 from efm.exceptions import BookError
 from efm.transaction import Transaction

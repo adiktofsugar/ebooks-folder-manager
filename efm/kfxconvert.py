@@ -9,7 +9,7 @@ Notable changes:
 
 import logging
 from typing import cast
-from efm.kfxlib import (
+from kfxlib import (
     JobLog,
     set_logger,
     YJ_Book,
