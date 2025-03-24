@@ -1,0 +1,4 @@
+{
+  "include": ["efm"],
+  "extraPaths": ["adl", "DeDRM_tools/DeDRM_plugin", "kfxlib"]
+}

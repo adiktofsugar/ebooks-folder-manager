@@ -8,7 +8,6 @@ import traceback
 sys.path.append(
     os.path.join(os.path.dirname(__file__), "..", "DeDRM_tools", "DeDRM_plugin")
 )
-
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "kfxlib"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "adl"))
 

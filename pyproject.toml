@@ -56,7 +56,3 @@ python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
 addopts = "-v"
-
-[tool.pyright]
-include = ["efm"]
-exclude=["efm/DeDRM_tools", "efm/kfxlib", "efm/adl"]
