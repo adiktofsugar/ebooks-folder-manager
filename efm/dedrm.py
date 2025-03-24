@@ -3,13 +3,13 @@ import os
 import time
 from typing import TypeGuard
 
-from DeDRM_tools.DeDRM_plugin import ineptepub
-from DeDRM_tools.DeDRM_plugin import epubtest
-from DeDRM_tools.DeDRM_plugin import zipfix
-from DeDRM_tools.DeDRM_plugin import ineptpdf
-from DeDRM_tools.DeDRM_plugin import erdr2pml
-from DeDRM_tools.DeDRM_plugin import k4mobidedrm
-from DeDRM_tools.DeDRM_plugin.topazextract import TopazBook
+from DeDRM_plugin import ineptepub
+from DeDRM_plugin import epubtest
+from DeDRM_plugin import zipfix
+from DeDRM_plugin import ineptpdf
+from DeDRM_plugin import erdr2pml
+from DeDRM_plugin import k4mobidedrm
+from DeDRM_plugin.topazextract import TopazBook
 
 from efm.exceptions import (
     RemoveDrmError,

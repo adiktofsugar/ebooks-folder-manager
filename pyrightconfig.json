@@ -1,4 +1,8 @@
 {
   "include": ["efm"],
-  "extraPaths": ["adl", "DeDRM_tools/DeDRM_plugin", "kfxlib"]
+  "extraPaths": ["adl", "DeDRM_tools", "kfxlib"],
+  "reportImplicitRelativeImport": "error",
+  "reportUnusedImport": "error",
+  "reportImportCycles": "error",
+  "reportMissingImports": "error"
 }
