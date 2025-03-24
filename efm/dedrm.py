@@ -103,7 +103,10 @@ def decryptpdf(
             message=f"Unsupported encryption type '{pdf_encryption}'",
         )
     except ineptpdf.PDFNoValidXRef as e:
-        raise RemoveDrmError(infile, message="Invalid PDF file", original_error=e)
+        logger.debug(
+            f"{infile} is invalid according to dedrm, but we ignore since it doesn't matter if it's not encrypted"
+        )
+        return infile
 
 
 def decryptpdb(infile: str, outdir: str, social_drm_file: str) -> str:
