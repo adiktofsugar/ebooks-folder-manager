@@ -123,7 +123,7 @@ def main():
         logger.error("Errors occurred during processing:")
         for filepath, error in errors:
             logger.error(
-                f"> {filepath}:{os.linesep}{''.join(traceback.format_exception(error)[1:])}"
+                f"> {filepath}:{os.linesep}{''.join([f'  | {line}' for line in traceback.format_exception_only(error)])}"
             )
         return 1
     return 0

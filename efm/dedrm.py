@@ -2,6 +2,7 @@ import logging
 import os
 from textwrap import dedent
 import time
+import traceback
 from typing import TypeGuard
 
 from DeDRM_plugin import ineptepub
@@ -57,48 +58,52 @@ def decryptpdf(
 ) -> str:
     filename = os.path.splitext(os.path.basename(infile))[0]
 
-    pdf_encryption = ineptpdf.getPDFencryptionType(infile)
-    if pdf_encryption is None:
-        logger.debug(f"Skipping {infile}. has no drm")
-        return infile
+    try:
+        pdf_encryption = ineptpdf.getPDFencryptionType(infile)
+        if pdf_encryption is None:
+            logger.debug(f"Skipping {infile}. has no drm")
+            return infile
 
-    logger.debug(f"PDF encryption type for {infile}: {pdf_encryption}")
+        logger.debug(f"PDF encryption type for {infile}: {pdf_encryption}")
 
-    keys: list[tuple[str, bytearray | bytes]] | None = None
-    if pdf_encryption == "EBX_HANDLER":
-        # Adobe eBook / ADEPT (normal or B&N)
-        keys = [(key_file, open(key_file, "rb").read()) for key_file in key_files]
-    elif pdf_encryption == "Standard" or pdf_encryption == "Adobe.APS":
-        keys = [
-            (password, bytearray(password, "utf-8")) for password in [""] + passwords
-        ]
+        keys: list[tuple[str, bytearray | bytes]] | None = None
+        if pdf_encryption == "EBX_HANDLER":
+            # Adobe eBook / ADEPT (normal or B&N)
+            keys = [(key_file, open(key_file, "rb").read()) for key_file in key_files]
+        elif pdf_encryption == "Standard" or pdf_encryption == "Adobe.APS":
+            keys = [
+                (password, bytearray(password, "utf-8"))
+                for password in [""] + passwords
+            ]
 
-    if keys is not None:
-        outfile = os.path.join(outdir, filename + "_nodrm.pdf")
-        for key_name, key in keys:
-            try:
-                rv = ineptpdf.decryptBook(key, infile, outfile)
-                if rv == 0:
-                    logger.info(f"Decrypted {infile} with {key_name}")
-                    return outfile
-            except ineptpdf.ADEPTInvalidPasswordError:
-                logger.debug(f"Invalid password for {infile}: '{key_name}'")
-            except Exception as e:
-                raise RemoveDrmError(infile, original_error=e)
-        raise RemoveDrmError(infile, message="No valid key file found")
+        if keys is not None:
+            outfile = os.path.join(outdir, filename + "_nodrm.pdf")
+            for key_name, key in keys:
+                try:
+                    rv = ineptpdf.decryptBook(key, infile, outfile)
+                    if rv == 0:
+                        logger.info(f"Decrypted {infile} with {key_name}")
+                        return outfile
+                except ineptpdf.ADEPTInvalidPasswordError:
+                    logger.debug(f"Invalid password for {infile}: '{key_name}'")
+                except Exception as e:
+                    raise RemoveDrmError(infile, original_error=e)
+            raise RemoveDrmError(infile, message="No valid key file found")
 
-    if pdf_encryption == "FOPN_fLock" or pdf_encryption == "FOPN_foweb":
+        if pdf_encryption == "FOPN_fLock" or pdf_encryption == "FOPN_foweb":
+            raise RemoveDrmError(
+                infile,
+                message=dedent("""
+                    FileOpen encryption is unsupported.
+                    Try the standalone script from the 'Tetrachroma_FileOpen_ineptpdf' folder in the Github repo.
+                """),
+            )
         raise RemoveDrmError(
             infile,
-            message=dedent("""
-                FileOpen encryption is unsupported.
-                Try the standalone script from the 'Tetrachroma_FileOpen_ineptpdf' folder in the Github repo.
-            """),
+            message=f"Unsupported encryption type '{pdf_encryption}'",
         )
-    raise RemoveDrmError(
-        infile,
-        message=f"Unsupported encryption type '{pdf_encryption}'",
-    )
+    except ineptpdf.PDFNoValidXRef as e:
+        raise RemoveDrmError(infile, message="Invalid PDF file", original_error=e)
 
 
 def decryptpdb(infile: str, outdir: str, social_drm_file: str) -> str:
@@ -189,31 +194,34 @@ def decryptk4mobi(
             kindle_pids,
             starttime,
         )
+
+        logger.info(f"Decrypted {infile}")
+        outfilename = k4mobidedrm.inferReasonableName(infile, book.getBookTitle())
+        outfilename = outfilename + "_nodrm"
+        outfile = os.path.join(outdir, outfilename + book.getBookExtension())
+
+        book.getFile(outfile)
+
+        if is_topaz_book(book):
+            logger.error(
+                "Topaz SVG books are not supported since they apparently output two files"
+            )
+            # zipname = os.path.join(outdir, outfilename + "_SVG.zip")
+            # book.getSVGZip(zipname)
+            # logger.info(
+            #     "Saved SVG ZIP Archive for {1:s} after {0:.1f} seconds".format(
+            #         time.time() - starttime, outfilename
+            #     )
+            # )
+
+        # remove internal temporary directory of Topaz pieces
+        book.cleanup()
+        return outfile
     except Exception as e:
-        raise RemoveDrmError(infile, "Could not decrypt", original_error=e)
-
-    logger.info(f"Decrypted {infile}")
-    outfilename = k4mobidedrm.inferReasonableName(infile, book.getBookTitle())
-    outfilename = outfilename + "_nodrm"
-    outfile = os.path.join(outdir, outfilename + book.getBookExtension())
-
-    book.getFile(outfile)
-
-    if is_topaz_book(book):
         logger.error(
-            "Topaz SVG books are not supported since they apparently output two files"
+            f"Failed to decrypt {infile}: {''.join(traceback.format_exception_only(e))}"
         )
-        # zipname = os.path.join(outdir, outfilename + "_SVG.zip")
-        # book.getSVGZip(zipname)
-        # logger.info(
-        #     "Saved SVG ZIP Archive for {1:s} after {0:.1f} seconds".format(
-        #         time.time() - starttime, outfilename
-        #     )
-        # )
-
-    # remove internal temporary directory of Topaz pieces
-    book.cleanup()
-    return outfile
+        raise RemoveDrmError(infile, "Could not decrypt", original_error=e) from e
 
 
 def is_topaz_book(book) -> TypeGuard[TopazBook]:

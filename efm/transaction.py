@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+import sys
 import tempfile
 import traceback
 from typing import Literal
@@ -36,7 +37,7 @@ class Transaction:
     def perform(self):
         temp_dirpath = tempfile.mkdtemp(prefix=self.filename)
         try:
-            logger.info(
+            logger.debug(
                 f"Processing {self.original_filepath} with actions {self.action_ids}"
             )
             action_ids_run = []
@@ -114,9 +115,7 @@ class Transaction:
                     f"Successfully executed {', '.join(action_ids_run)} for {new_filepath}. Intermediate files are in {temp_dirpath}. {self.original_filepath} has been backed up to {bak_filepath}."
                 )
             else:
-                logger.info(
-                    f"Skipped all actions for {self.original_filepath}. Intermediate files are in {temp_dirpath}."
-                )
+                logger.info(f"Skipped all actions for {self.original_filepath}.")
 
         except:
             traceback.print_exc()

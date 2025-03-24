@@ -9,7 +9,6 @@ valid_actions = ["download_acsm", "drm", "kfx2epub", "rename", "pdf", "print", "
 
 schema = Schema(
     {
-        Optional("extends"): str,
         Optional("actions"): valid_actions,
         Optional("adobe_key_files"): list[str],
         Optional("b_and_n_key_files"): list[str],
@@ -42,27 +41,17 @@ class Config(object):
 
     def __init__(self, filepath: Path):
         data = schema.validate(load_config(filepath))
-        extends = data.get("extends")
-        parent = Config(extends) if extends else None
-        self.actions = optional_list_value(data, "actions", parent)
-        self.adobe_key_files = optional_list_value(data, "adobe_key_files", parent)
-        self.b_and_n_key_files = optional_list_value(data, "b_and_n_key_files", parent)
-        self.ereader_social_drm_file = optional_value(
-            data, "ereader_social_drm_file", parent
-        )
-        self.kindle_pidnums = optional_list_value(data, "kindle_pidnums", parent)
-        self.kindle_serialnums = optional_list_value(data, "kindle_serialnums", parent)
-        self.kindle_database_files = optional_list_value(
-            data, "kindle_database_files", parent
-        )
-        self.kindle_android_files = optional_list_value(
-            data, "kindle_android_files", parent
-        )
-        self.adobe_user = optional_value(data, "adobe_user", parent)
-        self.adobe_password = data.get(
-            "adobe_password", parent.adobe_password if parent else None
-        )
-        self.pdf_passwords = optional_list_value(data, "pdf_passwords", parent)
+        self.actions = data.get("actions")
+        self.adobe_key_files = data.get("adobe_key_files")
+        self.b_and_n_key_files = data.get("b_and_n_key_files")
+        self.ereader_social_drm_file = data.get("ereader_social_drm_file")
+        self.kindle_pidnums = data.get("kindle_pidnums")
+        self.kindle_serialnums = data.get("kindle_serialnums")
+        self.kindle_database_files = data.get("kindle_database_files")
+        self.kindle_android_files = data.get("kindle_android_files")
+        self.adobe_user = data.get("adobe_user")
+        self.adobe_password = data.get("adobe_password")
+        self.pdf_passwords = data.get("pdf_passwords")
 
 
 def optional_value(d: dict[str, str], key: str, parent: Config | None) -> str | None:
