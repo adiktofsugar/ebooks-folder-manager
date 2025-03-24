@@ -70,7 +70,7 @@ from ..constants import StreamAttributes as SA
 from ..constants import TypArguments as TA
 from ..constants import TypFitArguments as TF
 from ..errors import STREAM_TRUNCATED_PREMATURELY, PdfReadError, PdfStreamError
-from ._base import (
+from _base import (
     BooleanObject,
     ByteStringObject,
     FloatObject,
@@ -82,15 +82,15 @@ from ._base import (
     TextStringObject,
     is_null_or_none,
 )
-from ._fit import Fit
-from ._image_inline import (
+from _fit import Fit
+from _image_inline import (
     extract_inline_A85,
     extract_inline_AHx,
     extract_inline_DCT,
     extract_inline_default,
     extract_inline_RL,
 )
-from ._utils import read_hex_string_from_stream, read_string_from_stream
+from _utils import read_hex_string_from_stream, read_string_from_stream
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -1016,7 +1016,7 @@ class StreamObject(DictionaryObject):
 
     @staticmethod
     def initialize_from_dictionary(
-        data: Dict[str, Any]
+        data: Dict[str, Any],
     ) -> Union["EncodedStreamObject", "DecodedStreamObject"]:
         retval: Union[EncodedStreamObject, DecodedStreamObject]
         if SA.FILTER in data:
@@ -1145,8 +1145,8 @@ class ContentStream(DecodedStreamObject):
 
     These fields are "rebuilt" lazily, when accessed:
 
-    * when .get_data() is called, if ._data is None, it is rebuilt from ._operations.
-    * when .operations is called, if ._operations is None, it is rebuilt from ._data.
+    * when .get_data() is called, if ._data is None, it is rebuilt from _operations.
+    * when .operations is called, if ._operations is None, it is rebuilt from _data.
 
     Conversely, these fields can be invalidated:
 
@@ -1596,9 +1596,9 @@ class Destination(TreeObject):
 
     """
 
-    node: Optional[
-        DictionaryObject
-    ] = None  # node provide access to the original Object
+    node: Optional[DictionaryObject] = (
+        None  # node provide access to the original Object
+    )
 
     def __init__(
         self,

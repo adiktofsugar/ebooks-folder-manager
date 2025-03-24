@@ -14,7 +14,7 @@ from ..generic._base import (
 )
 from ..generic._rectangle import RectangleObject
 from ..generic._utils import hex_to_rgb
-from ._base import NO_FLAGS, AnnotationDictionary
+from _base import NO_FLAGS, AnnotationDictionary
 
 if sys.version_info[:2] >= (3, 10):
     from typing import TypeAlias

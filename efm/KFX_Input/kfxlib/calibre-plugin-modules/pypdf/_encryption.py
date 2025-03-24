@@ -43,8 +43,8 @@ from pypdf._crypt_providers import (
     rc4_encrypt,
 )
 
-from ._utils import logger_warning
-from .generic import (
+from _utils import logger_warning
+from generic import (
     ArrayObject,
     ByteStringObject,
     DictionaryObject,

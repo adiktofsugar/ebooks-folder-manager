@@ -46,9 +46,9 @@ from typing import (
     cast,
 )
 
-from ._doc_common import PdfDocCommon, convert_to_int
-from ._encryption import Encryption, PasswordType
-from ._utils import (
+from _doc_common import PdfDocCommon, convert_to_int
+from _encryption import Encryption, PasswordType
+from _utils import (
     StrByteType,
     StreamType,
     logger_warning,
@@ -58,15 +58,15 @@ from ._utils import (
     skip_over_comment,
     skip_over_whitespace,
 )
-from .constants import TrailerKeys as TK
-from .errors import (
+from constants import TrailerKeys as TK
+from errors import (
     EmptyFileError,
     FileNotDecryptedError,
     PdfReadError,
     PdfStreamError,
     WrongPasswordError,
 )
-from .generic import (
+from generic import (
     ArrayObject,
     ContentStream,
     DecodedStreamObject,
@@ -82,10 +82,10 @@ from .generic import (
     is_null_or_none,
     read_object,
 )
-from .xmp import XmpInformation
+from xmp import XmpInformation
 
 if TYPE_CHECKING:
-    from ._page import PageObject
+    from _page import PageObject
 
 
 class PdfReader(PdfDocCommon):
@@ -331,7 +331,8 @@ class PdfReader(PdfDocCommon):
         """
         if self._page_id2num is None:
             self._page_id2num = {
-                x.indirect_reference.idnum: i for i, x in enumerate(self.pages)  # type: ignore
+                x.indirect_reference.idnum: i
+                for i, x in enumerate(self.pages)  # type: ignore
             }
 
         if is_null_or_none(indirect_reference):
@@ -452,7 +453,7 @@ class PdfReader(PdfDocCommon):
                     )
                     self.xref[indirect_reference.generation][
                         indirect_reference.idnum
-                    ] = (m.start(0) + 1)
+                    ] = m.start(0) + 1
                     self.stream.seek(m.start(0) + 1)
                     idnum, generation = self.read_object_header(self.stream)
                 else:
@@ -784,7 +785,7 @@ class PdfReader(PdfDocCommon):
                 # 21-byte entries (or more) due to the use of \r\n
                 # (CRLF) EOL's. Detect that case, and adjust the line
                 # until it does not begin with a \r (CR) or \n (LF).
-                while line[0] in b"\x0D\x0A":
+                while line[0] in b"\x0d\x0a":
                     stream.seek(-20 + 1, 1)
                     line = stream.read(20)
 

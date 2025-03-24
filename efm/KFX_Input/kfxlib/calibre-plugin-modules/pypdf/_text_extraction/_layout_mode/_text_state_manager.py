@@ -7,8 +7,8 @@ from typing import Counter as CounterType
 
 from ...errors import PdfReadError
 from .. import mult
-from ._font import Font
-from ._text_state_params import TextStateParams
+from _font import Font
+from _text_state_params import TextStateParams
 
 TextStateManagerChainMapType = ChainMapType[Union[int, str], Union[float, bool]]
 TextStateManagerDictType = MutableMapping[Union[int, str], Union[float, bool]]
@@ -105,9 +105,7 @@ class TextStateManager:
                     )
             except (UnicodeEncodeError, UnicodeDecodeError):
                 txt = value.decode("utf-8", "replace")
-            txt = "".join(
-                self.font.char_map.get(x, x) for x in txt
-            )
+            txt = "".join(self.font.char_map.get(x, x) for x in txt)
         else:
             txt = value
         return TextStateParams(
@@ -194,7 +192,8 @@ class TextStateManager:
         """Append a text transform matrix"""
         self.transform_stack = self.transform_stack.new_child(
             self.new_transform(  # type: ignore[misc]
-                *self._complete_matrix(operands), is_text=True  # type: ignore[arg-type]
+                *self._complete_matrix(operands),
+                is_text=True,  # type: ignore[arg-type]
             )
         )
         return self.transform_stack
@@ -203,7 +202,9 @@ class TextStateManager:
         """Append a text rendering transform matrix"""
         self.transform_stack = self.transform_stack.new_child(
             self.new_transform(  # type: ignore[misc]
-                *self._complete_matrix(operands), is_text=True, is_render=True  # type: ignore[arg-type]
+                *self._complete_matrix(operands),
+                is_text=True,
+                is_render=True,  # type: ignore[arg-type]
             )
         )
         return self.transform_stack

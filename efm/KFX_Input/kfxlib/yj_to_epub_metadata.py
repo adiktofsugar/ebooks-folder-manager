@@ -1,10 +1,14 @@
 import datetime
 
-from .message_logging import log
-from .yj_to_epub_properties import (
-        DEFAULT_DOCUMENT_FONT_FAMILY, DEFAULT_FONT_NAMES, DEFAULT_DOCUMENT_FONT_SIZE,
-        DEFAULT_DOCUMENT_LINE_HEIGHT, DEFAULT_KC_COMIC_FONT_SIZE)
-from .yj_structure import (METADATA_NAMES, SYM_TYPE)
+from message_logging import log
+from yj_to_epub_properties import (
+    DEFAULT_DOCUMENT_FONT_FAMILY,
+    DEFAULT_FONT_NAMES,
+    DEFAULT_DOCUMENT_FONT_SIZE,
+    DEFAULT_DOCUMENT_LINE_HEIGHT,
+    DEFAULT_KC_COMIC_FONT_SIZE,
+)
+from yj_structure import METADATA_NAMES, SYM_TYPE
 
 
 __license__ = "GPL v3"
@@ -15,7 +19,7 @@ ORIENTATIONS = {
     "$385": "portrait",
     "$386": "landscape",
     "$349": "none",
-    }
+}
 
 
 class KFX_EPUB_Metadata(object):
@@ -48,7 +52,10 @@ class KFX_EPUB_Metadata(object):
         if "$477" in document_data:
             spacing_percent_base = document_data.pop("$477")
             if spacing_percent_base != "$56":
-                log.error("Unexpected document spacing_percent_base: %s" % spacing_percent_base)
+                log.error(
+                    "Unexpected document spacing_percent_base: %s"
+                    % spacing_percent_base
+                )
 
         if "$581" in document_data:
             pan_zoom = document_data.pop("$581")
@@ -59,7 +66,9 @@ class KFX_EPUB_Metadata(object):
             self.set_book_type("comic")
             comic_panel_view_mode = document_data.pop("$665")
             if comic_panel_view_mode != "$666":
-                log.error("Unexpected comic panel view mode: %s" % comic_panel_view_mode)
+                log.error(
+                    "Unexpected comic panel view mode: %s" % comic_panel_view_mode
+                )
 
         if "$668" in document_data:
             auto_contrast = document_data.pop("$668")
@@ -93,9 +102,19 @@ class KFX_EPUB_Metadata(object):
         if "max_id" in document_data:
             max_id = document_data.pop("max_id")
             if self.book_symbol_format != SYM_TYPE.SHORT:
-                log.error("Unexpected document_data max_id=%s for %s symbol format" % (max_id, self.book_symbol_format))
-        elif self.book_symbol_format == SYM_TYPE.SHORT and self.reading_orders and len(self.reading_orders[0].get("$170")) > 0:
-            log.error("Book has %s symbol format without document_data max_id" % self.book_symbol_format)
+                log.error(
+                    "Unexpected document_data max_id=%s for %s symbol format"
+                    % (max_id, self.book_symbol_format)
+                )
+        elif (
+            self.book_symbol_format == SYM_TYPE.SHORT
+            and self.reading_orders
+            and len(self.reading_orders[0].get("$170")) > 0
+        ):
+            log.error(
+                "Book has %s symbol format without document_data max_id"
+                % self.book_symbol_format
+            )
 
         self.font_name_replacements["default"] = DEFAULT_DOCUMENT_FONT_FAMILY
 
@@ -107,19 +126,30 @@ class KFX_EPUB_Metadata(object):
 
         self.page_progression_direction = doc_style.pop("direction", "ltr")
 
-        self.default_font_family = doc_style.pop("font-family", DEFAULT_DOCUMENT_FONT_FAMILY)
+        self.default_font_family = doc_style.pop(
+            "font-family", DEFAULT_DOCUMENT_FONT_FAMILY
+        )
 
         for default_name in DEFAULT_FONT_NAMES:
             for font_family in self.default_font_family.split(","):
-                self.font_name_replacements[default_name] = self.strip_font_name(font_family)
+                self.font_name_replacements[default_name] = self.strip_font_name(
+                    font_family
+                )
 
         self.default_font_size = doc_style.pop("font-size", DEFAULT_DOCUMENT_FONT_SIZE)
-        if self.default_font_size not in [DEFAULT_DOCUMENT_FONT_SIZE, DEFAULT_KC_COMIC_FONT_SIZE]:
+        if self.default_font_size not in [
+            DEFAULT_DOCUMENT_FONT_SIZE,
+            DEFAULT_KC_COMIC_FONT_SIZE,
+        ]:
             log.warning("Unexpected document font-size: %s" % self.default_font_size)
 
-        self.default_line_height = doc_style.pop("line-height", DEFAULT_DOCUMENT_LINE_HEIGHT)
+        self.default_line_height = doc_style.pop(
+            "line-height", DEFAULT_DOCUMENT_LINE_HEIGHT
+        )
         if self.default_line_height != DEFAULT_DOCUMENT_LINE_HEIGHT:
-            log.warning("Unexpected document line-height: %s" % self.default_line_height)
+            log.warning(
+                "Unexpected document line-height: %s" % self.default_line_height
+            )
 
         self.writing_mode = doc_style.pop("writing-mode", "horizontal-tb")
         if self.writing_mode not in ["horizontal-tb", "vertical-lr", "vertical-rl"]:
@@ -157,7 +187,9 @@ class KFX_EPUB_Metadata(object):
             for metadata in categorised_metadata.pop("$258"):
                 key = metadata.pop("$492")
                 self.process_metadata_item(category, key, metadata.pop("$307"))
-                self.check_empty(metadata, "categorised_metadata %s/%s" % (category, key))
+                self.check_empty(
+                    metadata, "categorised_metadata %s/%s" % (category, key)
+                )
 
             self.check_empty(categorised_metadata, "categorised_metadata %s" % category)
 
@@ -166,8 +198,11 @@ class KFX_EPUB_Metadata(object):
         for key, value in self.book_data.pop("$258", {}).items():
             self.process_metadata_item("", METADATA_NAMES.get(key, str(key)), value)
 
-        if (self.book_type is None and self.fixed_layout and
-                (self.virtual_panels_allowed or not self.is_print_replica)):
+        if (
+            self.book_type is None
+            and self.fixed_layout
+            and (self.virtual_panels_allowed or not self.is_print_replica)
+        ):
             self.set_book_type("comic")
 
             if not self.region_magnification:
@@ -177,7 +212,10 @@ class KFX_EPUB_Metadata(object):
             self.fixed_layout = True
             self.set_book_type("notebook")
             if not self.title:
-                self.title = "Notebook %s %s" % (self.book_id, datetime.date.today().isoformat())
+                self.title = "Notebook %s %s" % (
+                    self.book_id,
+                    datetime.date.today().isoformat(),
+                )
 
     def process_metadata_item(self, category, key, value):
         cat_key = "%s/%s" % (category, key) if category else key
@@ -196,7 +234,10 @@ class KFX_EPUB_Metadata(object):
                 self.authors = [a.strip() for a in value.split("&") if a]
         elif cat_key == "kindle_title_metadata/book_id":
             self.book_id = value
-        elif cat_key == "kindle_title_metadata/cde_content_type" or cat_key == "cde_content_type":
+        elif (
+            cat_key == "kindle_title_metadata/cde_content_type"
+            or cat_key == "cde_content_type"
+        ):
             self.cde_content_type = value
             if value == "MAGZ":
                 self.set_book_type("magazine")
@@ -230,7 +271,10 @@ class KFX_EPUB_Metadata(object):
                 self.title_pronunciation = value.strip()
         elif cat_key == "kindle_ebook_metadata/book_orientation_lock":
             if value != self.orientation_lock:
-                log.error("Conflicting orientation lock values: %s, %s" % (self.orientation_lock, value))
+                log.error(
+                    "Conflicting orientation lock values: %s, %s"
+                    % (self.orientation_lock, value)
+                )
             self.orientation_lock = value
         elif cat_key == "kindle_title_metadata/is_dictionary":
             self.is_dictionary = value

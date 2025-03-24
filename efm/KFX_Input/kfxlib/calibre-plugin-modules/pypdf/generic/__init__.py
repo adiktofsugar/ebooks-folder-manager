@@ -26,6 +26,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 """Implementation of generic PDF objects (dictionary, number, string, ...)."""
+
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
@@ -35,7 +36,7 @@ from .._utils import (
     deprecation_with_replacement,
 )
 from ..constants import OutlineFontFlag
-from ._base import (
+from _base import (
     BooleanObject,
     ByteStringObject,
     FloatObject,
@@ -48,7 +49,7 @@ from ._base import (
     encode_pdfdocencoding,
     is_null_or_none,
 )
-from ._data_structures import (
+from _data_structures import (
     ArrayObject,
     ContentStream,
     DecodedStreamObject,
@@ -60,17 +61,17 @@ from ._data_structures import (
     TreeObject,
     read_object,
 )
-from ._fit import Fit
-from ._outline import OutlineItem
-from ._rectangle import RectangleObject
-from ._utils import (
+from _fit import Fit
+from _outline import OutlineItem
+from _rectangle import RectangleObject
+from _utils import (
     create_string_object,
     decode_pdfdocencoding,
     hex_to_rgb,
     read_hex_string_from_stream,
     read_string_from_stream,
 )
-from ._viewerpref import ViewerPreferences
+from _viewerpref import ViewerPreferences
 
 PAGE_FIT = Fit.fit()
 
@@ -182,7 +183,7 @@ class AnnotationBuilder:  # deprecated
             "AnnotationBuilder.polygon", "pypdf.annotations.Polygon", "5.0.0"
         )
 
-    from ._fit import DEFAULT_FIT
+    from _fit import DEFAULT_FIT
 
     @staticmethod
     def link(

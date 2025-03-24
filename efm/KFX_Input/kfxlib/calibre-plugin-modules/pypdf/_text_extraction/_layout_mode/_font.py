@@ -5,7 +5,7 @@ from typing import Any, Dict, Sequence, Union, cast
 
 from ...errors import ParseError
 from ...generic import IndirectObject
-from ._font_widths import STANDARD_WIDTHS
+from _font_widths import STANDARD_WIDTHS
 
 
 @dataclass

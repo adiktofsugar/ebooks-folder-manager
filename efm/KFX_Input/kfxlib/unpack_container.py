@@ -2,12 +2,12 @@ import io
 import posixpath
 import zipfile
 
-from .ion import (IonAnnotation, IonBLOB)
-from .ion_text import IonText
-from .message_logging import log
-from .resources import (EXTS_OF_MIMETYPE, font_file_ext, image_file_ext, SYMBOL_FORMATS)
-from .utilities import (DataFile, json_serialize, type_name)
-from .yj_container import (YJContainer, YJFragment)
+from ion import IonAnnotation, IonBLOB
+from ion_text import IonText
+from message_logging import log
+from resources import EXTS_OF_MIMETYPE, font_file_ext, image_file_ext, SYMBOL_FORMATS
+from utilities import DataFile, json_serialize, type_name
+from yj_container import YJContainer, YJFragment
 
 
 __license__ = "GPL v3"
@@ -17,9 +17,14 @@ __copyright__ = "2016-2025, John Howell <jhowell@acm.org>"
 class IonTextContainer(YJContainer):
     def deserialize(self, ignore_drm=False):
         self.fragments.clear()
-        for annot in IonText(self.symtab).deserialize_multiple_values(self.datafile.get_data(), import_symbols=True):
+        for annot in IonText(self.symtab).deserialize_multiple_values(
+            self.datafile.get_data(), import_symbols=True
+        ):
             if not isinstance(annot, IonAnnotation):
-                raise Exception("deserialize kfx ion text expected IonAnnotation but found %s" % type_name(annot))
+                raise Exception(
+                    "deserialize kfx ion text expected IonAnnotation but found %s"
+                    % type_name(annot)
+                )
 
             self.fragments.append(YJFragment(annot))
 
@@ -34,8 +39,11 @@ class ZipUnpackContainer(YJContainer):
         with self.datafile.as_ZipFile() as zf:
             for info in zf.infolist():
                 if info.filename == "book.ion":
-                    IonTextContainer(self.symtab, datafile=DataFile(info.filename, data=zf.read(info)),
-                                     fragments=self.fragments).deserialize()
+                    IonTextContainer(
+                        self.symtab,
+                        datafile=DataFile(info.filename, data=zf.read(info)),
+                        fragments=self.fragments,
+                    ).deserialize()
                     break
             else:
                 raise Exception("book.ion file missing from ZipUnpackContainer")
@@ -49,11 +57,19 @@ class ZipUnpackContainer(YJContainer):
                 if info.filename != "book.ion" and not info.filename.endswith("/"):
                     fn, ext = posixpath.splitext(info.filename)
 
-                    fid = fn[:-1] if ext and fn.endswith(self.ADDED_EXT_FLAG_CHAR) else info.filename
+                    fid = (
+                        fn[:-1]
+                        if ext and fn.endswith(self.ADDED_EXT_FLAG_CHAR)
+                        else info.filename
+                    )
 
-                    self.fragments.append(YJFragment(
-                            ftype=("$418" if fid in fonts else "$417"), fid=fid,
-                            value=IonBLOB(zf.read(info))))
+                    self.fragments.append(
+                        YJFragment(
+                            ftype=("$418" if fid in fonts else "$417"),
+                            fid=fid,
+                            value=IonBLOB(zf.read(info)),
+                        )
+                    )
 
     def serialize(self):
         desired_extension = {}
@@ -84,9 +100,12 @@ class ZipUnpackContainer(YJContainer):
         zfile = io.BytesIO()
 
         with zipfile.ZipFile(zfile, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-
-            zf.writestr("book.ion", IonTextContainer(
-                    self.symtab, fragments=self.fragments.filtered(omit_resources=True)).serialize())
+            zf.writestr(
+                "book.ion",
+                IonTextContainer(
+                    self.symtab, fragments=self.fragments.filtered(omit_resources=True)
+                ).serialize(),
+            )
 
             for ftype in ["$417", "$418"]:
                 for fragment in self.fragments.get_all(ftype):
@@ -114,7 +133,6 @@ class ZipUnpackContainer(YJContainer):
 
 
 class JsonContentContainer(object):
-
     VERSION = "1.1"
     TYPE_TEXT = 1
     TYPE_IMAGE = 2
@@ -124,19 +142,26 @@ class JsonContentContainer(object):
         self.book = book
 
     def serialize(self, keep_footnote_refs):
-        content_pos_info = self.book.collect_content_position_info(keep_footnote_refs=keep_footnote_refs)
+        content_pos_info = self.book.collect_content_position_info(
+            keep_footnote_refs=keep_footnote_refs
+        )
         data = []
         next_pid = 0
 
         for chunk in content_pos_info:
-
             if chunk.pid != next_pid:
-                log.error("next PID is %d but expected %d: %s" % (chunk.pid, next_pid, repr(chunk)))
+                log.error(
+                    "next PID is %d but expected %d: %s"
+                    % (chunk.pid, next_pid, repr(chunk))
+                )
                 next_pid = chunk.pid
 
             if chunk.text is not None:
                 if len(chunk.text) != chunk.length:
-                    log.error("chunk length %d but have %d characters: %s" % (chunk.length, len(chunk.text), repr(chunk)))
+                    log.error(
+                        "chunk length %d but have %d characters: %s"
+                        % (chunk.length, len(chunk.text), repr(chunk))
+                    )
 
                 entry = {}
                 entry["content"] = chunk.text
@@ -145,7 +170,9 @@ class JsonContentContainer(object):
                 data.append(entry)
             elif chunk.image_resource is not None:
                 if chunk.length != 1:
-                    log.error("chunk length %d for image: %s" % (chunk.length, repr(chunk)))
+                    log.error(
+                        "chunk length %d for image: %s" % (chunk.length, repr(chunk))
+                    )
 
                 entry = {}
                 entry["content"] = chunk.image_resource

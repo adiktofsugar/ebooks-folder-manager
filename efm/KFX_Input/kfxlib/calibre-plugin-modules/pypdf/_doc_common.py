@@ -45,28 +45,28 @@ from typing import (
     cast,
 )
 
-from ._encryption import Encryption
-from ._page import PageObject, _VirtualList
-from ._page_labels import index2label as page_index2page_label
-from ._utils import (
+from _encryption import Encryption
+from _page import PageObject, _VirtualList
+from _page_labels import index2label as page_index2page_label
+from _utils import (
     deprecate_with_replacement,
     logger_warning,
     parse_iso8824_date,
 )
-from .constants import CatalogAttributes as CA
-from .constants import CatalogDictionary as CD
-from .constants import (
+from constants import CatalogAttributes as CA
+from constants import CatalogDictionary as CD
+from constants import (
     CheckboxRadioButtonAttributes,
     GoToActionArguments,
     UserAccessPermissions,
 )
-from .constants import Core as CO
-from .constants import DocumentInformationAttributes as DI
-from .constants import FieldDictionaryAttributes as FA
-from .constants import PageAttributes as PG
-from .constants import PagesAttributes as PA
-from .errors import PdfReadError, PyPdfError
-from .generic import (
+from constants import Core as CO
+from constants import DocumentInformationAttributes as DI
+from constants import FieldDictionaryAttributes as FA
+from constants import PageAttributes as PG
+from constants import PagesAttributes as PA
+from errors import PdfReadError, PyPdfError
+from generic import (
     ArrayObject,
     BooleanObject,
     ByteStringObject,
@@ -87,8 +87,8 @@ from .generic import (
     create_string_object,
     is_null_or_none,
 )
-from .types import OutlineType, PagemodeType
-from .xmp import XmpInformation
+from types import OutlineType, PagemodeType
+from xmp import XmpInformation
 
 
 def convert_to_int(d: bytes, size: int) -> Union[int, Tuple[Any, ...]]:
@@ -257,28 +257,25 @@ class PdfDocCommon:
 
     @property
     @abstractmethod
-    def root_object(self) -> DictionaryObject:
-        ...  # pragma: no cover
+    def root_object(self) -> DictionaryObject: ...  # pragma: no cover
 
     @property
     @abstractmethod
-    def pdf_header(self) -> str:
-        ...  # pragma: no cover
+    def pdf_header(self) -> str: ...  # pragma: no cover
 
     @abstractmethod
     def get_object(
         self, indirect_reference: Union[int, IndirectObject]
-    ) -> Optional[PdfObject]:
-        ...  # pragma: no cover
+    ) -> Optional[PdfObject]: ...  # pragma: no cover
 
     @abstractmethod
-    def _replace_object(self, indirect: IndirectObject, obj: PdfObject) -> PdfObject:
-        ...  # pragma: no cover
+    def _replace_object(
+        self, indirect: IndirectObject, obj: PdfObject
+    ) -> PdfObject: ...  # pragma: no cover
 
     @property
     @abstractmethod
-    def _info(self) -> Optional[DictionaryObject]:
-        ...  # pragma: no cover
+    def _info(self) -> Optional[DictionaryObject]: ...  # pragma: no cover
 
     @property
     def metadata(self) -> Optional[DocumentInformation]:
@@ -296,8 +293,7 @@ class PdfDocCommon:
         return retval
 
     @property
-    def xmp_metadata(self) -> Optional[XmpInformation]:
-        ...  # pragma: no cover
+    def xmp_metadata(self) -> Optional[XmpInformation]: ...  # pragma: no cover
 
     @abstractmethod
     def _repr_mimebundle_(
@@ -911,8 +907,7 @@ class PdfDocCommon:
     @abstractmethod
     def _get_page_number_by_indirect(
         self, indirect_reference: Union[None, int, NullObject, IndirectObject]
-    ) -> Optional[int]:
-        ...  # pragma: no cover
+    ) -> Optional[int]: ...  # pragma: no cover
 
     def get_page_number(self, page: PageObject) -> Optional[int]:
         """
@@ -1028,7 +1023,9 @@ class PdfDocCommon:
         if outline_item:
             if "/C" in node:
                 # Color of outline item font in (R, G, B) with values ranging 0.0-1.0
-                outline_item[NameObject("/C")] = ArrayObject(FloatObject(c) for c in node["/C"])  # type: ignore
+                outline_item[NameObject("/C")] = ArrayObject(
+                    FloatObject(c) for c in node["/C"]
+                )  # type: ignore
             if "/F" in node:
                 # specifies style characteristics bold and/or italic
                 # with 1=italic, 2=bold, 3=both

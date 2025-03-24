@@ -4,7 +4,7 @@ from typing import Dict, List, Tuple, Union
 from .._codecs import _pdfdoc_encoding
 from .._utils import StreamType, logger_warning, read_non_whitespace
 from ..errors import STREAM_TRUNCATED_PREMATURELY, PdfStreamError
-from ._base import ByteStringObject, TextStringObject
+from _base import ByteStringObject, TextStringObject
 
 
 def hex_to_rgb(value: str) -> Tuple[float, float, float]:
@@ -114,7 +114,7 @@ def read_string_from_stream(
                     # line break was escaped:
                     continue
                 else:
-                    msg = f"Unexpected escaped string: {tok.decode('utf-8','ignore')}"
+                    msg = f"Unexpected escaped string: {tok.decode('utf-8', 'ignore')}"
                     logger_warning(msg, __name__)
                     txt.append(__BACKSLASH_CODE__)
         txt.append(ord(tok))

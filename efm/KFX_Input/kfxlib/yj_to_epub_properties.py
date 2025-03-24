@@ -4,10 +4,39 @@ import functools
 from lxml import etree
 import re
 
-from .epub_output import (EPUB_NS_URI, EPUB_TYPE, IDX_ENTRY, MATH, qname, SVG, XML_LANG, XML_NS_URI, value_str)
-from .ion import (ion_type, IonBool, IonDecimal, IonFloat, IonInt, IonList, IonString, IonStruct, IonSymbol, isstring)
-from .message_logging import log
-from .utilities import (get_url_filename, list_symbols, natural_sort_key, remove_duplicates, type_name, urlabspath, urlrelpath)
+from epub_output import (
+    EPUB_NS_URI,
+    EPUB_TYPE,
+    IDX_ENTRY,
+    MATH,
+    qname,
+    SVG,
+    XML_LANG,
+    XML_NS_URI,
+    value_str,
+)
+from ion import (
+    ion_type,
+    IonBool,
+    IonDecimal,
+    IonFloat,
+    IonInt,
+    IonList,
+    IonString,
+    IonStruct,
+    IonSymbol,
+    isstring,
+)
+from message_logging import log
+from utilities import (
+    get_url_filename,
+    list_symbols,
+    natural_sort_key,
+    remove_duplicates,
+    type_name,
+    urlabspath,
+    urlrelpath,
+)
 
 
 __license__ = "GPL v3"
@@ -38,18 +67,19 @@ MINIMUM_LINE_HEIGHT = decimal.Decimal("1.0")
 CVT_DIRECTION_PROPERTY_TO_MARKUP = False
 
 DEFAULT_DOCUMENT_FONT_FAMILY = "serif"
-DEFAULT_DOCUMENT_LINE_HEIGHT = "normal" if USE_NORMAL_LINE_HEIGHT else NORMAL_LINE_HEIGHT_EM
+DEFAULT_DOCUMENT_LINE_HEIGHT = (
+    "normal" if USE_NORMAL_LINE_HEIGHT else NORMAL_LINE_HEIGHT_EM
+)
 DEFAULT_DOCUMENT_FONT_SIZE = "1em"
 
 DEFAULT_KC_COMIC_FONT_SIZE = "16px"
 
 DEFAULT_CLASS_NAME_PREFIX = "class"
 
-ALPHA_MASK = 0xff000000
+ALPHA_MASK = 0xFF000000
 
 
 class Prop(object):
-
     def __init__(self, name, values=None):
         self.name = name
         self.values = values
@@ -58,7 +88,7 @@ class Prop(object):
 COLLISIONS = {
     "$352": "always",
     "$652": "queue",
-    }
+}
 
 
 BORDER_STYLES = {
@@ -71,7 +101,7 @@ BORDER_STYLES = {
     "$334": "groove",
     "$336": "inset",
     "$337": "outset",
-    }
+}
 
 
 LAYOUT_HINT_ELEMENT_NAMES = {
@@ -85,545 +115,608 @@ YJ_PROPERTY_INFO = {
     "$479": Prop("background-image"),
     "$480": Prop("-kfx-background-positionx"),
     "$481": Prop("-kfx-background-positiony"),
-
-    "$547": Prop("background-origin", {
-        "$378": "border-box",
-        "$377": "content-box",
-        "$379": "padding-box",
-        }),
-
-    "$484": Prop("background-repeat", {
-        "$487": "no-repeat",
-        "$485": "repeat-x",
-        "$486": "repeat-y",
-        }),
-
+    "$547": Prop(
+        "background-origin",
+        {
+            "$378": "border-box",
+            "$377": "content-box",
+            "$379": "padding-box",
+        },
+    ),
+    "$484": Prop(
+        "background-repeat",
+        {
+            "$487": "no-repeat",
+            "$485": "repeat-x",
+            "$486": "repeat-y",
+        },
+    ),
     "$482": Prop("-kfx-background-sizex"),
     "$483": Prop("-kfx-background-sizey"),
-
     "$31": Prop("-kfx-baseline-shift"),
-
-    "$44": Prop("-kfx-baseline-style", {
-        "$60": "bottom",
-        "$320": "middle",
-        "$350": "baseline",
-        "$371": "sub",
-        "$370": "super",
-        "$449": "text-bottom",
-        "$447": "text-top",
-        "$58": "top",
-        }),
-
-    "$682": Prop("direction", {
-        "$376": "ltr",
-        "$375": "rtl",
-        }),
-
-    "$674": Prop("unicode-bidi", {
-        "$675": "embed",
-        "$676": "isolate",
-        "$678": "isolate-override",
-        "$350": "normal",
-        "$677": "bidi-override",
-        "$679": "plaintext",
-        }),
-
+    "$44": Prop(
+        "-kfx-baseline-style",
+        {
+            "$60": "bottom",
+            "$320": "middle",
+            "$350": "baseline",
+            "$371": "sub",
+            "$370": "super",
+            "$449": "text-bottom",
+            "$447": "text-top",
+            "$58": "top",
+        },
+    ),
+    "$682": Prop(
+        "direction",
+        {
+            "$376": "ltr",
+            "$375": "rtl",
+        },
+    ),
+    "$674": Prop(
+        "unicode-bidi",
+        {
+            "$675": "embed",
+            "$676": "isolate",
+            "$678": "isolate-override",
+            "$350": "normal",
+            "$677": "bidi-override",
+            "$679": "plaintext",
+        },
+    ),
     "$83": Prop("border-color"),
     "$86": Prop("border-bottom-color"),
     "$85": Prop("border-left-color"),
     "$87": Prop("border-right-color"),
     "$84": Prop("border-top-color"),
-
     "$461": Prop("border-bottom-left-radius"),
     "$462": Prop("border-bottom-right-radius"),
     "$459": Prop("border-top-left-radius"),
     "$460": Prop("border-top-right-radius"),
-
     "$457": Prop("-webkit-border-horizontal-spacing"),
     "$456": Prop("-webkit-border-vertical-spacing"),
-
     "$88": Prop("border-style", BORDER_STYLES),
     "$91": Prop("border-bottom-style", BORDER_STYLES),
     "$90": Prop("border-left-style", BORDER_STYLES),
     "$92": Prop("border-right-style", BORDER_STYLES),
     "$89": Prop("border-top-style", BORDER_STYLES),
-
     "$93": Prop("border-width"),
     "$96": Prop("border-bottom-width"),
     "$95": Prop("border-left-width"),
     "$97": Prop("border-right-width"),
     "$94": Prop("border-top-width"),
-
     "$60": Prop("bottom"),
-    "$580": Prop("-kfx-box-align", {
-        "$320": "center",
-        "$59": "left",
-        "$61": "right",
-        }),
-
-    "$133": Prop("page-break-after", {
-        "$352": "always",
-        "$383": "auto",
-        "$353": "avoid",
-        }),
-
-    "$134": Prop("page-break-before", {
-        "$352": "always",
-        "$383": "auto",
-        "$353": "avoid",
-        }),
-
-    "$135": Prop("page-break-inside", {
-        "$383": "auto",
-        "$353": "avoid",
-        }),
-
-    "$708": Prop("-kfx-character-width", {
-        "$383": None,
-        }),
-
-    "$476": Prop("overflow", {
-        False: "visible",
-        True: "hidden",
-        }),
-
-    "$112": Prop("column-count", {
-        "$383": "auto",
-        }),
-
+    "$580": Prop(
+        "-kfx-box-align",
+        {
+            "$320": "center",
+            "$59": "left",
+            "$61": "right",
+        },
+    ),
+    "$133": Prop(
+        "page-break-after",
+        {
+            "$352": "always",
+            "$383": "auto",
+            "$353": "avoid",
+        },
+    ),
+    "$134": Prop(
+        "page-break-before",
+        {
+            "$352": "always",
+            "$383": "auto",
+            "$353": "avoid",
+        },
+    ),
+    "$135": Prop(
+        "page-break-inside",
+        {
+            "$383": "auto",
+            "$353": "avoid",
+        },
+    ),
+    "$708": Prop(
+        "-kfx-character-width",
+        {
+            "$383": None,
+        },
+    ),
+    "$476": Prop(
+        "overflow",
+        {
+            False: "visible",
+            True: "hidden",
+        },
+    ),
+    "$112": Prop(
+        "column-count",
+        {
+            "$383": "auto",
+        },
+    ),
     "$116": Prop("column-rule-color"),
-
-    "$192": Prop("direction", {
-        "$376": "ltr",
-        "$375": "rtl",
-        }),
-
-    "$99": Prop("box-decoration-break", {
-        False: "slice",
-        True: "clone",
-        }),
-
-    "$73": Prop("background-clip", {
-        "$378": "border-box",
-        "$377": "content-box",
-        "$379": "padding-box",
-        }),
-
+    "$192": Prop(
+        "direction",
+        {
+            "$376": "ltr",
+            "$375": "rtl",
+        },
+    ),
+    "$99": Prop(
+        "box-decoration-break",
+        {
+            False: "slice",
+            True: "clone",
+        },
+    ),
+    "$73": Prop(
+        "background-clip",
+        {
+            "$378": "border-box",
+            "$377": "content-box",
+            "$379": "padding-box",
+        },
+    ),
     "$70": Prop("-kfx-fill-color"),
     "$72": Prop("-kfx-fill-opacity"),
-
-    "$140": Prop("float", {
-        "$59": "left",
-        "$61": "right",
-        "$786": "snap-block",
-        }),
-
+    "$140": Prop(
+        "float",
+        {
+            "$59": "left",
+            "$61": "right",
+            "$786": "snap-block",
+        },
+    ),
     "$11": Prop("font-family"),
     "$16": Prop("font-size"),
-
-    "$15": Prop("font-stretch", {
-        "$365": "condensed",
-        "$368": "expanded",
-        "$350": "normal",
-        "$366": "semi-condensed",
-        "$367": "semi-expanded",
-        }),
-
-    "$12": Prop("font-style", {
-        "$382": "italic",
-        "$350": "normal",
-        "$381": "oblique",
-         }),
-
-    "$13": Prop("font-weight", {
-        "$361": "bold",
-        "$363": "900",
-        "$357": "300",
-        "$359": "500",
-        "$350": "normal",
-        "$360": "600",
-        "$355": "100",
-        "$362": "800",
-        "$356": "200",
-        }),
-
-    "$583": Prop("font-variant", {
-        "$349": "normal",
-        "$369": "small-caps"}),
-
+    "$15": Prop(
+        "font-stretch",
+        {
+            "$365": "condensed",
+            "$368": "expanded",
+            "$350": "normal",
+            "$366": "semi-condensed",
+            "$367": "semi-expanded",
+        },
+    ),
+    "$12": Prop(
+        "font-style",
+        {
+            "$382": "italic",
+            "$350": "normal",
+            "$381": "oblique",
+        },
+    ),
+    "$13": Prop(
+        "font-weight",
+        {
+            "$361": "bold",
+            "$363": "900",
+            "$357": "300",
+            "$359": "500",
+            "$350": "normal",
+            "$360": "600",
+            "$355": "100",
+            "$362": "800",
+            "$356": "200",
+        },
+    ),
+    "$583": Prop("font-variant", {"$349": "normal", "$369": "small-caps"}),
     "$57": Prop("height"),
-
-    "$458": Prop("empty-cells", {
-        False: "show",
-        True: "hide",
-        }),
-
-    "$127": Prop("hyphens", {
-        "$383": "auto",
-        "$384": "manual",
-        "$349": "none",
-        }),
-
+    "$458": Prop(
+        "empty-cells",
+        {
+            False: "show",
+            True: "hide",
+        },
+    ),
+    "$127": Prop(
+        "hyphens",
+        {
+            "$383": "auto",
+            "$384": "manual",
+            "$349": "none",
+        },
+    ),
     "$785": Prop("-kfx-keep-lines-together"),
-
     "$10": Prop("-kfx-attrib-xml-lang"),
     "$761": Prop("-kfx-layout-hints"),
     "$59": Prop("left"),
     "$32": Prop("letter-spacing"),
-
-    "$780": Prop("line-break", {
-        "$783": "anywhere",
-        "$383": "auto",
-        "$781": "loose",
-        "$350": "normal",
-        "$782": "strict",
-        }),
-
-    "$42": Prop("line-height", {
-        "$383": "normal",
-        }),
-
+    "$780": Prop(
+        "line-break",
+        {
+            "$783": "anywhere",
+            "$383": "auto",
+            "$781": "loose",
+            "$350": "normal",
+            "$782": "strict",
+        },
+    ),
+    "$42": Prop(
+        "line-height",
+        {
+            "$383": "normal",
+        },
+    ),
     "$577": Prop("-kfx-link-color"),
     "$576": Prop("-kfx-visited-color"),
-
-    "$100": Prop("list-style-type", {
-        "$346": "lower-alpha",
-        "$347": "upper-alpha",
-        "$342": "circle",
-        "$737": "cjk-earthly-branch",
-        "$738": "cjk-heavenly-stem",
-        "$736": "cjk-ideographic",
-        "$796": "decimal-leading-zero",
-        "$340": "disc",
-        "$795": "georgian",
-        "$739": "hiragana",
-        "$740": "hiragana-iroha",
-        "$271": None,
-        "$743": "japanese-formal",
-        "$744": "japanese-informal",
-        "$741": "katakana",
-        "$742": "katakana-iroha",
-        "$793": "lower-armenian",
-        "$791": "lower-greek",
-        "$349": "none",
-        "$343": "decimal",
-        "$344": "lower-roman",
-        "$345": "upper-roman",
-        "$746": "simp-chinese-formal",
-        "$745": "simp-chinese-informal",
-        "$341": "square",
-        "$748": "trad-chinese-formal",
-        "$747": "trad-chinese-informal",
-        "$794": "upper-armenian",
-        "$792": "upper-greek",
-        }),
-
+    "$100": Prop(
+        "list-style-type",
+        {
+            "$346": "lower-alpha",
+            "$347": "upper-alpha",
+            "$342": "circle",
+            "$737": "cjk-earthly-branch",
+            "$738": "cjk-heavenly-stem",
+            "$736": "cjk-ideographic",
+            "$796": "decimal-leading-zero",
+            "$340": "disc",
+            "$795": "georgian",
+            "$739": "hiragana",
+            "$740": "hiragana-iroha",
+            "$271": None,
+            "$743": "japanese-formal",
+            "$744": "japanese-informal",
+            "$741": "katakana",
+            "$742": "katakana-iroha",
+            "$793": "lower-armenian",
+            "$791": "lower-greek",
+            "$349": "none",
+            "$343": "decimal",
+            "$344": "lower-roman",
+            "$345": "upper-roman",
+            "$746": "simp-chinese-formal",
+            "$745": "simp-chinese-informal",
+            "$341": "square",
+            "$748": "trad-chinese-formal",
+            "$747": "trad-chinese-informal",
+            "$794": "upper-armenian",
+            "$792": "upper-greek",
+        },
+    ),
     "$503": Prop("list-style-image"),
-
-    "$551": Prop("list-style-position", {
-        "$552": "inside",
-        "$553": "outside",
-        }),
-
+    "$551": Prop(
+        "list-style-position",
+        {
+            "$552": "inside",
+            "$553": "outside",
+        },
+    ),
     "$46": Prop("margin"),
     "$49": Prop("margin-bottom"),
     "$48": Prop("margin-left"),
     "$50": Prop("margin-right"),
     "$47": Prop("margin-top"),
-
     "$64": Prop("max-height"),
     "$65": Prop("max-width"),
     "$62": Prop("min-height"),
     "$63": Prop("min-width"),
-
-    "$45": Prop("white-space", {
-        False: "normal",
-        True: "nowrap",
-        }),
-
+    "$45": Prop(
+        "white-space",
+        {
+            False: "normal",
+            True: "nowrap",
+        },
+    ),
     "$105": Prop("outline-color"),
     "$106": Prop("outline-offset"),
     "$107": Prop("outline-style", BORDER_STYLES),
     "$108": Prop("outline-width"),
-
-    "$554": Prop("text-decoration", {
-        "$330": "overline dashed",
-        "$331": "overline dotted",
-        "$329": "overline double",
-        "$349": None,
-        "$328": "overline",
-        }),
-
+    "$554": Prop(
+        "text-decoration",
+        {
+            "$330": "overline dashed",
+            "$331": "overline dotted",
+            "$329": "overline double",
+            "$349": None,
+            "$328": "overline",
+        },
+    ),
     "$555": Prop("text-decoration-color"),
-
     "$51": Prop("padding"),
     "$54": Prop("padding-bottom"),
     "$53": Prop("padding-left"),
     "$55": Prop("padding-right"),
     "$52": Prop("padding-top"),
-
-    "$183": Prop("position", {
-        "$324": "absolute",
-        "$455": "oeb-page-foot",
-        "$151": "oeb-page-head",
-        "$488": "relative",
-        "$489": "fixed",
-        }),
-
+    "$183": Prop(
+        "position",
+        {
+            "$324": "absolute",
+            "$455": "oeb-page-foot",
+            "$151": "oeb-page-head",
+            "$488": "relative",
+            "$489": "fixed",
+        },
+    ),
     "$61": Prop("right"),
-
-    "$766": Prop("ruby-align", {
-        "$320": "center",
-        "$773": "space-around",
-        "$774": "space-between",
-        "$680": "start",
-        }),
-
-    "$764": Prop("ruby-merge", {
-        "$772": "collapse",
-        "$771": "separate",
-        }),
-
-    "$762": Prop("ruby-position", {
-        "$60": "under",
-        "$58": "over",
-        }),
-
-    "$763": Prop("ruby-position", {
-        "$59": "under",
-        "$61": "over",
-        }),
-
-    "$765": Prop("ruby-align", {
-        "$320": "center",
-        "$773": "space-around",
-        "$774": "space-between",
-        "$680": "start",
-        }),
-
+    "$766": Prop(
+        "ruby-align",
+        {
+            "$320": "center",
+            "$773": "space-around",
+            "$774": "space-between",
+            "$680": "start",
+        },
+    ),
+    "$764": Prop(
+        "ruby-merge",
+        {
+            "$772": "collapse",
+            "$771": "separate",
+        },
+    ),
+    "$762": Prop(
+        "ruby-position",
+        {
+            "$60": "under",
+            "$58": "over",
+        },
+    ),
+    "$763": Prop(
+        "ruby-position",
+        {
+            "$59": "under",
+            "$61": "over",
+        },
+    ),
+    "$765": Prop(
+        "ruby-align",
+        {
+            "$320": "center",
+            "$773": "space-around",
+            "$774": "space-between",
+            "$680": "start",
+        },
+    ),
     "$496": Prop("box-shadow"),
-
-    "$546": Prop("box-sizing", {
-        "$378": "border-box",
-        "$377": "content-box",
-        "$379": "padding-box",
-        }),
-
+    "$546": Prop(
+        "box-sizing",
+        {
+            "$378": "border-box",
+            "$377": "content-box",
+            "$379": "padding-box",
+        },
+    ),
     "src": Prop("src"),
-
-    "$27": Prop("text-decoration", {
-        "$330": "line-through dashed",
-        "$331": "line-through dotted",
-        "$329": "line-through double",
-        "$349": None,
-        "$328": "line-through"}),
-
+    "$27": Prop(
+        "text-decoration",
+        {
+            "$330": "line-through dashed",
+            "$331": "line-through dotted",
+            "$329": "line-through double",
+            "$349": None,
+            "$328": "line-through",
+        },
+    ),
     "$28": Prop("text-decoration-color"),
-
     "$75": Prop("-webkit-text-stroke-color"),
-
     "$531": Prop("-svg-stroke-dasharray"),
-
     "$532": Prop("-svg-stroke-dashoffset"),
-
-    "$77": Prop("-svg-stroke-linecap", {
-        "$534": "butt",
-        "$533": "round",
-        "$341": "square",
-        }),
-
-    "$529": Prop("-svg-stroke-linejoin", {
-        "$536": "bevel",
-        "$535": "miter",
-        "$533": "round",
-        }),
-
+    "$77": Prop(
+        "-svg-stroke-linecap",
+        {
+            "$534": "butt",
+            "$533": "round",
+            "$341": "square",
+        },
+    ),
+    "$529": Prop(
+        "-svg-stroke-linejoin",
+        {
+            "$536": "bevel",
+            "$535": "miter",
+            "$533": "round",
+        },
+    ),
     "$530": Prop("-svg-stroke-miterlimit"),
-
     "$76": Prop("-webkit-text-stroke-width"),
-
     "$173": Prop("-kfx-style-name"),
-
-    "$150": Prop("border-collapse", {
-        False: "separate",
-        True: "collapse",
-        }),
-
+    "$150": Prop(
+        "border-collapse",
+        {
+            False: "separate",
+            True: "collapse",
+        },
+    ),
     "$148": Prop("-kfx-attrib-colspan"),
     "$149": Prop("-kfx-attrib-rowspan"),
-
-    "$34": Prop("text-align", {
-        "$320": "center",
-        "$321": "justify",
-        "$59": "left",
-        "$61": "right",
-        }),
-
-    "$35": Prop("text-align-last", {
-        "$383": "auto",
-        "$320": "center",
-        "$681": "end",
-        "$321": "justify",
-        "$59": "left",
-        "$61": "right",
-        "$680": "start",
-        }),
-
+    "$34": Prop(
+        "text-align",
+        {
+            "$320": "center",
+            "$321": "justify",
+            "$59": "left",
+            "$61": "right",
+        },
+    ),
+    "$35": Prop(
+        "text-align-last",
+        {
+            "$383": "auto",
+            "$320": "center",
+            "$681": "end",
+            "$321": "justify",
+            "$59": "left",
+            "$61": "right",
+            "$680": "start",
+        },
+    ),
     "$21": Prop("background-color"),
     "$528": Prop("background-image"),
     "$19": Prop("color"),
-
-    "$707": Prop("text-combine-upright", {
-        "$573": "all",
-        }),
-
+    "$707": Prop(
+        "text-combine-upright",
+        {
+            "$573": "all",
+        },
+    ),
     "$718": Prop("text-emphasis-color"),
-
-    "$719": Prop("-kfx-text-emphasis-position-horizontal", {
-        "$58": "over",
-        "$60": "under",
-        }),
-
-    "$720": Prop("-kfx-text-emphasis-position-vertical", {
-        "$59": "left",
-        "$61": "right",
-        }),
-
-    "$717": Prop("text-emphasis-style", {
-        "$724": "filled",
-        "$728": "filled circle",
-        "$726": "filled dot",
-        "$730": "filled double-circle",
-        "$734": "filled sesame",
-        "$732": "filled triangle",
-        "$725": "open",
-        "$729": "open circle",
-        "$727": "open dot",
-        "$731": "open double-circle",
-        "$735": "open sesame",
-        "$733": "open triangle",
-        }),
-
-    "$706": Prop("text-orientation", {
-        "$383": "mixed",
-        "$778": "sideways",
-        "$779": "upright",
-        }),
-
+    "$719": Prop(
+        "-kfx-text-emphasis-position-horizontal",
+        {
+            "$58": "over",
+            "$60": "under",
+        },
+    ),
+    "$720": Prop(
+        "-kfx-text-emphasis-position-vertical",
+        {
+            "$59": "left",
+            "$61": "right",
+        },
+    ),
+    "$717": Prop(
+        "text-emphasis-style",
+        {
+            "$724": "filled",
+            "$728": "filled circle",
+            "$726": "filled dot",
+            "$730": "filled double-circle",
+            "$734": "filled sesame",
+            "$732": "filled triangle",
+            "$725": "open",
+            "$729": "open circle",
+            "$727": "open dot",
+            "$731": "open double-circle",
+            "$735": "open sesame",
+            "$733": "open triangle",
+        },
+    ),
+    "$706": Prop(
+        "text-orientation",
+        {
+            "$383": "mixed",
+            "$778": "sideways",
+            "$779": "upright",
+        },
+    ),
     "$36": Prop("text-indent"),
-
-    "$41": Prop("text-transform", {
-        "$373": "lowercase",
-        "$349": "none",
-        "$374": "capitalize",
-        "$372": "uppercase",
-        }),
-
+    "$41": Prop(
+        "text-transform",
+        {
+            "$373": "lowercase",
+            "$349": "none",
+            "$374": "capitalize",
+            "$372": "uppercase",
+        },
+    ),
     "$497": Prop("text-shadow"),
     "$58": Prop("top"),
     "$98": Prop("transform"),
     "$549": Prop("transform-origin"),
-
-    "$23": Prop("text-decoration", {
-        "$330": "underline dashed",
-        "$331": "underline dotted",
-        "$329": "underline double",
-        "$349": None,
-        "$328": "underline",
-        }),
-
+    "$23": Prop(
+        "text-decoration",
+        {
+            "$330": "underline dashed",
+            "$331": "underline dotted",
+            "$329": "underline double",
+            "$349": None,
+            "$328": "underline",
+        },
+    ),
     "$24": Prop("text-decoration-color"),
-
-    "$68": Prop("visibility", {
-        False: "hidden",
-        True: "visible"}),
-
-    "$716": Prop("white-space", {
-        "$715": "nowrap",
-        }),
-
+    "$68": Prop("visibility", {False: "hidden", True: "visible"}),
+    "$716": Prop(
+        "white-space",
+        {
+            "$715": "nowrap",
+        },
+    ),
     "$56": Prop("width"),
-
-    "$569": Prop("word-break", {
-        "$570": "break-all",
-        "$350": "normal",
-        }),
-
+    "$569": Prop(
+        "word-break",
+        {
+            "$570": "break-all",
+            "$350": "normal",
+        },
+    ),
     "$33": Prop("word-spacing"),
-
-    "$560": Prop("writing-mode", {
-        "$557": "horizontal-tb",
-        "$559": "vertical-rl",
-        "$558": "vertical-lr"}),
-
+    "$560": Prop(
+        "writing-mode",
+        {"$557": "horizontal-tb", "$559": "vertical-rl", "$558": "vertical-lr"},
+    ),
     "$650": Prop("-amzn-shape-outside"),
-
     "$646": Prop("-kfx-collision"),
-
-    "$616": Prop("-kfx-attrib-epub-type", {
-        "$617": "noteref"}),
-
-    "$658": Prop("yj-float-align", {
-        "$58": None,
-        }),
-
-    "$672": Prop("yj-float-bias", {
-        "$671": None,
-        }),
-
-    "$628": Prop("clear", {
-        "$59": "left",
-        "$61": "right",
-        "$421": "both",
-        "$349": "none",
-        }),
-
-    "$673": Prop("yj-float-to-block", {
-        False: None}),
-
-    "$644": Prop("-amzn-page-footer", {
-        "$442": "disable",
-        "$441": "overlay",
-        }),
-
-    "$643": Prop("-amzn-page-header", {
-        "$442": "disable",
-        "$441": "overlay",
-        }),
-
+    "$616": Prop("-kfx-attrib-epub-type", {"$617": "noteref"}),
+    "$658": Prop(
+        "yj-float-align",
+        {
+            "$58": None,
+        },
+    ),
+    "$672": Prop(
+        "yj-float-bias",
+        {
+            "$671": None,
+        },
+    ),
+    "$628": Prop(
+        "clear",
+        {
+            "$59": "left",
+            "$61": "right",
+            "$421": "both",
+            "$349": "none",
+        },
+    ),
+    "$673": Prop("yj-float-to-block", {False: None}),
+    "$644": Prop(
+        "-amzn-page-footer",
+        {
+            "$442": "disable",
+            "$441": "overlay",
+        },
+    ),
+    "$643": Prop(
+        "-amzn-page-header",
+        {
+            "$442": "disable",
+            "$441": "overlay",
+        },
+    ),
     "$645": Prop("-amzn-max-crop-percentage"),
-
     "$790": Prop("-kfx-heading-level"),
-
     "$640": Prop("-kfx-user-margin-bottom-percentage"),
     "$641": Prop("-kfx-user-margin-left-percentage"),
     "$642": Prop("-kfx-user-margin-right-percentage"),
     "$639": Prop("-kfx-user-margin-top-percentage"),
-
-    "$633": Prop("-kfx-table-vertical-align", {
-        "$350": "baseline",
-        "$60": "bottom",
-        "$320": "middle",
-        "$58": "top",
-        }),
-
-    "$649": Prop("-kfx-attrib-epub-type", {
-        "$442": "amzn:decorative",
-        "$441": "amzn:not-decorative",
-        }),
-
-    "$788": Prop("page-break-after", {
-        "$352": "always",
-        "$383": "auto",
-        "$353": "avoid",
-        }),
-
-    "$789": Prop("page-break-before", {
-        "$352": "always",
-        "$383": "auto",
-        "$353": "avoid",
-        }),
-    }
+    "$633": Prop(
+        "-kfx-table-vertical-align",
+        {
+            "$350": "baseline",
+            "$60": "bottom",
+            "$320": "middle",
+            "$58": "top",
+        },
+    ),
+    "$649": Prop(
+        "-kfx-attrib-epub-type",
+        {
+            "$442": "amzn:decorative",
+            "$441": "amzn:not-decorative",
+        },
+    ),
+    "$788": Prop(
+        "page-break-after",
+        {
+            "$352": "always",
+            "$383": "auto",
+            "$353": "avoid",
+        },
+    ),
+    "$789": Prop(
+        "page-break-before",
+        {
+            "$352": "always",
+            "$383": "auto",
+            "$353": "avoid",
+        },
+    ),
+}
 
 YJ_PROPERTY_NAMES = set(YJ_PROPERTY_INFO.keys())
 
@@ -644,14 +737,28 @@ YJ_LENGTH_UNITS = {
     "$507": "vmax",
     "$313": "vmin",
     "$311": "vw",
-    }
+}
 
 
 COLOR_YJ_PROPERTIES = {
-    "$83", "$86", "$85", "$87", "$84", "$116",
-    "$498", "$70", "$121", "$105", "$555", "$28", "$75",
-    "$21", "$19", "$718", "$24",
-    }
+    "$83",
+    "$86",
+    "$85",
+    "$87",
+    "$84",
+    "$116",
+    "$498",
+    "$70",
+    "$121",
+    "$105",
+    "$555",
+    "$28",
+    "$75",
+    "$21",
+    "$19",
+    "$718",
+    "$24",
+}
 
 COLOR_NAME = {
     "#000000": "black",
@@ -669,7 +776,7 @@ COLOR_NAME = {
     "#ff00ff": "magenta",
     "#ffff00": "yellow",
     "#ffffff": "white",
-    }
+}
 
 COLOR_NAMES = set(COLOR_NAME.values())
 
@@ -679,38 +786,63 @@ for h, n in COLOR_NAME.items():
 
 
 GENERIC_FONT_NAMES = {
-    "serif", "sans-serif", "cursive", "fantasy", "monospace",
-
-    "Arial", "Caecilia", "Courier", "Georgia", "Lucida", "Times New Roman", "Trebuchet",
-
-    "Amazon Ember", "Amazon Ember Bold", "Baskerville", "Bookerly", "Caecilia",
-    "Caecilia Condensed", "Futura", "Helvetica", "OpenDyslexic", "Palatino",
-
-    "Helvetica Light", "Helvetica Neue LT", "Noto Sans",
-
+    "serif",
+    "sans-serif",
+    "cursive",
+    "fantasy",
+    "monospace",
+    "Arial",
+    "Caecilia",
+    "Courier",
+    "Georgia",
+    "Lucida",
+    "Times New Roman",
+    "Trebuchet",
+    "Amazon Ember",
+    "Amazon Ember Bold",
+    "Baskerville",
+    "Bookerly",
+    "Caecilia",
+    "Caecilia Condensed",
+    "Futura",
+    "Helvetica",
+    "OpenDyslexic",
+    "Palatino",
+    "Helvetica Light",
+    "Helvetica Neue LT",
+    "Noto Sans",
     "明朝",
     "ゴシック",
-
     "Source Code Pro",
-
-    "Droid Sans", "Droid Serif", "Verdana",
-
-    "Book Antiqua", "Calibri", "Calibri Light", "Cambria", "Comic Sans MS", "Courier New", "Lucida Sans Unicode",
-    "Palatino Linotype", "Tahoma", "Trebuchet MS",
-
-    "CCL", "Helvetica Neue", "Malabar", "Merriweather", "Sorts Mill Goudy",
-
-    "Code2000", "Palatino LT Std", "Times",
-
+    "Droid Sans",
+    "Droid Serif",
+    "Verdana",
+    "Book Antiqua",
+    "Calibri",
+    "Calibri Light",
+    "Cambria",
+    "Comic Sans MS",
+    "Courier New",
+    "Lucida Sans Unicode",
+    "Palatino Linotype",
+    "Tahoma",
+    "Trebuchet MS",
+    "CCL",
+    "Helvetica Neue",
+    "Malabar",
+    "Merriweather",
+    "Sorts Mill Goudy",
+    "Code2000",
+    "Palatino LT Std",
+    "Times",
     "ＭＳ 明朝",
     "@ＭＳ 明朝",
     "MS Mincho",
     "@MS Mincho",
-
     "AmazonEmber Medium",
     "Bookerly Italic",
     "BookerlyDisplay Regular",
-    }
+}
 
 DEFAULT_FONT_NAMES = {"default", "$amzn_fixup_default_font$"}
 
@@ -718,16 +850,28 @@ DEFAULT_FONT_NAMES = {"default", "$amzn_fixup_default_font$"}
 MISSPELLED_FONT_NAMES = {
     "san-serif": "sans-serif",
     "ariel": "Arial",
-    }
+}
 
 
 KNOWN_STYLES = {
     "-amzn-float": {"bottom", "top", "top,bottom"},
-    "-amzn-max-crop-percentage": {
-            "0 0 0 0"},
+    "-amzn-max-crop-percentage": {"0 0 0 0"},
     "-amzn-page-align": {
-            "all", "bottom", "bottom,left", "bottom,left,right", "bottom,right", "left", "left,right",
-            "right", "top", "top,bottom,left", "top,bottom,right", "top,left", "top,left,right", "top,right"},
+        "all",
+        "bottom",
+        "bottom,left",
+        "bottom,left,right",
+        "bottom,right",
+        "left",
+        "left,right",
+        "right",
+        "top",
+        "top,bottom,left",
+        "top,bottom,right",
+        "top,left",
+        "top,left,right",
+        "top,right",
+    },
     "-amzn-page-footer": {"disable"},
     "-amzn-page-header": {"disable"},
     "-amzn-shape-outside": {"*"},
@@ -741,8 +885,19 @@ KNOWN_STYLES = {
     "-webkit-text-emphasis-color": {"#0"},
     "-webkit-text-emphasis-position": {"over right", "under left"},
     "-webkit-text-emphasis-style": {
-        "filled", "filled circle", "filled dot", "filled double-circle", "filled sesame", "filled triangle",
-        "open", "open circle", "open dot", "open double-circle", "open sesame", "open triangle"},
+        "filled",
+        "filled circle",
+        "filled dot",
+        "filled double-circle",
+        "filled sesame",
+        "filled triangle",
+        "open",
+        "open circle",
+        "open dot",
+        "open double-circle",
+        "open sesame",
+        "open triangle",
+    },
     "-webkit-text-orientation": {"mixed", "sideways", "upright"},
     "-webkit-text-stroke-color": {"#0"},
     "-webkit-text-stroke-width": {"0"},
@@ -759,33 +914,98 @@ KNOWN_STYLES = {
     "border-bottom-color": {"#0"},
     "border-bottom-left-radius": {"0"},
     "border-bottom-right-radius": {"0"},
-    "border-bottom-style": {"dashed", "dotted", "double", "groove", "inset", "none", "outset", "ridge", "solid"},
+    "border-bottom-style": {
+        "dashed",
+        "dotted",
+        "double",
+        "groove",
+        "inset",
+        "none",
+        "outset",
+        "ridge",
+        "solid",
+    },
     "border-bottom-width": {"0"},
     "border-collapse": {"collapse", "separate"},
     "border-color": {"#0"},
     "border-left-color": {"#0"},
-    "border-left-style": {"dashed", "dotted", "double", "groove", "inset", "none", "outset", "ridge", "solid"},
+    "border-left-style": {
+        "dashed",
+        "dotted",
+        "double",
+        "groove",
+        "inset",
+        "none",
+        "outset",
+        "ridge",
+        "solid",
+    },
     "border-left-width": {"0"},
     "border-right-color": {"#0"},
-    "border-right-style": {"dashed", "dotted", "double", "groove", "inset", "none", "outset", "ridge", "solid"},
+    "border-right-style": {
+        "dashed",
+        "dotted",
+        "double",
+        "groove",
+        "inset",
+        "none",
+        "outset",
+        "ridge",
+        "solid",
+    },
     "border-right-width": {"0"},
     "border-spacing": {"0 0"},
-    "border-style": {"dashed", "dotted", "double", "groove", "inset", "none", "outset", "ridge", "solid"},
+    "border-style": {
+        "dashed",
+        "dotted",
+        "double",
+        "groove",
+        "inset",
+        "none",
+        "outset",
+        "ridge",
+        "solid",
+    },
     "border-top-color": {"#0"},
     "border-top-left-radius": {"0"},
     "border-top-right-radius": {"0"},
-    "border-top-style": {"dashed", "dotted", "double", "groove", "inset", "none", "outset", "ridge", "solid"},
+    "border-top-style": {
+        "dashed",
+        "dotted",
+        "double",
+        "groove",
+        "inset",
+        "none",
+        "outset",
+        "ridge",
+        "solid",
+    },
     "border-top-width": {"0"},
     "border-width": {"0"},
     "bottom": {"0"},
     "box-decoration-break": {"clone", "slice"},
-    "box-shadow": {"0 0 #0", "0 0 #0 inset", "0 0 0 #0", "0 0 0 #0 inset", "0 0 0 0 #0", "0 0 0 0 #0 inset"},
+    "box-shadow": {
+        "0 0 #0",
+        "0 0 #0 inset",
+        "0 0 0 #0",
+        "0 0 0 #0 inset",
+        "0 0 0 0 #0",
+        "0 0 0 0 #0 inset",
+    },
     "box-sizing": {"border-box", "content-box"},
     "clear": {"both", "left", "none", "right"},
     "color": {"#0"},
     "column-count": {"0", "auto"},
     "direction": {"ltr", "rtl"},
-    "display": {"block", "inline", "inline-block", "none", "oeb-page-foot", "oeb-page-head", "inline-table"},
+    "display": {
+        "block",
+        "inline",
+        "inline-block",
+        "none",
+        "oeb-page-foot",
+        "oeb-page-head",
+        "inline-table",
+    },
     "float": {"left", "right", "snap-block"},
     "font-family": {"*"},
     "font-size": {"0"},
@@ -801,9 +1021,25 @@ KNOWN_STYLES = {
     "list-style-image": {"*"},
     "list-style-position": {"inside", "outside"},
     "list-style-type": {
-        "circle", "cjk-ideographic", "decimal", "decimal-leading-zero", "disc", "georgian", "katakana", "katakana-iroha",
-        "lower-alpha", "lower-armenian", "lower-greek", "lower-roman", "none", "square", "upper-alpha", "upper-armenian",
-        "upper-greek", "upper-roman"},
+        "circle",
+        "cjk-ideographic",
+        "decimal",
+        "decimal-leading-zero",
+        "disc",
+        "georgian",
+        "katakana",
+        "katakana-iroha",
+        "lower-alpha",
+        "lower-armenian",
+        "lower-greek",
+        "lower-roman",
+        "none",
+        "square",
+        "upper-alpha",
+        "upper-armenian",
+        "upper-greek",
+        "upper-roman",
+    },
     "margin": {"0"},
     "margin-bottom": {"0"},
     "margin-left": {"0", "auto"},
@@ -816,7 +1052,17 @@ KNOWN_STYLES = {
     "orphans": {"0"},
     "outline-color": {"#0"},
     "outline-offset": {"0"},
-    "outline-style": {"dashed", "dotted", "double", "groove", "inset", "none", "outset", "ridge", "solid"},
+    "outline-style": {
+        "dashed",
+        "dotted",
+        "double",
+        "groove",
+        "inset",
+        "none",
+        "outset",
+        "ridge",
+        "solid",
+    },
     "outline-width": {"0"},
     "overflow": {"hidden"},
     "padding": {"0"},
@@ -836,18 +1082,41 @@ KNOWN_STYLES = {
     "text-align-last": {"auto", "center", "end", "justify", "left", "right", "start"},
     "text-combine-upright": {"all", "none"},
     "text-decoration": {
-            "line-through", "none !important", "overline", "underline",
-            "overline dashed", "overline dotted", "overline double",
-            "underline dashed", "underline dotted", "underline double",
-            "line-through dashed", "line-through dotted", "line-through double",
-            "overline underline", "line-through overline", "line-through underline",
-            "line-through overline underline"},
+        "line-through",
+        "none !important",
+        "overline",
+        "underline",
+        "overline dashed",
+        "overline dotted",
+        "overline double",
+        "underline dashed",
+        "underline dotted",
+        "underline double",
+        "line-through dashed",
+        "line-through dotted",
+        "line-through double",
+        "overline underline",
+        "line-through overline",
+        "line-through underline",
+        "line-through overline underline",
+    },
     "text-decoration-color": {"#0"},
     "text-emphasis-color": {"#0"},
     "text-emphasis-position": {"over right", "under left"},
     "text-emphasis-style": {
-        "filled", "filled circle", "filled dot", "filled double-circle", "filled sesame", "filled triangle",
-        "open", "open circle", "open dot", "open double-circle", "open sesame", "open triangle"},
+        "filled",
+        "filled circle",
+        "filled dot",
+        "filled double-circle",
+        "filled sesame",
+        "filled triangle",
+        "open",
+        "open circle",
+        "open dot",
+        "open double-circle",
+        "open sesame",
+        "open triangle",
+    },
     "text-indent": {"0"},
     "text-orientation": {"mixed", "sideways", "upright"},
     "text-shadow": {"*"},
@@ -855,8 +1124,25 @@ KNOWN_STYLES = {
     "top": {"0"},
     "transform": {"*"},
     "transform-origin": {"0 0"},
-    "unicode-bidi": {"bidi-override", "embed", "isolate", "isolate-override", "normal", "plaintext"},
-    "vertical-align": {"0", "baseline", "bottom", "middle", "sub", "super", "text-bottom", "text-top", "top"},
+    "unicode-bidi": {
+        "bidi-override",
+        "embed",
+        "isolate",
+        "isolate-override",
+        "normal",
+        "plaintext",
+    },
+    "vertical-align": {
+        "0",
+        "baseline",
+        "bottom",
+        "middle",
+        "sub",
+        "super",
+        "text-bottom",
+        "text-top",
+        "top",
+    },
     "visibility": {"hidden", "visible"},
     "white-space": {"normal", "nowrap"},
     "widows": {"0"},
@@ -865,36 +1151,88 @@ KNOWN_STYLES = {
     "word-spacing": {"0", "normal"},
     "writing-mode": {"horizontal-tb", "vertical-lr", "vertical-rl"},
     "z-index": {"0"},
-    }
+}
 
 
 ARBITRARY_VALUE_PROPERTIES = {
-    "-amzn-shape-outside", "-kfx-attrib-xml-lang", "-kfx-layout-hints", "-kfx-style-name",
-    "background-image", "font-family", "list-style-image", "src",
-    }
+    "-amzn-shape-outside",
+    "-kfx-attrib-xml-lang",
+    "-kfx-layout-hints",
+    "-kfx-style-name",
+    "background-image",
+    "font-family",
+    "list-style-image",
+    "src",
+}
 
 
 COMPOSITE_SIDE_STYLES = [
-    ["border-color", ["border-bottom-color", "border-left-color", "border-right-color", "border-top-color"]],
-    ["border-style", ["border-bottom-style", "border-left-style", "border-right-style", "border-top-style"]],
-    ["border-width", ["border-bottom-width", "border-left-width", "border-right-width", "border-top-width"]],
+    [
+        "border-color",
+        [
+            "border-bottom-color",
+            "border-left-color",
+            "border-right-color",
+            "border-top-color",
+        ],
+    ],
+    [
+        "border-style",
+        [
+            "border-bottom-style",
+            "border-left-style",
+            "border-right-style",
+            "border-top-style",
+        ],
+    ],
+    [
+        "border-width",
+        [
+            "border-bottom-width",
+            "border-left-width",
+            "border-right-width",
+            "border-top-width",
+        ],
+    ],
     ["margin", ["margin-bottom", "margin-left", "margin-right", "margin-top"]],
     ["padding", ["padding-bottom", "padding-left", "padding-right", "padding-top"]],
-    ]
+]
 
 CONFLICTING_PROPERTIES = {
     "background": {
-        "background-attachment", "background-clip", "background-color", "background-image",
-        "background-origin", "background-position", "background-repeat", "background-size"},
-    "border-color": {"border-bottom-color", "border-left-color", "border-right-color", "border-top-color"},
-    "border-style": {"border-bottom-style", "border-left-style", "border-right-style", "border-top-style"},
-    "border-width": {"border-bottom-width", "border-left-width", "border-right-width", "border-top-width"},
+        "background-attachment",
+        "background-clip",
+        "background-color",
+        "background-image",
+        "background-origin",
+        "background-position",
+        "background-repeat",
+        "background-size",
+    },
+    "border-color": {
+        "border-bottom-color",
+        "border-left-color",
+        "border-right-color",
+        "border-top-color",
+    },
+    "border-style": {
+        "border-bottom-style",
+        "border-left-style",
+        "border-right-style",
+        "border-top-style",
+    },
+    "border-width": {
+        "border-bottom-width",
+        "border-left-width",
+        "border-right-width",
+        "border-top-width",
+    },
     "font": {"font-family", "font-size", "font-style", "font-variant", "font-weight"},
     "list-style": {"list-style-type", "list-style-position", "list-style-image"},
     "margin": {"margin-bottom", "margin-left", "margin-right", "margin-top"},
     "outline": {"outline-width", "outline-style", "outline-color"},
     "padding": {"padding-bottom", "padding-left", "padding-right", "padding-top"},
-    }
+}
 
 for name, conf_set in list(CONFLICTING_PROPERTIES.items()):
     for conf in conf_set:
@@ -917,7 +1255,7 @@ ALTERNATE_EQUIVALENT_PROPERTIES = {
     "transform": "-webkit-transform",
     "transform-origin": "-webkit-transform-origin",
     "writing-mode": "-webkit-writing-mode",
-    }
+}
 
 
 HERITABLE_DEFAULT_PROPERTIES = {
@@ -985,10 +1323,12 @@ HERITABLE_DEFAULT_PROPERTIES = {
     "word-spacing": "normal",
     "word-wrap": "normal",
     "writing-mode": "horizontal-tb",
-    }
+}
 
 HERITABLE_PROPERTIES = set(HERITABLE_DEFAULT_PROPERTIES.keys())
-HERITABLE_DEFAULTS_FILTERED = dict([(k, v) for k, v in HERITABLE_DEFAULT_PROPERTIES.items() if v is not None])
+HERITABLE_DEFAULTS_FILTERED = dict(
+    [(k, v) for k, v in HERITABLE_DEFAULT_PROPERTIES.items() if v is not None]
+)
 
 
 REVERSE_HERITABLE_PROPERTIES = HERITABLE_PROPERTIES - {
@@ -999,7 +1339,7 @@ REVERSE_HERITABLE_PROPERTIES = HERITABLE_PROPERTIES - {
     "-kfx-user-margin-top-percentage",
     "font-size",
     "line-height",
-    }
+}
 
 NON_HERITABLE_DEFAULT_PROPERTIES = {
     "background-clip": "border-box",
@@ -1032,26 +1372,27 @@ NON_HERITABLE_DEFAULT_PROPERTIES = {
     "transform-origin": "50% 50% 0",
     "vertical-align": "baseline",
     "z-index": "auto",
-    }
+}
 
 
 RESET_CSS_DATA = (
-    "html {color: #000; background: #FFF;}\n" +
-    "body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,th,td {margin: 0; padding: 0;}\n" +
-    "table {border-collapse: collapse; border-spacing: 0;}\n" +
-    "fieldset,img {border: 0;}\n" +
-    "caption,th,var {font-style: normal; font-weight: normal;}\n" +
-    "li {list-style: none;}\n" +
-    "caption,th {text-align: left;}\n" +
-    "h1,h2,h3,h4,h5,h6 {font-size: 100%; font-weight: normal;}\n" +
-    "sup {vertical-align: text-top;}\n" +
-    "sub {vertical-align: text-bottom;}\n" +
-    "a.app-amzn-magnify {display: block; width: 100%; height: 100%;}\n")
+    "html {color: #000; background: #FFF;}\n"
+    + "body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,th,td {margin: 0; padding: 0;}\n"
+    + "table {border-collapse: collapse; border-spacing: 0;}\n"
+    + "fieldset,img {border: 0;}\n"
+    + "caption,th,var {font-style: normal; font-weight: normal;}\n"
+    + "li {list-style: none;}\n"
+    + "caption,th {text-align: left;}\n"
+    + "h1,h2,h3,h4,h5,h6 {font-size: 100%; font-weight: normal;}\n"
+    + "sup {vertical-align: text-top;}\n"
+    + "sub {vertical-align: text-bottom;}\n"
+    + "a.app-amzn-magnify {display: block; width: 100%; height: 100%;}\n"
+)
 
 
 AMAZON_SPECIAL_CLASSES = [
     "app-amzn-magnify",
-    ]
+]
 
 
 INLINE_ELEMENTS = {"a", "bdo", "br", "img", "object", "rp", "ruby", "span"}
@@ -1099,7 +1440,9 @@ class KFX_EPUB_Properties(object):
                 property = str(yj_property_name).replace("_", "-")
 
             if property == "position" and value in ["oeb-page-foot", "oeb-page-head"]:
-                property = "display" if self.generate_epub2 and EMIT_OEB_PAGE_PROPS else None
+                property = (
+                    "display" if self.generate_epub2 and EMIT_OEB_PAGE_PROPS else None
+                )
 
             if (property is not None) and (value is not None):
                 decl_value = declarations.get(property)
@@ -1108,8 +1451,10 @@ class KFX_EPUB_Properties(object):
                         vals = set(decl_value.split() + value.split())
                         for val in vals:
                             if not val.startswith("amzn:"):
-                                log.error("Property %s has multiple incompatible values: \"%s\" and \"%s\"" % (
-                                    property, decl_value, value))
+                                log.error(
+                                    'Property %s has multiple incompatible values: "%s" and "%s"'
+                                    % (property, decl_value, value)
+                                )
                                 break
                         else:
                             value = " ".join(sorted(list(vals)))
@@ -1119,7 +1464,10 @@ class KFX_EPUB_Properties(object):
                         value = " ".join(sorted(list(vals)))
 
                     else:
-                        log.error("Property %s has multiple values: \"%s\" and \"%s\"" % (property, decl_value, value))
+                        log.error(
+                            'Property %s has multiple values: "%s" and "%s"'
+                            % (property, decl_value, value)
+                        )
 
                 declarations[property] = value
 
@@ -1128,35 +1476,68 @@ class KFX_EPUB_Properties(object):
             if declarations.get("writing-mode") == "horizontal-tb":
                 declarations.pop("writing-mode")
 
-        if "-kfx-background-positionx" in declarations or "-kfx-background-positiony" in declarations:
+        if (
+            "-kfx-background-positionx" in declarations
+            or "-kfx-background-positiony" in declarations
+        ):
             declarations["background-position"] = "%s %s" % (
-                    declarations.pop("-kfx-background-positionx", "50%"), declarations.pop("-kfx-background-positiony", "50%"))
+                declarations.pop("-kfx-background-positionx", "50%"),
+                declarations.pop("-kfx-background-positiony", "50%"),
+            )
 
-        if "-kfx-background-sizex" in declarations or "-kfx-background-sizey" in declarations:
+        if (
+            "-kfx-background-sizex" in declarations
+            or "-kfx-background-sizey" in declarations
+        ):
             declarations["background-size"] = "%s %s" % (
-                    declarations.pop("-kfx-background-sizex", "auto"), declarations.pop("-kfx-background-sizey", "auto"))
+                declarations.pop("-kfx-background-sizex", "auto"),
+                declarations.pop("-kfx-background-sizey", "auto"),
+            )
 
         if "-kfx-fill-color" in declarations or "-kfx-fill-opacity" in declarations:
             declarations["background-color"] = self.add_color_opacity(
-                    declarations.pop("-kfx-fill-color", "#ffffff"),
-                    declarations.pop("-kfx-fill-opacity", None))
+                declarations.pop("-kfx-fill-color", "#ffffff"),
+                declarations.pop("-kfx-fill-opacity", None),
+            )
 
-        if "-kfx-text-emphasis-position-horizontal" in declarations or "-kfx-text-emphasis-position-vertical" in declarations:
+        if (
+            "-kfx-text-emphasis-position-horizontal" in declarations
+            or "-kfx-text-emphasis-position-vertical" in declarations
+        ):
             declarations["text-emphasis-position"] = " ".join(
-                    [v for v in [declarations.pop("-kfx-text-emphasis-position-horizontal", None),
-                                 declarations.pop("-kfx-text-emphasis-position-vertical", None)] if v])
+                [
+                    v
+                    for v in [
+                        declarations.pop(
+                            "-kfx-text-emphasis-position-horizontal", None
+                        ),
+                        declarations.pop("-kfx-text-emphasis-position-vertical", None),
+                    ]
+                    if v
+                ]
+            )
 
         if "-kfx-keep-lines-together" in declarations:
-            for prop, val in zip(["orphans", "widows"], declarations.pop("-kfx-keep-lines-together").split()):
+            for prop, val in zip(
+                ["orphans", "widows"],
+                declarations.pop("-kfx-keep-lines-together").split(),
+            ):
                 if val != "inherit":
                     declarations[prop] = val
 
-        if ("text-decoration-color" in declarations and "text-decoration" not in declarations and
-                declarations["text-decoration-color"] == "rgba(255,255,255,0)"):
+        if (
+            "text-decoration-color" in declarations
+            and "text-decoration" not in declarations
+            and declarations["text-decoration-color"] == "rgba(255,255,255,0)"
+        ):
             declarations.pop("text-decoration-color")
             declarations["text-decoration"] = "none !important"
 
-        if FIX_NONSTANDARD_FONT_WEIGHT and "font-weight" in declarations and re.match(r"^[0-9]+$", declarations["font-weight"]):
+        if (
+            FIX_NONSTANDARD_FONT_WEIGHT
+            and "font-weight" in declarations
+            and re.match(r"^[0-9]+$", declarations["font-weight"])
+        ):
             weight_num = int(declarations["font-weight"])
             declarations["font-weight"] = "normal" if weight_num <= 500 else "bold"
 
@@ -1182,10 +1563,20 @@ class KFX_EPUB_Properties(object):
                 magnitude = yj_value.pop("$307")
                 unit = yj_value.pop("$306")
                 if unit not in YJ_LENGTH_UNITS:
-                    log.error("Property %s has unknown unit: %s" % (yj_property_name, unit))
+                    log.error(
+                        "Property %s has unknown unit: %s" % (yj_property_name, unit)
+                    )
 
-                if DETECT_LAYOUT_ENHANCER and yj_property_name == "$65" and unit == "$318" and magnitude in [216, 270, 324, 360]:
-                    log.warning("YJImageLayoutEnhancer detected, max_width=%s" % value_str(magnitude, YJ_LENGTH_UNITS.get(unit, unit)))
+                if (
+                    DETECT_LAYOUT_ENHANCER
+                    and yj_property_name == "$65"
+                    and unit == "$318"
+                    and magnitude in [216, 270, 324, 360]
+                ):
+                    log.warning(
+                        "YJImageLayoutEnhancer detected, max_width=%s"
+                        % value_str(magnitude, YJ_LENGTH_UNITS.get(unit, unit))
+                    )
 
                 if FIX_PT_TO_PX and unit == "$318" and magnitude > 0:
                     if int(magnitude * 1000) % 225 == 0:
@@ -1198,7 +1589,11 @@ class KFX_EPUB_Properties(object):
 
                 value = value_str(magnitude, YJ_LENGTH_UNITS.get(unit, unit))
 
-                if USE_NORMAL_LINE_HEIGHT and yj_property_name == "$42" and value == NORMAL_LINE_HEIGHT_EM:
+                if (
+                    USE_NORMAL_LINE_HEIGHT
+                    and yj_property_name == "$42"
+                    and value == NORMAL_LINE_HEIGHT_EM
+                ):
                     value = "normal"
 
             elif "$19" in yj_value:
@@ -1208,7 +1603,11 @@ class KFX_EPUB_Properties(object):
                 values = []
                 for sub_property in ["$499", "$500", "$501", "$502", "$498"]:
                     if sub_property in yj_value:
-                        values.append(self.property_value(sub_property, yj_value.pop(sub_property)))
+                        values.append(
+                            self.property_value(
+                                sub_property, yj_value.pop(sub_property)
+                            )
+                        )
 
                 if yj_value.pop("$336", False):
                     values.append("inset")
@@ -1219,9 +1618,16 @@ class KFX_EPUB_Properties(object):
                 values = []
                 for sub_property in ["$59", "$58"]:
                     if sub_property in yj_value:
-                        values.append(self.property_value(sub_property, yj_value.pop(sub_property)))
+                        values.append(
+                            self.property_value(
+                                sub_property, yj_value.pop(sub_property)
+                            )
+                        )
                     else:
-                        log.error("Missing sub-property %s for %s" % (sub_property, yj_property_name))
+                        log.error(
+                            "Missing sub-property %s for %s"
+                            % (sub_property, yj_property_name)
+                        )
                         values.append("50%")
 
                 value = " ".join(values)
@@ -1230,12 +1636,20 @@ class KFX_EPUB_Properties(object):
                 values = []
                 for sub_property in ["$58", "$61", "$60", "$59"]:
                     if sub_property in yj_value:
-                        val = self.property_value(sub_property, yj_value.pop(sub_property))
+                        val = self.property_value(
+                            sub_property, yj_value.pop(sub_property)
+                        )
                         if val != "0" and not val.endswith("%"):
-                            log.error("Property %s has unexpected value: %s" % (yj_property_name, val))
+                            log.error(
+                                "Property %s has unexpected value: %s"
+                                % (yj_property_name, val)
+                            )
                         values.append(val.replace("%", ""))
                     else:
-                        log.error("Missing sub-property %s for %s" % (sub_property, yj_property_name))
+                        log.error(
+                            "Missing sub-property %s for %s"
+                            % (sub_property, yj_property_name)
+                        )
 
                 value = " ".join(values)
 
@@ -1245,10 +1659,16 @@ class KFX_EPUB_Properties(object):
                 value = self.property_value("$175", yj_value.pop("$175"))
 
             elif "$131" in yj_value or "$132" in yj_value:
-                value = "%s %s" % (yj_value.pop("$131", "inherit"), yj_value.pop("$132", "inherit"))
+                value = "%s %s" % (
+                    yj_value.pop("$131", "inherit"),
+                    yj_value.pop("$132", "inherit"),
+                )
 
             else:
-                log.error("Property %s has unknown dict value content: %s" % (yj_property_name, repr(yj_value)))
+                log.error(
+                    "Property %s has unknown dict value content: %s"
+                    % (yj_property_name, repr(yj_value))
+                )
                 yj_value = {}
                 value = "?"
 
@@ -1269,24 +1689,37 @@ class KFX_EPUB_Properties(object):
                     value = None
 
             elif yj_property_name in {"$479", "$175", "$528"}:
-                value = self.css_url(urlrelpath(
-                        self.process_external_resource(yj_value).filename, ref_from=self.STYLES_CSS_FILEPATH))
+                value = self.css_url(
+                    urlrelpath(
+                        self.process_external_resource(yj_value).filename,
+                        ref_from=self.STYLES_CSS_FILEPATH,
+                    )
+                )
 
             elif yj_property_name in COLOR_YJ_PROPERTIES:
                 if yj_value == "$349":
                     value = self.fix_color_value(0)
                 else:
-                    log.warning("unexpected symbolic property value for %s: %s" % (yj_property_name, yj_value))
+                    log.warning(
+                        "unexpected symbolic property value for %s: %s"
+                        % (yj_property_name, yj_value)
+                    )
 
             else:
                 if value_map is not None:
                     if yj_value in value_map:
                         value = value_map[yj_value]
                     else:
-                        log.warning("unknown property value for %s: %s" % (yj_property_name, yj_value))
+                        log.warning(
+                            "unknown property value for %s: %s"
+                            % (yj_property_name, yj_value)
+                        )
                         value = str(yj_value)
                 else:
-                    log.warning("unexpected symbolic property value for %s: %s" % (yj_property_name, yj_value))
+                    log.warning(
+                        "unexpected symbolic property value for %s: %s"
+                        % (yj_property_name, yj_value)
+                    )
                     value = str(yj_value)
 
                 if yj_property_name == "$11":
@@ -1301,14 +1734,29 @@ class KFX_EPUB_Properties(object):
 
                 value = self.fix_color_value(value)
 
-            elif value != "0" and yj_property_name not in {
-                    "$112", "$13",
-                    "$148", "$149", "$645", "$647",
-                    "$648", "$790", "$640",
-                    "$641", "$642",
-                    "$639", "$72",
-                    "$126", "$125", "$42"} and not svg:
-
+            elif (
+                value != "0"
+                and yj_property_name
+                not in {
+                    "$112",
+                    "$13",
+                    "$148",
+                    "$149",
+                    "$645",
+                    "$647",
+                    "$648",
+                    "$790",
+                    "$640",
+                    "$641",
+                    "$642",
+                    "$639",
+                    "$72",
+                    "$126",
+                    "$125",
+                    "$42",
+                }
+                and not svg
+            ):
                 value = value_str(self.adjust_pixel_value(yj_value))
 
                 value += "px"
@@ -1321,10 +1769,16 @@ class KFX_EPUB_Properties(object):
                 if yj_value in value_map:
                     value = value_map[yj_value]
                 else:
-                    log.warning("unknown property value for %s: %s" % (yj_property_name, yj_value))
+                    log.warning(
+                        "unknown property value for %s: %s"
+                        % (yj_property_name, yj_value)
+                    )
                     value = str(yj_value)
             else:
-                log.warning("unexpected boolean property value for %s: %s" % (yj_property_name, yj_value))
+                log.warning(
+                    "unexpected boolean property value for %s: %s"
+                    % (yj_property_name, yj_value)
+                )
                 value = str(yj_value)
 
         elif val_type is IonList:
@@ -1363,22 +1817,31 @@ class KFX_EPUB_Properties(object):
                 value = " ".join(values)
 
             elif yj_property_name == "$531":
-                value = " ".join([self.property_value(yj_property_name, val_) for val_ in yj_value])
+                value = " ".join(
+                    [self.property_value(yj_property_name, val_) for val_ in yj_value]
+                )
 
             else:
-                log.error("unexpected IonList property value for %s: %s" % (yj_property_name, yj_value))
+                log.error(
+                    "unexpected IonList property value for %s: %s"
+                    % (yj_property_name, yj_value)
+                )
                 value = "?"
 
         else:
-            log.error("Property %s has unknown value format (%s): %s" % (
-                            yj_property_name, type_name(yj_value), repr(yj_value)))
+            log.error(
+                "Property %s has unknown value format (%s): %s"
+                % (yj_property_name, type_name(yj_value), repr(yj_value))
+            )
             value = "?"
 
-        if (yj_property_name in {
-                "$640", "$641",
-                "$642", "$639"} and
-                value not in ["100", "-100"]):
-            log.error("Property %s has disallowed value: %s" % (yj_property_name, value))
+        if yj_property_name in {"$640", "$641", "$642", "$639"} and value not in [
+            "100",
+            "-100",
+        ]:
+            log.error(
+                "Property %s has disallowed value: %s" % (yj_property_name, value)
+            )
 
         if yj_property_name in {"$32", "$33"} and value == "0em":
             value = "normal"
@@ -1392,16 +1855,22 @@ class KFX_EPUB_Properties(object):
 
         self.css_rules = {}
 
-        self.non_heritable_default_properties = self.Style(NON_HERITABLE_DEFAULT_PROPERTIES)
+        self.non_heritable_default_properties = self.Style(
+            NON_HERITABLE_DEFAULT_PROPERTIES
+        )
 
         for book_part in self.book_parts:
             self.last_kfx_heading_level = "1"
             heritable_default_properties = self.Style(HERITABLE_DEFAULTS_FILTERED)
             lang = book_part.html.get(XML_LANG)
             if lang:
-                heritable_default_properties.update(self.Style({"-kfx-attrib-xml-lang": lang}), replace=True)
+                heritable_default_properties.update(
+                    self.Style({"-kfx-attrib-xml-lang": lang}), replace=True
+                )
 
-            self.simplify_styles(book_part.body(), book_part, heritable_default_properties)
+            self.simplify_styles(
+                book_part.body(), book_part, heritable_default_properties
+            )
 
             self.add_composite_and_equivalent_styles(book_part.body(), book_part)
 
@@ -1420,11 +1889,12 @@ class KFX_EPUB_Properties(object):
                         self.missing_special_classes.add(selector)
 
                 if "style" in e.attrib:
-
                     style = self.get_style(e)
                     style_modified = False
 
-                    style_attribs = style.partition(name_prefix="-kfx-attrib-", remove_prefix=True)
+                    style_attribs = style.partition(
+                        name_prefix="-kfx-attrib-", remove_prefix=True
+                    )
                     if style_attribs:
                         style_modified = True
                         for name, value in style_attribs.items():
@@ -1437,26 +1907,55 @@ class KFX_EPUB_Properties(object):
                             elif name.startswith("xml-"):
                                 name = qname(XML_NS_URI, name.partition("-")[2])
 
-                            if name in ["colspan", "rowspan", "valign"] and e.tag not in ["tbody", "tr", "td"]:
-                                log.error("Unexpected class_attribute in %s: %s" % (e.tag, name))
+                            if name in [
+                                "colspan",
+                                "rowspan",
+                                "valign",
+                            ] and e.tag not in ["tbody", "tr", "td"]:
+                                log.error(
+                                    "Unexpected class_attribute in %s: %s"
+                                    % (e.tag, name)
+                                )
 
                             e.set(name, value)
 
                     if style_modified:
                         self.set_style(e, style)
 
-                    if (CVT_DIRECTION_PROPERTY_TO_MARKUP or not self.generate_epub2) and ("direction" in style or "unicode-bidi" in style):
+                    if (
+                        CVT_DIRECTION_PROPERTY_TO_MARKUP or not self.generate_epub2
+                    ) and ("direction" in style or "unicode-bidi" in style):
                         unicode_bidi = style.get("unicode-bidi", "normal")
 
                         has_block = False
                         has_content = e.text
                         for ex in e.iterfind(".//*"):
                             if ex.tag in {
-                                    "aside", "div", "figure", "h1", "h2", "h3", "h4", "h5", "h6", "iframe", "li",
-                                    "ol", "p", "table", "td", "ul"}:
+                                "aside",
+                                "div",
+                                "figure",
+                                "h1",
+                                "h2",
+                                "h3",
+                                "h4",
+                                "h5",
+                                "h6",
+                                "iframe",
+                                "li",
+                                "ol",
+                                "p",
+                                "table",
+                                "td",
+                                "ul",
+                            }:
                                 has_block = True
 
-                            if ex.text or ex.tail or ex.tag in {"audio", "img", "li", MATH, "object", SVG, "video"}:
+                            if (
+                                ex.text
+                                or ex.tail
+                                or ex.tag
+                                in {"audio", "img", "li", MATH, "object", SVG, "video"}
+                            ):
                                 has_content = True
 
                             if has_block and has_content:
@@ -1474,9 +1973,14 @@ class KFX_EPUB_Properties(object):
                             style.pop("unicode-bidi", None)
                             self.set_style(e, style)
 
-                        elif unicode_bidi in ["isolate", "bidi-override", "isolate-override"]:
-
-                            bdx = etree.Element("bdo" if "override" in unicode_bidi else "bdi")
+                        elif unicode_bidi in [
+                            "isolate",
+                            "bidi-override",
+                            "isolate-override",
+                        ]:
+                            bdx = etree.Element(
+                                "bdo" if "override" in unicode_bidi else "bdi"
+                            )
                             if "direction" in style:
                                 bdx.set("dir", style.pop("direction"))
 
@@ -1495,10 +1999,20 @@ class KFX_EPUB_Properties(object):
                             self.set_style(e, style)
 
                         else:
-                            log.error("Cannot produce EPUB3 equivalent for: unicode-bidi:%s direction:%s" % (
-                                    unicode_bidi, style.get("direction", "?")))
+                            log.error(
+                                "Cannot produce EPUB3 equivalent for: unicode-bidi:%s direction:%s"
+                                % (unicode_bidi, style.get("direction", "?"))
+                            )
 
-                    if REMOVE_EMPTY_NAMED_CLASSES and len(style.partition({"-kfx-style-name", "-kfx-layout-hints"}, keep_all=True)) == 0:
+                    if (
+                        REMOVE_EMPTY_NAMED_CLASSES
+                        and len(
+                            style.partition(
+                                {"-kfx-style-name", "-kfx-layout-hints"}, keep_all=True
+                            )
+                        )
+                        == 0
+                    ):
                         style.pop("-kfx-style-name", None)
                         style.pop("-kfx-layout-hints", None)
                         self.set_style(e, style)
@@ -1515,16 +2029,22 @@ class KFX_EPUB_Properties(object):
         for style_str, count in sorted(style_counts.items(), key=lambda sc: -sc[1]):
             style = self.Style(style_str)
 
-            class_name = re.sub(r"[^A-Za-z0-9_-]", "_", style.pop("-kfx-style-name", ""))
+            class_name = re.sub(
+                r"[^A-Za-z0-9_-]", "_", style.pop("-kfx-style-name", "")
+            )
 
             if "-kfx-layout-hints" in style:
-                class_name_prefix = "-".join(sorted(list(style.pop("-kfx-layout-hints").split())))
+                class_name_prefix = "-".join(
+                    sorted(list(style.pop("-kfx-layout-hints").split()))
+                )
             else:
                 class_name_prefix = DEFAULT_CLASS_NAME_PREFIX
 
             known_class_name_count[class_name_prefix] += 1
 
-            class_name = self.prefix_unique_part_of_symbol(class_name, class_name_prefix)
+            class_name = self.prefix_unique_part_of_symbol(
+                class_name, class_name_prefix
+            )
             known_class_name_count[class_name] += 1
             sorted_style_data.append((style_str, style, class_name))
 
@@ -1540,17 +2060,24 @@ class KFX_EPUB_Properties(object):
                     unique = used_class_name_count[class_name]
                     used_class_name_count[class_name] += 1
                     class_name = "%s-%d" % (class_name, unique)
-                    if known_class_name_count[class_name] == 0 and class_name not in classes:
+                    if (
+                        known_class_name_count[class_name] == 0
+                        and class_name not in classes
+                    ):
                         break
 
             for prop_name_prefix, selector_suffix in [
-                        ("-kfx-firstline-", "::first-line"),
-                        ("-kfx-link-", ":link"),
-                        ("-kfx-visited-", ":visited")]:
-
-                selector_style = style.partition(name_prefix=prop_name_prefix, remove_prefix=True)
+                ("-kfx-firstline-", "::first-line"),
+                ("-kfx-link-", ":link"),
+                ("-kfx-visited-", ":visited"),
+            ]:
+                selector_style = style.partition(
+                    name_prefix=prop_name_prefix, remove_prefix=True
+                )
                 if selector_style:
-                    self.css_rules[class_selector(class_name) + selector_suffix] = selector_style
+                    self.css_rules[class_selector(class_name) + selector_suffix] = (
+                        selector_style
+                    )
                     selector_classes.add(class_name)
 
             classes[class_name] = style
@@ -1564,9 +2091,11 @@ class KFX_EPUB_Properties(object):
                     class_name = style_class_names[style_str]
                     class_style = classes[class_name]
 
-                    if ((KEEP_STYLES_INLINE or book_part.is_fxl) and
-                            class_name not in selector_classes and
-                            "-kfx-media-query" not in class_style):
+                    if (
+                        (KEEP_STYLES_INLINE or book_part.is_fxl)
+                        and class_name not in selector_classes
+                        and "-kfx-media-query" not in class_style
+                    ):
                         e.set("style", class_style.tostring())
                         self.inventory_style(class_style)
                     else:
@@ -1581,7 +2110,11 @@ class KFX_EPUB_Properties(object):
             if class_name in referenced_classes:
                 media_query = class_style.pop("-kfx-media-query")
                 if class_style:
-                    target = self.media_queries[media_query] if media_query else self.css_rules
+                    target = (
+                        self.media_queries[media_query]
+                        if media_query
+                        else self.css_rules
+                    )
                     target[class_selector(class_name)] = class_style
 
         for class_style in list(self.css_rules.values()) + self.font_faces:
@@ -1595,19 +2128,20 @@ class KFX_EPUB_Properties(object):
         reported = set()
         for key, value in style.items():
             simple_value = " ".join(zero_quantity(v) for v in value.split())
-            if ((simple_value not in KNOWN_STYLES.get(key, set())) and ("*" not in KNOWN_STYLES.get(key, set())) and
-                    (key, value) not in reported):
+            if (
+                (simple_value not in KNOWN_STYLES.get(key, set()))
+                and ("*" not in KNOWN_STYLES.get(key, set()))
+                and (key, value) not in reported
+            ):
                 log.error("Unexpected style definition: %s: %s" % (key, value))
 
                 reported.add((key, value))
 
     def update_default_font_and_language(self):
-
         content_font_families = collections.defaultdict(lambda: 0)
         content_languages = collections.defaultdict(lambda: 0)
 
         def scan_content(elem, font_family, lang):
-
             style = elem.get("style", "")
             if "font-family" in style or "-kfx-attrib-xml-lang" in style:
                 sty = self.Style(style)
@@ -1630,10 +2164,16 @@ class KFX_EPUB_Properties(object):
             scan_content(book_part.html, None, None)
 
         best_font_family, best_merit = self.default_font_family, 0
-        default_font_family_pattern = re.compile(re.escape(self.default_font_family) + "(,.+)?$")
+        default_font_family_pattern = re.compile(
+            re.escape(self.default_font_family) + "(,.+)?$"
+        )
 
         for font_family, merit in content_font_families.items():
-            if merit > best_merit and font_family and re.match(default_font_family_pattern, font_family):
+            if (
+                merit > best_merit
+                and font_family
+                and re.match(default_font_family_pattern, font_family)
+            ):
                 best_font_family, best_merit = font_family, merit
 
         self.default_font_family = best_font_family
@@ -1641,10 +2181,16 @@ class KFX_EPUB_Properties(object):
         best_language, best_merit = self.language, 0
 
         if self.language:
-            default_language_pattern = re.compile(re.escape(self.language) + "(-.+)?$", re.IGNORECASE)
+            default_language_pattern = re.compile(
+                re.escape(self.language) + "(-.+)?$", re.IGNORECASE
+            )
 
             for language, merit in content_languages.items():
-                if merit > best_merit and language and re.match(default_language_pattern, language):
+                if (
+                    merit > best_merit
+                    and language
+                    and re.match(default_language_pattern, language)
+                ):
                     best_language, best_merit = language, merit
 
             self.language = best_language
@@ -1672,7 +2218,14 @@ class KFX_EPUB_Properties(object):
                 if self.language:
                     book_part.html.set(XML_LANG, self.language)
 
-    def simplify_styles(self, elem, book_part, inherited_properties, default_ordered_list_value=None, known_width=True):
+    def simplify_styles(
+        self,
+        elem,
+        book_part,
+        inherited_properties,
+        default_ordered_list_value=None,
+        known_width=True,
+    ):
         inherited_properties = inherited_properties.copy()
 
         if split_value(inherited_properties.get("font-size", ""))[1] == "em":
@@ -1683,8 +2236,12 @@ class KFX_EPUB_Properties(object):
 
         sty.pop("-kfx-render", None)
 
-        if (book_part.is_fxl and elem.tag in {"a", "span"} and sty.get("display", "inline") == "inline" and
-                ("height" in sty or "width" in sty)):
+        if (
+            book_part.is_fxl
+            and elem.tag in {"a", "span"}
+            and sty.get("display", "inline") == "inline"
+            and ("height" in sty or "width" in sty)
+        ):
             sty["display"] = "inline-block"
 
         if sty.get("position", "static") == "static":
@@ -1693,19 +2250,33 @@ class KFX_EPUB_Properties(object):
                     if sty[positioning] == "0":
                         sty.pop(positioning)
                     else:
-                        log.warning("%s style with unexpected position: %s" % (elem.tag, sty.tostring()))
+                        log.warning(
+                            "%s style with unexpected position: %s"
+                            % (elem.tag, sty.tostring())
+                        )
 
-        sty["border-spacing"] = "%s %s" % (sty["-webkit-border-horizontal-spacing"], sty["-webkit-border-vertical-spacing"])
+        sty["border-spacing"] = "%s %s" % (
+            sty["-webkit-border-horizontal-spacing"],
+            sty["-webkit-border-vertical-spacing"],
+        )
 
         sides = []
         for s in ["top", "bottom", "left", "right"]:
             if sty.pop("-kfx-user-margin-%s-percentage" % s, "100") == "-100":
                 sides.append(s)
 
-        page_align = sty["-amzn-page-align"] = (",".join(sides) if len(sides) < 4 else "all") if len(sides) > 0 else "none"
+        page_align = sty["-amzn-page-align"] = (
+            (",".join(sides) if len(sides) < 4 else "all") if len(sides) > 0 else "none"
+        )
 
         for name, val in list(sty.items()):
-            if name in {"padding", "padding-top", "padding-bottom", "padding-left", "padding-right"} and val.startswith("-"):
+            if name in {
+                "padding",
+                "padding-top",
+                "padding-bottom",
+                "padding-left",
+                "padding-right",
+            } and val.startswith("-"):
                 log.warning("Discarding invalid %s: %s" % (name, val))
                 sty.pop(name)
 
@@ -1714,12 +2285,18 @@ class KFX_EPUB_Properties(object):
 
                 if unit == "lh" and quantity is not None:
                     if name == "line-height":
-                        if USE_NORMAL_LINE_HEIGHT and quantity >= 0.99 and quantity <= 1.01:
+                        if (
+                            USE_NORMAL_LINE_HEIGHT
+                            and quantity >= 0.99
+                            and quantity <= 1.01
+                        ):
                             sty[name] = "normal"
                         else:
                             quantity = quantity * LINE_HEIGHT_SCALE_FACTOR
 
-                            if (MINIMUM_LINE_HEIGHT is not None) and (quantity < MINIMUM_LINE_HEIGHT):
+                            if (MINIMUM_LINE_HEIGHT is not None) and (
+                                quantity < MINIMUM_LINE_HEIGHT
+                            ):
                                 quantity = MINIMUM_LINE_HEIGHT
 
                             sty[name] = value_str(quantity)
@@ -1728,13 +2305,19 @@ class KFX_EPUB_Properties(object):
 
                     quantity, unit = split_value(sty[name])
 
-                if unit == "rem" and quantity is not None and (self.generate_epub2 or self.GENERATE_EPUB2_COMPATIBLE):
+                if (
+                    unit == "rem"
+                    and quantity is not None
+                    and (self.generate_epub2 or self.GENERATE_EPUB2_COMPATIBLE)
+                ):
                     if name == "font-size":
                         base_font_size = inherited_properties["font-size"]
                     else:
                         base_font_size = orig_sty["font-size"]
 
-                    base_font_size_quantity, base_font_size_unit = split_value(base_font_size)
+                    base_font_size_quantity, base_font_size_unit = split_value(
+                        base_font_size
+                    )
 
                     if base_font_size_unit == "rem":
                         quantity = quantity / base_font_size_quantity
@@ -1742,46 +2325,78 @@ class KFX_EPUB_Properties(object):
                     elif base_font_size_unit == "em":
                         unit = "em"
                     else:
-                        log.error("Cannot convert %s:%s with incorrect base font size units %s" % (name, val, base_font_size))
+                        log.error(
+                            "Cannot convert %s:%s with incorrect base font size units %s"
+                            % (name, val, base_font_size)
+                        )
 
-                    if name == "line-height" and (MINIMUM_LINE_HEIGHT is not None) and (quantity < MINIMUM_LINE_HEIGHT):
+                    if (
+                        name == "line-height"
+                        and (MINIMUM_LINE_HEIGHT is not None)
+                        and (quantity < MINIMUM_LINE_HEIGHT)
+                    ):
                         quantity = MINIMUM_LINE_HEIGHT
 
                     sty[name] = value_str(quantity, unit)
 
                 if (unit == "vh" or unit == "vw") and quantity is not None:
-
                     if page_align != "none" and name in ["height", "width"]:
                         if name[0] != unit[1]:
                             if not ("height" in sty and "width" in sty):
                                 if elem.tag == "img":
-                                    img_filename = get_url_filename(urlabspath(elem.get("src"), ref_from=book_part.filename))
+                                    img_filename = get_url_filename(
+                                        urlabspath(
+                                            elem.get("src"), ref_from=book_part.filename
+                                        )
+                                    )
                                     img_file = self.oebps_files[img_filename]
                                     orig_prop = name
                                     sty.pop(orig_prop)
 
                                     if name == "width":
-                                        quantity = (quantity * img_file.height) / img_file.width
+                                        quantity = (
+                                            quantity * img_file.height
+                                        ) / img_file.width
                                         name = "height"
                                     else:
-                                        quantity = (quantity * img_file.width) / img_file.height
+                                        quantity = (
+                                            quantity * img_file.width
+                                        ) / img_file.height
                                         name = "width"
 
                                     if quantity > 99.0 and quantity < 101.0:
                                         quantity = 100.0
                                     else:
-                                        log.warning("converted %s:%s for img %dw x %dh to %s:%f%%" % (
-                                                orig_prop, val, img_file.width, img_file.height, name, quantity))
+                                        log.warning(
+                                            "converted %s:%s for img %dw x %dh to %s:%f%%"
+                                            % (
+                                                orig_prop,
+                                                val,
+                                                img_file.width,
+                                                img_file.height,
+                                                name,
+                                                quantity,
+                                            )
+                                        )
 
                                 else:
-                                    log.error("viewport-based units with wrong property on non-image: %s:%s" % (name, val))
+                                    log.error(
+                                        "viewport-based units with wrong property on non-image: %s:%s"
+                                        % (name, val)
+                                    )
                             else:
-                                log.error("viewport-based units with wrong property: %s:%s" % (name, val))
+                                log.error(
+                                    "viewport-based units with wrong property: %s:%s"
+                                    % (name, val)
+                                )
 
                         sty[name] = value_str(quantity, "%")
                         quantity, unit = split_value(sty[name])
                     else:
-                        log.error("viewport-based units with wrong property or without page-align: %s:%s" % (name, val))
+                        log.error(
+                            "viewport-based units with wrong property or without page-align: %s:%s"
+                            % (name, val)
+                        )
 
         if "width" in sty:
             known_width = True
@@ -1789,13 +2404,18 @@ class KFX_EPUB_Properties(object):
             known_width = False
 
         if not known_width:
-            for name in (["margin-left", "margin-right"] if sty.get("writing-mode", "horizontal-tb") == "horizontal-tb" else
-                         ["margin-bottom", "margin-top"]):
+            for name in (
+                ["margin-left", "margin-right"]
+                if sty.get("writing-mode", "horizontal-tb") == "horizontal-tb"
+                else ["margin-bottom", "margin-top"]
+            ):
                 if name in sty:
                     val = sty.get(name)
                     quantity, unit = split_value(val)
                     if unit == "%" and quantity is not None:
-                        sty[name] = value_str(round(float(quantity) * PX_PER_PERCENT), "px")
+                        sty[name] = value_str(
+                            round(float(quantity) * PX_PER_PERCENT), "px"
+                        )
 
         if ("outline-width" in sty) and (sty.get("outline-style", "none") == "none"):
             sty.pop("outline-width")
@@ -1817,7 +2437,9 @@ class KFX_EPUB_Properties(object):
         elif elem.tag == "li":
             if "value" in elem.attrib:
                 ordered_list_value = int(elem.get("value"))
-                if (default_ordered_list_value is False) or (ordered_list_value == default_ordered_list_value):
+                if (default_ordered_list_value is False) or (
+                    ordered_list_value == default_ordered_list_value
+                ):
                     elem.attrib.pop("value")
 
             default_ordered_list_value = None
@@ -1828,7 +2450,10 @@ class KFX_EPUB_Properties(object):
         if elem.tag == "div":
             sty.update(self.non_heritable_default_properties, replace=False)
 
-        if sty.get("background-image", "none") != "none" and "-amzn-max-crop-percentage" in sty:
+        if (
+            sty.get("background-image", "none") != "none"
+            and "-amzn-max-crop-percentage" in sty
+        ):
             if sty["-amzn-max-crop-percentage"] == "0 0 0 0":
                 sty.pop("-amzn-max-crop-percentage")
                 sty["background-size"] = "contain"
@@ -1836,43 +2461,76 @@ class KFX_EPUB_Properties(object):
                 sty.pop("-amzn-max-crop-percentage")
                 sty["background-size"] = "cover"
 
-        if (elem.tag == "a" and "color" not in sty and "-kfx-link-color" in sty and "-kfx-visited-color" in sty and
-                sty["-kfx-link-color"] == sty["-kfx-visited-color"]):
+        if (
+            elem.tag == "a"
+            and "color" not in sty
+            and "-kfx-link-color" in sty
+            and "-kfx-visited-color" in sty
+            and sty["-kfx-link-color"] == sty["-kfx-visited-color"]
+        ):
             sty["color"] = sty.pop("-kfx-link-color")
             sty.pop("-kfx-visited-color")
 
         parent_sty = sty.copy()
 
-        for name in ["font-size", "-kfx-user-margin-bottom-percentage", "-kfx-user-margin-left-percentage",
-                     "-kfx-user-margin-right-percentage", "-kfx-user-margin-top-percentage"]:
+        for name in [
+            "font-size",
+            "-kfx-user-margin-bottom-percentage",
+            "-kfx-user-margin-left-percentage",
+            "-kfx-user-margin-right-percentage",
+            "-kfx-user-margin-top-percentage",
+        ]:
             parent_sty[name] = orig_sty[name]
 
         for name, val in list(parent_sty.items()):
             if name not in HERITABLE_PROPERTIES:
                 parent_sty.pop(name)
-            elif name not in ARBITRARY_VALUE_PROPERTIES and name != "line-height" and split_value(val)[1] == "%":
+            elif (
+                name not in ARBITRARY_VALUE_PROPERTIES
+                and name != "line-height"
+                and split_value(val)[1] == "%"
+            ):
                 parent_sty.pop(name)
 
         kfx_layout_hints = sty.get("-kfx-layout-hints", "").split()
-        self.last_kfx_heading_level = kfx_heading_level = sty.pop("-kfx-heading-level", self.last_kfx_heading_level)
+        self.last_kfx_heading_level = kfx_heading_level = sty.pop(
+            "-kfx-heading-level", self.last_kfx_heading_level
+        )
 
         contains_block_elem = contains_text = contains_image = False
         for child in elem.findall("*"):
-            contains_block_elem_, contains_text_, contains_image_ = self.simplify_styles(
-                child, book_part, parent_sty, default_ordered_list_value, known_width)
+            contains_block_elem_, contains_text_, contains_image_ = (
+                self.simplify_styles(
+                    child,
+                    book_part,
+                    parent_sty,
+                    default_ordered_list_value,
+                    known_width,
+                )
+            )
             contains_block_elem = contains_block_elem or contains_block_elem_
             contains_text = contains_text or contains_text_
             contains_image = contains_image or contains_image_
 
-            if (child.tag == "li") and (default_ordered_list_value not in [None, False]):
+            if (child.tag == "li") and (
+                default_ordered_list_value not in [None, False]
+            ):
                 default_ordered_list_value += 1
 
         num_children = len(elem)
-        if (REVERSE_INHERITANCE and (not self.book_has_illustrated_layout_conditional_page_template or self.fixed_layout) and
-                num_children > 0):
-
+        if (
+            REVERSE_INHERITANCE
+            and (
+                not self.book_has_illustrated_layout_conditional_page_template
+                or self.fixed_layout
+            )
+            and num_children > 0
+        ):
             if elem.text or elem.tail:
-                log.error("elem %s with children has text or tail in %s" % (elem.tag, book_part.filename))
+                log.error(
+                    "elem %s with children has text or tail in %s"
+                    % (elem.tag, book_part.filename)
+                )
             else:
                 child_props = collections.defaultdict(dict)
                 for child in elem.findall("*"):
@@ -1895,11 +2553,12 @@ class KFX_EPUB_Properties(object):
 
                     if total < num_children and sty.get(name) is None:
                         pass
-                    elif vals[most_common] >= num_children * REVERSE_INHERITANCE_FRACTION:
+                    elif (
+                        vals[most_common] >= num_children * REVERSE_INHERITANCE_FRACTION
+                    ):
                         new_heritable_sty[name] = most_common
 
                 if len(new_heritable_sty) > 0:
-
                     for child in elem.findall("*"):
                         child_sty = self.get_style(child)
 
@@ -1917,7 +2576,9 @@ class KFX_EPUB_Properties(object):
 
         inherited_properties.update(self.non_heritable_default_properties)
 
-        if elem.tag == "div" and not (self.fixed_layout or self.illustrated_layout or self.has_conditional_content):
+        if elem.tag == "div" and not (
+            self.fixed_layout or self.illustrated_layout or self.has_conditional_content
+        ):
             if "heading" in kfx_layout_hints and not contains_block_elem:
                 elem.tag = "h" + kfx_heading_level
                 inherited_properties.pop("font-size")
@@ -1930,25 +2591,46 @@ class KFX_EPUB_Properties(object):
                     inherited_properties.pop("margin-left")
                     inherited_properties.pop("margin-right")
 
-            elif "figure" in kfx_layout_hints and contains_image and not self.epub2_desired:
+            elif (
+                "figure" in kfx_layout_hints
+                and contains_image
+                and not self.epub2_desired
+            ):
                 elem.tag = "figure"
                 if sty.get("writing-mode", "horizontal-tb") == "horizontal-tb":
-                    inherited_properties.update({"margin-top": "1em", "margin-bottom": "1em"}, replace=True)
+                    inherited_properties.update(
+                        {"margin-top": "1em", "margin-bottom": "1em"}, replace=True
+                    )
                 else:
-                    inherited_properties.update({"margin-left": "1em", "margin-right": "1em"}, replace=True)
+                    inherited_properties.update(
+                        {"margin-left": "1em", "margin-right": "1em"}, replace=True
+                    )
 
             elif contains_text and not contains_block_elem:
                 elem.tag = "p"
                 if sty.get("writing-mode", "horizontal-tb") == "horizontal-tb":
-                    inherited_properties.update({"margin-top": "1em", "margin-bottom": "1em"}, replace=True)
+                    inherited_properties.update(
+                        {"margin-top": "1em", "margin-bottom": "1em"}, replace=True
+                    )
                 else:
-                    inherited_properties.update({"margin-left": "1em", "margin-right": "1em"}, replace=True)
+                    inherited_properties.update(
+                        {"margin-left": "1em", "margin-right": "1em"}, replace=True
+                    )
 
         if split_value(sty.get("font-size", ""))[1] == "em":
             inherited_properties["font-size"] = "1em"
 
-        if sty.get("background-color", "transparent") == "transparent" and sty.get("background-image", "none") == "none":
-            for name in ["background-clip", "background-origin", "background-position", "background-repeat", "background-size"]:
+        if (
+            sty.get("background-color", "transparent") == "transparent"
+            and sty.get("background-image", "none") == "none"
+        ):
+            for name in [
+                "background-clip",
+                "background-origin",
+                "background-position",
+                "background-repeat",
+                "background-size",
+            ]:
                 sty.pop(name, None)
 
         remove_from = inherited_properties if elem.tag == "a" else sty
@@ -1962,8 +2644,21 @@ class KFX_EPUB_Properties(object):
         self.set_style(elem, sty)
 
         contains_block_elem = contains_block_elem or elem.tag in {
-                "aside", "caption", "div", "figure", "h1", "h2", "h3", "h4", "h5", "h6", "li", "p", "td",
-                IDX_ENTRY}
+            "aside",
+            "caption",
+            "div",
+            "figure",
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "h6",
+            "li",
+            "p",
+            "td",
+            IDX_ENTRY,
+        }
         contains_text = contains_text or elem.text is not None and len(elem.text) > 0
         contains_image = contains_image or elem.tag == "img" or elem.tag == "svg"
 
@@ -1994,22 +2689,50 @@ class KFX_EPUB_Properties(object):
         display = sty.get("display", "")
         ineffective_properties = []
 
-        if display == "inline" or (elem.tag in INLINE_ELEMENTS and display not in {"block", "inline-block"}):
-            ineffective_properties.extend([
-                    "list-style-image", "list-style-position", "list-style-type",
-                    "column-count", "text-align", "text-align-last", "text-indent"])
+        if display == "inline" or (
+            elem.tag in INLINE_ELEMENTS and display not in {"block", "inline-block"}
+        ):
+            ineffective_properties.extend(
+                [
+                    "list-style-image",
+                    "list-style-position",
+                    "list-style-type",
+                    "column-count",
+                    "text-align",
+                    "text-align-last",
+                    "text-indent",
+                ]
+            )
 
             if elem.tag != "img":
-                ineffective_properties.extend([
-                        "height", "width", "max-height", "max-width", "overflow",
-                        "-amzn-page-align", "-amzn-page-footer", "-amzn-page-header"])
+                ineffective_properties.extend(
+                    [
+                        "height",
+                        "width",
+                        "max-height",
+                        "max-width",
+                        "overflow",
+                        "-amzn-page-align",
+                        "-amzn-page-footer",
+                        "-amzn-page-header",
+                    ]
+                )
 
         if ineffective_properties:
-            ineffective_sty = sty.partition(property_names=ineffective_properties, modify=False)
+            ineffective_sty = sty.partition(
+                property_names=ineffective_properties, modify=False
+            )
 
             if ineffective_sty:
-                log.warning("Ineffective property in %s element for kfx-style %s in %s: %s" % (
-                        elem.tag, sty.get("-kfx-style-name", "?"), book_part.filename, ineffective_sty.tostring()))
+                log.warning(
+                    "Ineffective property in %s element for kfx-style %s in %s: %s"
+                    % (
+                        elem.tag,
+                        sty.get("-kfx-style-name", "?"),
+                        book_part.filename,
+                        ineffective_sty.tostring(),
+                    )
+                )
 
         self.set_style(elem, sty)
 
@@ -2017,8 +2740,14 @@ class KFX_EPUB_Properties(object):
             self.add_composite_and_equivalent_styles(child, book_part)
 
     def fix_and_quote_font_family_list(self, value):
-        return ",".join(remove_duplicates(
-            [self.quote_font_name(name) for name in self.split_and_fix_font_family_list(value)]))
+        return ",".join(
+            remove_duplicates(
+                [
+                    self.quote_font_name(name)
+                    for name in self.split_and_fix_font_family_list(value)
+                ]
+            )
+        )
 
     def split_and_fix_font_family_list(self, value):
         return [self.fix_font_name(name) for name in value.split(",")]
@@ -2026,16 +2755,15 @@ class KFX_EPUB_Properties(object):
     def strip_font_name(self, name):
         name = name.strip()
 
-        if name and (name[0] == "'" or name[0] == "\""):
+        if name and (name[0] == "'" or name[0] == '"'):
             name = name[1:]
 
-        if name and (name[-1] == "'" or name[-1] == "\""):
+        if name and (name[-1] == "'" or name[-1] == '"'):
             name = name[:-1]
 
         return name.strip()
 
     def fix_font_name(self, name, add=False, generic=False):
-
         name = self.strip_font_name(name)
         if not name:
             return name
@@ -2048,7 +2776,12 @@ class KFX_EPUB_Properties(object):
 
         name = name.replace("\\", "")
 
-        name = re.sub(r"-(oblique|italic|bold|regular|roman|medium)$", r" \1", name, flags=re.IGNORECASE)
+        name = re.sub(
+            r"-(oblique|italic|bold|regular|roman|medium)$",
+            r" \1",
+            name,
+            flags=re.IGNORECASE,
+        )
         name = MISSPELLED_FONT_NAMES.get(name.lower(), name)
 
         has_prefix = "-" in name and name != "sans-serif"
@@ -2064,15 +2797,19 @@ class KFX_EPUB_Properties(object):
             if lower_name not in self.font_name_replacements:
                 self.font_name_replacements[lower_name] = name
             elif self.font_name_replacements[lower_name] != name:
-                log.warning("KFX font family name %s changed from %s to %s" % (
-                    orig_name, name, self.font_name_replacements[lower_name]))
+                log.warning(
+                    "KFX font family name %s changed from %s to %s"
+                    % (orig_name, name, self.font_name_replacements[lower_name])
+                )
                 name = self.font_name_replacements[lower_name]
 
             if not generic:
                 self.present_font_names.add(name)
 
         else:
-            name = self.font_name_replacements.get(name.lower(), capitalize_font_name(name))
+            name = self.font_name_replacements.get(
+                name.lower(), capitalize_font_name(name)
+            )
 
             if name not in GENERIC_FONT_NAMES:
                 self.used_font_names.add(name)
@@ -2106,27 +2843,33 @@ class KFX_EPUB_Properties(object):
         orig_alpha = self.int_to_alpha(color >> 24)
 
         if orig_alpha not in {0.0, 1.0}:
-            log.error("Unexpected combination of alpha (%s) and opacity (%s) for color %s" % (orig_alpha, opacity, value))
+            log.error(
+                "Unexpected combination of alpha (%s) and opacity (%s) for color %s"
+                % (orig_alpha, opacity, value)
+            )
 
         return self.color_str(color, float(opacity))
 
     def color_str(self, rgb_int, alpha=1.0):
         if alpha == 1.0:
-            hex_color = "#%06x" % (rgb_int & 0x00ffffff)
+            hex_color = "#%06x" % (rgb_int & 0x00FFFFFF)
             if hex_color in COLOR_NAME:
                 return COLOR_NAME[hex_color]
 
-            return "#000" if hex_color == "#000000" else ("#fff" if hex_color == "#ffffff" else hex_color)
+            return (
+                "#000"
+                if hex_color == "#000000"
+                else ("#fff" if hex_color == "#ffffff" else hex_color)
+            )
 
-        red = (rgb_int & 0x00ff0000) >> 16
-        green = (rgb_int & 0x0000ff00) >> 8
-        blue = (rgb_int & 0x000000ff)
+        red = (rgb_int & 0x00FF0000) >> 16
+        green = (rgb_int & 0x0000FF00) >> 8
+        blue = rgb_int & 0x000000FF
         alpha_str = "0" if alpha == 0.0 else "%0.3f" % alpha
 
         return "rgba(%d,%d,%d,%s)" % (red, green, blue, alpha_str)
 
     def color_int(self, color):
-
         if color in COLOR_HEX:
             color = COLOR_HEX[color]
 
@@ -2136,9 +2879,13 @@ class KFX_EPUB_Properties(object):
             if len(rgb) == 3:
                 rgb = rgb[0] + rgb[0] + rgb[1] + rgb[1] + rgb[2] + rgb[2]
 
-            return 0xff000000 + int(rgb, 16)
+            return 0xFF000000 + int(rgb, 16)
 
-        m = re.match(r"^rgba\(([0-9]+),([0-9]+),([0-9]+),([0-9.]+)\)$", color, flags=re.IGNORECASE)
+        m = re.match(
+            r"^rgba\(([0-9]+),([0-9]+),([0-9]+),([0-9.]+)\)$",
+            color,
+            flags=re.IGNORECASE,
+        )
         if m:
             red = int(m.group(1))
             green = int(m.group(2))
@@ -2173,7 +2920,9 @@ class KFX_EPUB_Properties(object):
         if ion_type(value) is IonStruct:
             unit = value.pop("$306")
             if unit != "$319":
-                log.error("%s Expected px value, found %s" % (self.content_context, unit))
+                log.error(
+                    "%s Expected px value, found %s" % (self.content_context, unit)
+                )
 
             value = value.pop("$307")
 
@@ -2181,7 +2930,10 @@ class KFX_EPUB_Properties(object):
             value = int(value)
 
         if ion_type(value) is not IonInt:
-            log.error("%s Expected int for px value, found %s" % (self.content_context, type_name(value)))
+            log.error(
+                "%s Expected int for px value, found %s"
+                % (self.content_context, type_name(value))
+            )
             return value
 
         if adjust:
@@ -2208,7 +2960,9 @@ class KFX_EPUB_Properties(object):
             elem.set("class", " ".join(classes))
 
     def get_style(self, elem, remove=False):
-        return self.Style(elem.attrib.pop("style", "") if remove else elem.get("style", ""))
+        return self.Style(
+            elem.attrib.pop("style", "") if remove else elem.get("style", "")
+        )
 
     def set_style(self, elem, new_style):
         if type(new_style) is not Style:
@@ -2237,32 +2991,57 @@ class KFX_EPUB_Properties(object):
     def create_css_files(self):
         for css_file in sorted(list(self.css_files)):
             if css_file == self.RESET_CSS_FILEPATH:
-                self.manifest_resource(self.RESET_CSS_FILEPATH, data=RESET_CSS_DATA.encode("utf-8"), mimetype="text/css")
+                self.manifest_resource(
+                    self.RESET_CSS_FILEPATH,
+                    data=RESET_CSS_DATA.encode("utf-8"),
+                    mimetype="text/css",
+                )
 
             elif css_file == self.STYLES_CSS_FILEPATH:
-                css_lines = ["@charset \"UTF-8\";"]
+                css_lines = ['@charset "UTF-8";']
 
                 if self.font_faces:
-                    css_lines.extend(["@font-face {%s}" % ff.tostring() for ff in sorted(self.font_faces)])
+                    css_lines.extend(
+                        [
+                            "@font-face {%s}" % ff.tostring()
+                            for ff in sorted(self.font_faces)
+                        ]
+                    )
 
                 if self.css_rules:
-                    css_lines.extend(["%s {%s}" % (cn, self.css_rules[cn]) for cn in sorted(
-                                self.css_rules.keys(), key=natural_sort_key)])
+                    css_lines.extend(
+                        [
+                            "%s {%s}" % (cn, self.css_rules[cn])
+                            for cn in sorted(
+                                self.css_rules.keys(), key=natural_sort_key
+                            )
+                        ]
+                    )
 
                 for mq, css_rules in sorted(self.media_queries.items()):
                     css_lines.append("@media %s {" % mq)
-                    css_lines.extend(["    %s {%s}" % (cn, css_rules[cn]) for cn in sorted(css_rules.keys(), key=natural_sort_key)])
+                    css_lines.extend(
+                        [
+                            "    %s {%s}" % (cn, css_rules[cn])
+                            for cn in sorted(css_rules.keys(), key=natural_sort_key)
+                        ]
+                    )
                     css_lines.append("}")
 
                 self.manifest_resource(
-                    self.STYLES_CSS_FILEPATH, data="\n".join(css_lines).encode("utf-8"), mimetype="text/css")
+                    self.STYLES_CSS_FILEPATH,
+                    data="\n".join(css_lines).encode("utf-8"),
+                    mimetype="text/css",
+                )
 
     def quote_font_name(self, value):
         for ident in value.split(" "):
             if len(ident) == 0:
                 break
 
-            if re.match("^(-?[0-9]|--)", ident) or not re.match("^[-_a-zA-Z0-9]*$", ident):
+            if re.match("^(-?[0-9]|--)", ident) or not re.match(
+                "^[-_a-zA-Z0-9]*$", ident
+            ):
                 break
         else:
             return value
@@ -2270,14 +3049,15 @@ class KFX_EPUB_Properties(object):
         return self.quote_css_str(value)
 
     def css_url(self, val):
-        return "url(%s)" % (self.quote_css_str(val) if re.search("[ ()'\"\\\\]", val) else val)
+        return "url(%s)" % (
+            self.quote_css_str(val) if re.search("[ ()'\"\\\\]", val) else val
+        )
 
     def quote_css_str(self, val):
-
         if not re.search("['\\\\]", val):
             return "'%s'" % val
 
-        return "\"%s\"" % re.sub("([\"\\\\])", "\\\\\\1", val)
+        return '"%s"' % re.sub('(["\\\\])', "\\\\\\1", val)
 
 
 @functools.total_ordering
@@ -2315,10 +3095,15 @@ class Style(object):
                     value = value.strip()
 
                     if sep != ":":
-                        log.error("Malformed property %s in style: %s" % (name, style_str))
+                        log.error(
+                            "Malformed property %s in style: %s" % (name, style_str)
+                        )
                     else:
                         if name in properties and properties[name] != value:
-                            log.error("Conflicting property %s values in style: %s" % (name, style_str))
+                            log.error(
+                                "Conflicting property %s values in style: %s"
+                                % (name, style_str)
+                            )
 
                         properties[name] = value
 
@@ -2326,7 +3111,9 @@ class Style(object):
 
     def tostring(self):
         if self.style_str is None:
-            self.style_str = "; ".join(["%s: %s" % s for s in sorted(self.properties.items())])
+            self.style_str = "; ".join(
+                ["%s: %s" % s for s in sorted(self.properties.items())]
+            )
 
         return self.style_str
 
@@ -2394,15 +3181,26 @@ class Style(object):
             other = other.properties
 
         for name, value in other.items():
-            if (name in CONFLICTING_PROPERTIES) and not CONFLICTING_PROPERTIES[name].isdisjoint(set(self.properties.keys())):
-                log.error("Setting conflicting property: %s with %s" % (name, list_symbols(self.properties.keys())))
+            if (name in CONFLICTING_PROPERTIES) and not CONFLICTING_PROPERTIES[
+                name
+            ].isdisjoint(set(self.properties.keys())):
+                log.error(
+                    "Setting conflicting property: %s with %s"
+                    % (name, list_symbols(self.properties.keys()))
+                )
 
             if name in self.properties and self.properties[name] != value:
                 if replace is Exception:
-                    raise Exception("Setting conflicting property value: %s = %s >> %s" % (name, self.properties[name], value))
+                    raise Exception(
+                        "Setting conflicting property value: %s = %s >> %s"
+                        % (name, self.properties[name], value)
+                    )
 
                 if replace is None:
-                    log.error("Setting conflicting property value: %s = %s >> %s" % (name, self.properties[name], value))
+                    log.error(
+                        "Setting conflicting property value: %s = %s >> %s"
+                        % (name, self.properties[name], value)
+                    )
                 elif not replace:
                     continue
 
@@ -2411,8 +3209,16 @@ class Style(object):
 
         return self
 
-    def partition(self, property_names=None, name_prefix=None, remove_prefix=False, add_prefix=False, keep=False, keep_all=False, modify=True):
-
+    def partition(
+        self,
+        property_names=None,
+        name_prefix=None,
+        remove_prefix=False,
+        add_prefix=False,
+        keep=False,
+        keep_all=False,
+        modify=True,
+    ):
         match_props = {}
         other_props = {}
 
@@ -2425,9 +3231,9 @@ class Style(object):
                     match = name.startswith(name_prefix)
 
                 if match and remove_prefix:
-                    name = name[len(name_prefix):]
+                    name = name[len(name_prefix) :]
             else:
-                match = (name in property_names)
+                match = name in property_names
 
             if match:
                 match_props[name] = value
@@ -2459,11 +3265,17 @@ class Style(object):
 
 
 def zero_quantity(val):
-
-    if re.match(r"^#[0-9a-f]+$", val) or re.match(r"^rgba\([0-9]+,[0-9]+,[0-9]+,[0-9.]+\)$", val) or val in COLOR_NAMES:
+    if (
+        re.match(r"^#[0-9a-f]+$", val)
+        or re.match(r"^rgba\([0-9]+,[0-9]+,[0-9]+,[0-9.]+\)$", val)
+        or val in COLOR_NAMES
+    ):
         return "#0"
 
-    num_match = re.match(r"^([+-]?[0-9]+\.?[0-9]*)(|em|ex|ch|rem|vw|vh|vmin|vmax|%|cm|mm|in|px|pt|pc)$", val)
+    num_match = re.match(
+        r"^([+-]?[0-9]+\.?[0-9]*)(|em|ex|ch|rem|vw|vh|vmin|vmax|%|cm|mm|in|px|pt|pc)$",
+        val,
+    )
     if num_match:
         return "0"
 
@@ -2476,13 +3288,18 @@ def split_value(val):
         return (None, val)
 
     num = num_match.group(1)
-    unit = val[len(num):]
+    unit = val[len(num) :]
 
     return (decimal.Decimal(num), unit)
 
 
 def capitalize_font_name(name):
-    return " ".join([(word.capitalize() if len(word) > 2 else word.upper()) for word in name.split(" ")])
+    return " ".join(
+        [
+            (word.capitalize() if len(word) > 2 else word.upper())
+            for word in name.split(" ")
+        ]
+    )
 
 
 def class_selector(class_name):

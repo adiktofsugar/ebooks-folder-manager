@@ -60,9 +60,9 @@ a       Lowercase letters (a to z for the first 26 pages,
 
 from typing import Iterator, List, Optional, Tuple, cast
 
-from ._protocols import PdfCommonDocProtocol
-from ._utils import logger_warning
-from .generic import (
+from _protocols import PdfCommonDocProtocol
+from _utils import logger_warning
+from generic import (
     ArrayObject,
     DictionaryObject,
     NullObject,

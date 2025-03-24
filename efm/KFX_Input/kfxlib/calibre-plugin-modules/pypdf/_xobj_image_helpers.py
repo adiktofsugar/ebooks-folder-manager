@@ -4,12 +4,12 @@ import sys
 from io import BytesIO
 from typing import Any, Dict, List, Literal, Tuple, Union, cast
 
-from ._utils import check_if_whitespace_only, logger_warning
-from .constants import ColorSpaces
-from .constants import FilterTypes as FT
-from .constants import ImageAttributes as IA
-from .errors import EmptyImageDataError, PdfReadError
-from .generic import (
+from _utils import check_if_whitespace_only, logger_warning
+from constants import ColorSpaces
+from constants import FilterTypes as FT
+from constants import ImageAttributes as IA
+from errors import EmptyImageDataError, PdfReadError
+from generic import (
     ArrayObject,
     DecodedStreamObject,
     EncodedStreamObject,
@@ -184,7 +184,7 @@ def _handle_flate(
         data = bits2byte(data, size, 4)
     img = _extended_image_frombytes(mode, size, data)
     if color_space == "/Indexed":
-        from .generic import TextStringObject
+        from generic import TextStringObject
 
         if isinstance(lookup, (EncodedStreamObject, DecodedStreamObject)):
             lookup = lookup.get_data()
@@ -215,13 +215,13 @@ def _handle_flate(
                     if actual_count < expected_count:
                         logger_warning(
                             f"Not enough lookup values: Expected {expected_count}, got {actual_count}.",
-                            __name__
+                            __name__,
                         )
                         lookup += bytes([0] * (expected_count - actual_count))
                     elif not check_if_whitespace_only(lookup[expected_count:]):
                         logger_warning(
                             f"Too many lookup values: Expected {expected_count}, got {actual_count}.",
-                            __name__
+                            __name__,
                         )
                     lookup = lookup[:expected_count]
                 colors_arr = [lookup[:nb], lookup[nb:]]

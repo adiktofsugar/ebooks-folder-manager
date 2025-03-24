@@ -5,19 +5,50 @@ import random
 import re
 import string
 
-from .ion import (
-        ion_type, ion_data_eq, IonAnnotation, IonInt, IonList, IonSExp, IonString,
-        IonStruct, IonSymbol, IS, unannotated)
-from .kfx_container import KfxContainer
-from .message_logging import log
-from .resources import (EXTS_OF_MIMETYPE, get_pdf_page_size, jpeg_type, show_pdf_page_boxes, SYMBOL_FORMATS)
-from .utilities import (disable_debug_log, list_symbols, list_truncated, natural_sort_key, type_name, UUID_MATCH_RE)
-from .version import __version__
-from .yj_container import (
-        CONTAINER_FORMAT_KFX_MAIN, YJFragment, YJFragmentKey, YJFragmentList,
-        ALLOWED_BOOK_FRAGMENT_TYPES, CONTAINER_FRAGMENT_TYPES, KNOWN_FRAGMENT_TYPES,
-        REQUIRED_BOOK_FRAGMENT_TYPES, ROOT_FRAGMENT_TYPES, SINGLETON_FRAGMENT_TYPES)
-from .yj_versions import (is_known_aux_metadata, is_known_kcb_data)
+from ion import (
+    ion_type,
+    ion_data_eq,
+    IonAnnotation,
+    IonInt,
+    IonList,
+    IonSExp,
+    IonString,
+    IonStruct,
+    IonSymbol,
+    IS,
+    unannotated,
+)
+from kfx_container import KfxContainer
+from message_logging import log
+from resources import (
+    EXTS_OF_MIMETYPE,
+    get_pdf_page_size,
+    jpeg_type,
+    show_pdf_page_boxes,
+    SYMBOL_FORMATS,
+)
+from utilities import (
+    disable_debug_log,
+    list_symbols,
+    list_truncated,
+    natural_sort_key,
+    type_name,
+    UUID_MATCH_RE,
+)
+from version import __version__
+from yj_container import (
+    CONTAINER_FORMAT_KFX_MAIN,
+    YJFragment,
+    YJFragmentKey,
+    YJFragmentList,
+    ALLOWED_BOOK_FRAGMENT_TYPES,
+    CONTAINER_FRAGMENT_TYPES,
+    KNOWN_FRAGMENT_TYPES,
+    REQUIRED_BOOK_FRAGMENT_TYPES,
+    ROOT_FRAGMENT_TYPES,
+    SINGLETON_FRAGMENT_TYPES,
+)
+from yj_versions import is_known_aux_metadata, is_known_kcb_data
 
 
 __license__ = "GPL v3"
@@ -52,14 +83,26 @@ METADATA_SYMBOLS = {
     "support_landscape": "$218",
     "support_portrait": "$217",
     "title": "$153",
-    }
+}
 
 METADATA_NAMES = {}
 for k, v in METADATA_SYMBOLS.items():
     METADATA_NAMES[v] = k
 
 
-CHECKED_IMAGE_FMTS = {"bmp", "bpg", "gif", "ico", "jpg", "pbm", "pdf", "png", "svg", "tiff", "webp"}
+CHECKED_IMAGE_FMTS = {
+    "bmp",
+    "bpg",
+    "gif",
+    "ico",
+    "jpg",
+    "pbm",
+    "pdf",
+    "png",
+    "svg",
+    "tiff",
+    "webp",
+}
 UNCHECKED_IMAGE_FMTS = {"jxr", "kvg"}
 ALL_IMAGE_FMTS = CHECKED_IMAGE_FMTS | UNCHECKED_IMAGE_FMTS
 
@@ -85,8 +128,7 @@ FRAGMENT_ID_KEYS = {
     "$608": ["$598"],
     "$157": ["$173"],
     "$610": ["$602"],
-
-    }
+}
 
 
 COMMON_FRAGMENT_REFERENCES = {
@@ -114,7 +156,7 @@ COMMON_FRAGMENT_REFERENCES = {
     "$214": "$164",
     "$636": "$417",
     "$635": "$164",
-    }
+}
 
 
 NESTED_FRAGMENT_REFERENCES = {
@@ -122,26 +164,26 @@ NESTED_FRAGMENT_REFERENCES = {
     ("$597", "$538"): "$597",
     ("$597", "$613"): "$597",
     ("$597", "$614"): "$597",
-    }
+}
 
 
 SPECIAL_FRAGMENT_REFERENCES = {
     "$391": {
         "$247": "$394",
-        },
+    },
     "$387": {
         "$213": "$164",
         "$214": "$164",
         "$212": "$164",
-        },
-    }
+    },
+}
 
 
 SPECIAL_PARENT_FRAGMENT_REFERENCES = {
     "$538": {
         "yj.print.style": False,
-        },
-    }
+    },
+}
 
 
 SECTION_DATA_TYPES = {
@@ -149,7 +191,7 @@ SECTION_DATA_TYPES = {
     "$260",
     "$267",
     "$609",
-    }
+}
 
 
 EXPECTED_ANNOTATIONS = {
@@ -158,13 +200,13 @@ EXPECTED_ANNOTATIONS = {
     ("$389", "$392", "$391"),
     ("$259", "$429", "$157"),
     ("$259", "$173", "$157"),
-    }
+}
 
 
 EXPECTED_DICTIONARY_ANNOTATIONS = {
     ("$260", "$141", "$608"),
     ("$259", "$146", "$608"),
-    }
+}
 
 
 EID_REFERENCES = {
@@ -174,7 +216,7 @@ EID_REFERENCES = {
     "$754",
     "$474",
     "$163",
-    }
+}
 
 
 class SYM_TYPE:
@@ -188,13 +230,14 @@ class SYM_TYPE:
 
 
 class BookStructure(object):
-
     def check_consistency(self):
         fragment_id_types = collections.defaultdict(set)
         for fragment in self.fragments:
             if fragment.ftype not in KNOWN_FRAGMENT_TYPES:
                 log.error("Fragment has unknown type: %s" % str(fragment))
-            elif fragment.ftype in ROOT_FRAGMENT_TYPES and not (fragment.ftype == "$262" and self.is_kpf_prepub):
+            elif fragment.ftype in ROOT_FRAGMENT_TYPES and not (
+                fragment.ftype == "$262" and self.is_kpf_prepub
+            ):
                 if fragment.ftype != fragment.fid:
                     log.error("Root fragment has unexpected id: %s" % str(fragment))
             elif fragment.ftype == fragment.fid:
@@ -209,25 +252,43 @@ class BookStructure(object):
                             value_fid = fragment.value[id_key]
 
                             if fragment.ftype == "$609" and (
-                                    self.is_dictionary or self.is_scribe_notebook or self.is_kpf_prepub):
+                                self.is_dictionary
+                                or self.is_scribe_notebook
+                                or self.is_kpf_prepub
+                            ):
                                 value_fid = IS(str(value_fid) + "-spm")
-                            elif fragment.ftype == "$610" and isinstance(value_fid, int):
+                            elif fragment.ftype == "$610" and isinstance(
+                                value_fid, int
+                            ):
                                 value_fid = IonSymbol("eidbucket_%d" % value_fid)
                             break
 
-                    if fragment.fid != value_fid and not (self.is_kpf_prepub and fragment.ftype == "$608"):
-                        log.error("Fragment type %s id %s has incorrect name %s" % (
-                                    fragment.ftype, fragment.fid, value_fid))
+                    if fragment.fid != value_fid and not (
+                        self.is_kpf_prepub and fragment.ftype == "$608"
+                    ):
+                        log.error(
+                            "Fragment type %s id %s has incorrect name %s"
+                            % (fragment.ftype, fragment.fid, value_fid)
+                        )
 
             fragment_id_types[fragment.fid].add(fragment.ftype)
 
         for fid, ftypes in sorted(list(fragment_id_types.items())):
-            if len(ftypes) > 1 and (len(ftypes - SECTION_DATA_TYPES) > 0 or self.is_dictionary or self.is_kpf_prepub):
-                log.error("Book contains fragment id %s with multiple types %s" % (fid, list_symbols(ftypes)))
+            if len(ftypes) > 1 and (
+                len(ftypes - SECTION_DATA_TYPES) > 0
+                or self.is_dictionary
+                or self.is_kpf_prepub
+            ):
+                log.error(
+                    "Book contains fragment id %s with multiple types %s"
+                    % (fid, list_symbols(ftypes))
+                )
 
         for ftype in sorted(list(SINGLETON_FRAGMENT_TYPES)):
             if len(self.fragments.get_all(ftype)) > 1:
-                log.error("Multiple %s fragments present (only one allowed per book)" % ftype)
+                log.error(
+                    "Multiple %s fragments present (only one allowed per book)" % ftype
+                )
 
         containers = {}
         entity_map_container_id = None
@@ -236,10 +297,16 @@ class BookStructure(object):
                 container_id = fragment.value["$409"]
                 containers[container_id] = fragment
 
-                if fragment.value["$161"] == CONTAINER_FORMAT_KFX_MAIN and not self.is_magazine:
+                if (
+                    fragment.value["$161"] == CONTAINER_FORMAT_KFX_MAIN
+                    and not self.is_magazine
+                ):
                     asset_id = self.get_asset_id()
                     if asset_id and asset_id != container_id:
-                        log.error("asset_id (%s) != main container_id (%s)" % (asset_id, container_id))
+                        log.error(
+                            "asset_id (%s) != main container_id (%s)"
+                            % (asset_id, container_id)
+                        )
 
                 for ftype, fid in fragment.value.get("$181", []):
                     if ftype == 419:
@@ -258,24 +325,41 @@ class BookStructure(object):
                 if cem_fragment_ids:
                     container = containers.get(container_id)
                     if container is not None and "$181" in container.value:
-                        container_fragment_ids = set([self.symtab.get_symbol(e[1]) for e in container.value["$181"] if e[0] != e[1]])
+                        container_fragment_ids = set(
+                            [
+                                self.symtab.get_symbol(e[1])
+                                for e in container.value["$181"]
+                                if e[0] != e[1]
+                            ]
+                        )
 
-                        cem_missing_fids = (cem_fragment_ids - container_fragment_ids) - {"$348"}
+                        cem_missing_fids = (
+                            cem_fragment_ids - container_fragment_ids
+                        ) - {"$348"}
                         if cem_missing_fids:
-                            self.log_known_error("Entity map references missing fragments in %s: %s" % (
-                                    container_id, list_truncated(cem_missing_fids)))
+                            self.log_known_error(
+                                "Entity map references missing fragments in %s: %s"
+                                % (container_id, list_truncated(cem_missing_fids))
+                            )
                             self.reported_missing_fids.update(cem_missing_fids)
 
-                        extra_fids = (container_fragment_ids - cem_fragment_ids) - {"$348"}
+                        extra_fids = (container_fragment_ids - cem_fragment_ids) - {
+                            "$348"
+                        }
                         if extra_fids:
-                            log.error("Found fragments in %s missing from entity map: %s" % (container_id, list_truncated(extra_fids)))
+                            log.error(
+                                "Found fragments in %s missing from entity map: %s"
+                                % (container_id, list_truncated(extra_fids))
+                            )
 
             actual_container_ids = set(containers.keys())
             missing_container_ids = cem_container_ids - actual_container_ids
             if missing_container_ids:
-                log.error("Book is incomplete. All of the KFX container files that make up the book must be combined "
-                          "into a KFX-ZIP file for successful conversion. (Missing containers %s)" %
-                          list_symbols(list(missing_container_ids)))
+                log.error(
+                    "Book is incomplete. All of the KFX container files that make up the book must be combined "
+                    "into a KFX-ZIP file for successful conversion. (Missing containers %s)"
+                    % list_symbols(list(missing_container_ids))
+                )
 
             extra_ids = actual_container_ids - cem_container_ids
 
@@ -283,7 +367,10 @@ class BookStructure(object):
                 extra_ids -= {entity_map_container_id}
 
             if extra_ids:
-                log.error("Found containers missing from entity map: %s" % list_symbols(extra_ids))
+                log.error(
+                    "Found containers missing from entity map: %s"
+                    % list_symbols(extra_ids)
+                )
 
         required_ftypes = REQUIRED_BOOK_FRAGMENT_TYPES.copy()
         allowed_ftypes = ALLOWED_BOOK_FRAGMENT_TYPES.copy()
@@ -296,14 +383,24 @@ class BookStructure(object):
         else:
             required_ftypes.remove("$611")
 
-            if self.get_feature_value("kfxgen.positionMaps", namespace="format_capabilities") != 2:
+            if (
+                self.get_feature_value(
+                    "kfxgen.positionMaps", namespace="format_capabilities"
+                )
+                != 2
+            ):
                 allowed_ftypes.remove("$609")
                 allowed_ftypes.remove("$621")
 
         if not self.is_kpf_prepub:
             allowed_ftypes.remove("$610")
 
-        if self.is_dictionary or self.is_scribe_notebook or self.is_magazine or self.is_print_replica:
+        if (
+            self.is_dictionary
+            or self.is_scribe_notebook
+            or self.is_magazine
+            or self.is_print_replica
+        ):
             required_ftypes.remove("$550")
 
             if not self.is_dictionary:
@@ -335,21 +432,32 @@ class BookStructure(object):
                 log.warning("Book incomplete. Missing book_navigation")
             else:
                 missing_ft = list_symbols(missing_ftypes)
-                log.error("Book is incomplete. All of the KFX container files that make up the book must be combined "
-                          "into a KFX-ZIP file for successful conversion. (Missing fragments %s)" % missing_ft)
+                log.error(
+                    "Book is incomplete. All of the KFX container files that make up the book must be combined "
+                    "into a KFX-ZIP file for successful conversion. (Missing fragments %s)"
+                    % missing_ft
+                )
 
         extra_ftypes = present_ftypes - allowed_ftypes
         if extra_ftypes:
-            log.error("Book has unexpected fragment types: %s" % list_symbols(extra_ftypes))
+            log.error(
+                "Book has unexpected fragment types: %s" % list_symbols(extra_ftypes)
+            )
 
         document_data = self.fragments.get("$538", first=True)
-        reading_orders = [] if document_data is None else document_data.value.get("$169", [])
+        reading_orders = (
+            [] if document_data is None else document_data.value.get("$169", [])
+        )
 
         metadata = self.fragments.get("$258", first=True)
-        metadata_reading_orders = [] if metadata is None else metadata.value.get("$169", [])
+        metadata_reading_orders = (
+            [] if metadata is None else metadata.value.get("$169", [])
+        )
 
         if document_data is not None:
-            if metadata is not None and not ion_data_eq(reading_orders, metadata_reading_orders, report_errors=False):
+            if metadata is not None and not ion_data_eq(
+                reading_orders, metadata_reading_orders, report_errors=False
+            ):
                 log.error("document_data and metadata reading_orders do not match")
         else:
             reading_orders = metadata_reading_orders
@@ -362,25 +470,50 @@ class BookStructure(object):
 
             extra_keys = set(reading_order.keys()) - {"$178", "$170"}
             if extra_keys:
-                log.error("Unexpected reading_order %d data: %s" % (i, list_symbols(extra_keys)))
+                log.error(
+                    "Unexpected reading_order %d data: %s"
+                    % (i, list_symbols(extra_keys))
+                )
 
         if self.is_scribe_notebook:
             if len(reading_orders) == 1:
                 pass
             elif len(reading_orders) != 2:
-                log.error("Scribe notebook contains %d reading_orders: %s" % (len(reading_orders), list_symbols(reading_order_names)))
+                log.error(
+                    "Scribe notebook contains %d reading_orders: %s"
+                    % (len(reading_orders), list_symbols(reading_order_names))
+                )
             elif reading_order_names != ["$351", "note_template_collection"]:
-                log.error("Unexpected Scribe notebook reading order names: %s" % list_symbols(reading_order_names))
+                log.error(
+                    "Unexpected Scribe notebook reading order names: %s"
+                    % list_symbols(reading_order_names)
+                )
         elif self.get_metadata_value("periodicals_generation_V2", default=False):
             if len(reading_orders) != 2:
-                log.error("Magazine contains %d reading_orders: %s" % (len(reading_orders), list_symbols(reading_order_names)))
+                log.error(
+                    "Magazine contains %d reading_orders: %s"
+                    % (len(reading_orders), list_symbols(reading_order_names))
+                )
             elif reading_order_names != ["$351", "$701"]:
-                log.error("Unexpected magazine reading order names: %s" % list_symbols(reading_order_names))
+                log.error(
+                    "Unexpected magazine reading order names: %s"
+                    % list_symbols(reading_order_names)
+                )
         else:
             if len(reading_orders) != 1:
-                log.error("Book contains %d reading_orders: %s" % (len(reading_orders), list_symbols(reading_order_names)))
-            elif (not self.is_magazine) and reading_order_names[0] not in ["$351", "order-1", "TargetReadingOrder"]:
-                log.error("Unexpected book reading order names: %s" % list_symbols(reading_order_names))
+                log.error(
+                    "Book contains %d reading_orders: %s"
+                    % (len(reading_orders), list_symbols(reading_order_names))
+                )
+            elif (not self.is_magazine) and reading_order_names[0] not in [
+                "$351",
+                "order-1",
+                "TargetReadingOrder",
+            ]:
+                log.error(
+                    "Unexpected book reading order names: %s"
+                    % list_symbols(reading_order_names)
+                )
 
         book_navigation = self.fragments.get("$389", first=True)
         if book_navigation is not None:
@@ -393,11 +526,20 @@ class BookStructure(object):
 
                 for nav_container in nav.get("$392", []):
                     if ion_type(nav_container) is IonSymbol:
-                        nav_container = self.fragments.get(ftype="$391", fid=nav_container)
+                        nav_container = self.fragments.get(
+                            ftype="$391", fid=nav_container
+                        )
 
                     if nav_container is not None:
                         nav_type = unannotated(nav_container).get("$235", None)
-                        if nav_type not in {"$212", "$236", "$237", "$213", "$214", "$798"}:
+                        if nav_type not in {
+                            "$212",
+                            "$236",
+                            "$237",
+                            "$213",
+                            "$214",
+                            "$798",
+                        }:
                             log.warning("Unexpected nav_type: %s" % nav_type)
                         elif nav_type in found_nav_types:
                             log.warning("Duplicate nav_type: %s" % nav_type)
@@ -406,17 +548,32 @@ class BookStructure(object):
 
             missing_reading_order_names = reading_order_names - nav_reading_order_names
             if missing_reading_order_names:
-                log.warning("Navigation has missing reading orders: %s" % list_symbols(missing_reading_order_names))
+                log.warning(
+                    "Navigation has missing reading orders: %s"
+                    % list_symbols(missing_reading_order_names)
+                )
 
             extra_reading_order_names = nav_reading_order_names - reading_order_names
             if extra_reading_order_names:
-                log.warning("Navigation has extra reading orders: %s" % list_symbols(extra_reading_order_names))
+                log.warning(
+                    "Navigation has extra reading orders: %s"
+                    % list_symbols(extra_reading_order_names)
+                )
 
         reading_order_sections = set()
-        duplicate_sections = set([s for s in reading_order_section_list if s in reading_order_sections or reading_order_sections.add(s)])
+        duplicate_sections = set(
+            [
+                s
+                for s in reading_order_section_list
+                if s in reading_order_sections or reading_order_sections.add(s)
+            ]
+        )
 
         if duplicate_sections:
-            log.warning("Reading order has duplicate sections: %s" % list_symbols(duplicate_sections))
+            log.warning(
+                "Reading order has duplicate sections: %s"
+                % list_symbols(duplicate_sections)
+            )
 
         sections = set()
         for fragment in self.fragments.get_all("$260"):
@@ -425,13 +582,22 @@ class BookStructure(object):
         missing_reading_order_sections = sections - reading_order_sections
         if missing_reading_order_sections:
             if self.is_scribe_notebook:
-                log.warning("Notebook contains unreferenced pages: %s" % list_symbols(missing_reading_order_sections))
+                log.warning(
+                    "Notebook contains unreferenced pages: %s"
+                    % list_symbols(missing_reading_order_sections)
+                )
             else:
-                log.warning("Reading order is missing sections: %s" % list_symbols(missing_reading_order_sections))
+                log.warning(
+                    "Reading order is missing sections: %s"
+                    % list_symbols(missing_reading_order_sections)
+                )
 
         extra_reading_order_sections = reading_order_sections - sections
         if extra_reading_order_sections:
-            log.warning("Reading order has extra sections: %s" % list_symbols(extra_reading_order_sections))
+            log.warning(
+                "Reading order has extra sections: %s"
+                % list_symbols(extra_reading_order_sections)
+            )
 
         has_content_fragment = False
         for fragment in self.fragments.get_all("$145"):
@@ -441,8 +607,10 @@ class BookStructure(object):
                 content_bytes += len(content.encode("utf8"))
 
             if content_bytes >= MAX_CONTENT_FRAGMENT_SIZE:
-                log.error("Content %s: %d bytes exceeds maximum (%d bytes)" % (
-                    fragment.fid, content_bytes, MAX_CONTENT_FRAGMENT_SIZE))
+                log.error(
+                    "Content %s: %d bytes exceeds maximum (%d bytes)"
+                    % (fragment.fid, content_bytes, MAX_CONTENT_FRAGMENT_SIZE)
+                )
 
         for fragment in self.fragments.get_all("$395"):
             if len(fragment.value["$247"]) > 0 and not self.is_magazine:
@@ -450,9 +618,14 @@ class BookStructure(object):
 
         is_sample = self.get_metadata_value("is_sample", default=False)
         if (self.cde_type == "EBSP") is not is_sample:
-            log.warning("Feature/content mismatch: cde_type=%s, is_sample=%s" % (self.cde_type, is_sample))
+            log.warning(
+                "Feature/content mismatch: cde_type=%s, is_sample=%s"
+                % (self.cde_type, is_sample)
+            )
 
-        has_hdv_image = has_tiles = has_overlapped_tiles = has_jpeg_rst_marker = has_jpeg_xr_image = False
+        has_hdv_image = has_tiles = has_overlapped_tiles = has_jpeg_rst_marker = (
+            has_jpeg_xr_image
+        ) = False
 
         for fragment in self.fragments.get_all("$164"):
             resource_name = str(fragment.fid)
@@ -464,7 +637,10 @@ class BookStructure(object):
                 if format in SYMBOL_FORMATS:
                     format_fmt = SYMBOL_FORMATS[format]
                 else:
-                    log.error("External resource %s has unexpected format: %s" % (resource_name, format))
+                    log.error(
+                        "External resource %s has unexpected format: %s"
+                        % (resource_name, format)
+                    )
 
             mime_fmt = ""
             mime = resource.get("$162")
@@ -475,8 +651,10 @@ class BookStructure(object):
                     if not format_fmt:
                         format_fmt = mime_fmt
                 else:
-                    log.error("External resource %s format %s has unknown mime type: %s" % (
-                        resource_name, format_fmt, repr(mime)))
+                    log.error(
+                        "External resource %s format %s has unknown mime type: %s"
+                        % (resource_name, format_fmt, repr(mime))
+                    )
 
             resource_height = resource.get("$423", 0) or resource.get("$67", 0)
             resource_width = resource.get("$422", 0) or resource.get("$66", 0)
@@ -494,15 +672,25 @@ class BookStructure(object):
             if format_fmt in ALL_IMAGE_FMTS or mime_fmt in ALL_IMAGE_FMTS:
                 if location is not None:
                     if ion_type(location) is not IonString:
-                        log.error("Resource %s location is type %s" % (str(fragment.fid), type_name(location)))
+                        log.error(
+                            "Resource %s location is type %s"
+                            % (str(fragment.fid), type_name(location))
+                        )
 
-                    raw_media = self.fragments.get(ftype="$417", fid=location, first=True)
+                    raw_media = self.fragments.get(
+                        ftype="$417", fid=location, first=True
+                    )
                     if raw_media is not None:
                         image_data = raw_media.value.tobytes()
 
-                        if format_fmt in UNCHECKED_IMAGE_FMTS or mime_fmt in UNCHECKED_IMAGE_FMTS:
+                        if (
+                            format_fmt in UNCHECKED_IMAGE_FMTS
+                            or mime_fmt in UNCHECKED_IMAGE_FMTS
+                        ):
                             img_ok = True
-                            img_format = format_fmt if format_fmt != "pobject" else mime_fmt
+                            img_format = (
+                                format_fmt if format_fmt != "pobject" else mime_fmt
+                            )
                             img_transparent = img_animated = False
                             img_width, img_height = (0, 0)
                         elif format_fmt == "pdf" or mime_fmt == "pdf":
@@ -510,16 +698,26 @@ class BookStructure(object):
                             img_format = "pdf"
                             img_transparent = img_animated = False
                             page_num = resource.get("$564", 0) + 1
-                            img_width, img_height = get_pdf_page_size(image_data, resource_name, page_num)
+                            img_width, img_height = get_pdf_page_size(
+                                image_data, resource_name, page_num
+                            )
                         else:
                             with disable_debug_log():
                                 try:
                                     img = Image.open(io.BytesIO(image_data))
-                                    img_format = img.format.lower().replace("jpeg", "jpg")
+                                    img_format = img.format.lower().replace(
+                                        "jpeg", "jpg"
+                                    )
 
-                                    img_width, img_height = (0, 0) if img_format in ["gif", "webp"] else img.size
+                                    img_width, img_height = (
+                                        (0, 0)
+                                        if img_format in ["gif", "webp"]
+                                        else img.size
+                                    )
 
-                                    img_transparent = img.mode == "P" and "transparency" in img.info
+                                    img_transparent = (
+                                        img.mode == "P" and "transparency" in img.info
+                                    )
 
                                     try:
                                         img.seek(1)
@@ -536,101 +734,217 @@ class BookStructure(object):
                                 else:
                                     img_ok = True
 
-                        if (resource_height > 1920 or resource_width > 1920) and img_format not in ["jpg", "pdf", "png", "webp"]:
-                            log.warning("Resource %s has image format %s with HDV dimensions %dx%d" % (
-                                 resource_name, img_format, resource_width, resource_height))
+                        if (
+                            resource_height > 1920 or resource_width > 1920
+                        ) and img_format not in ["jpg", "pdf", "png", "webp"]:
+                            log.warning(
+                                "Resource %s has image format %s with HDV dimensions %dx%d"
+                                % (
+                                    resource_name,
+                                    img_format,
+                                    resource_width,
+                                    resource_height,
+                                )
+                            )
 
                         if img_ok:
+                            if img_format in [
+                                "gif",
+                                "jpg",
+                                "jxr",
+                                "pdf",
+                                "png",
+                                "webp",
+                            ]:
+                                if (
+                                    format != "$287"
+                                    and format_fmt
+                                    and format_fmt != img_format
+                                ):
+                                    log.warning(
+                                        "Resource %s has image format %s and resource format %s"
+                                        % (resource_name, img_format, format_fmt)
+                                    )
 
-                            if img_format in ["gif", "jpg", "jxr", "pdf", "png", "webp"]:
-                                if format != "$287" and format_fmt and format_fmt != img_format:
-                                    log.warning("Resource %s has image format %s and resource format %s" % (
-                                            resource_name, img_format, format_fmt))
-
-                                if mime != "figure" and mime_fmt and mime_fmt != img_format:
-                                    if not (img_format in ["jpg", "jxr"] and format_fmt == img_format and mime == "image/svg+xml"):
-                                        log.warning("Resource %s has image format %s and mime type %s" % (
-                                                resource_name, img_format, mime))
+                                if (
+                                    mime != "figure"
+                                    and mime_fmt
+                                    and mime_fmt != img_format
+                                ):
+                                    if not (
+                                        img_format in ["jpg", "jxr"]
+                                        and format_fmt == img_format
+                                        and mime == "image/svg+xml"
+                                    ):
+                                        log.warning(
+                                            "Resource %s has image format %s and mime type %s"
+                                            % (resource_name, img_format, mime)
+                                        )
 
                                 if img_format == "jpg" and REPORT_JPEG_VARIANTS:
                                     jtype = jpeg_type(image_data)
                                     if jtype not in ["JPEG"]:
-                                        log.warning("Resource %s is unexpected JPEG variant %s" % (resource_name, jtype))
+                                        log.warning(
+                                            "Resource %s is unexpected JPEG variant %s"
+                                            % (resource_name, jtype)
+                                        )
 
-                                if img_format == "jpg" and (not has_jpeg_rst_marker) and re.search(b"\xff[\xd0-\xd7]", image_data):
+                                if (
+                                    img_format == "jpg"
+                                    and (not has_jpeg_rst_marker)
+                                    and re.search(b"\xff[\xd0-\xd7]", image_data)
+                                ):
                                     has_jpeg_rst_marker = True
 
                                 if img_format == "jxr":
                                     has_jpeg_xr_image = True
 
                                     if len(image_data) >= 85000:
-
-                                        log.warning("Large JXR resource %s image %s is %d bytes" % (resource_name, location, len(image_data)))
+                                        log.warning(
+                                            "Large JXR resource %s image %s is %d bytes"
+                                            % (resource_name, location, len(image_data))
+                                        )
 
                                 if img_format == "png" and not (
-                                        self.is_illustrated_layout or self.is_print_replica or
-                                        self.is_magazine or self.is_kpf_prepub):
-                                    log.warning("Resource %s is unexpected PNG" % resource_name)
+                                    self.is_illustrated_layout
+                                    or self.is_print_replica
+                                    or self.is_magazine
+                                    or self.is_kpf_prepub
+                                ):
+                                    log.warning(
+                                        "Resource %s is unexpected PNG" % resource_name
+                                    )
 
-                                if img_format == "webp" and not self.is_illustrated_layout:
-                                    log.warning("Resource %s is unexpected WEBP" % resource_name)
+                                if (
+                                    img_format == "webp"
+                                    and not self.is_illustrated_layout
+                                ):
+                                    log.warning(
+                                        "Resource %s is unexpected WEBP" % resource_name
+                                    )
 
                                 if img_format == "gif" and not self.is_magazine:
-                                    log.warning("Resource %s is unexpected GIF" % resource_name)
+                                    log.warning(
+                                        "Resource %s is unexpected GIF" % resource_name
+                                    )
 
                                 if img_format == "pdf":
-                                    if (img_width and img_height and resource_width and resource_height and
-                                            (numstr(img_width) != numstr(resource_width) or numstr(img_height) != numstr(resource_height))):
-                                        log.warning("Resource %s dimensions %gx%g, PDF image %s page %d is %gx%g" % (
-                                            resource_name, resource_width, resource_height, location, page_num, img_width, img_height))
+                                    if (
+                                        img_width
+                                        and img_height
+                                        and resource_width
+                                        and resource_height
+                                        and (
+                                            numstr(img_width) != numstr(resource_width)
+                                            or numstr(img_height)
+                                            != numstr(resource_height)
+                                        )
+                                    ):
+                                        log.warning(
+                                            "Resource %s dimensions %gx%g, PDF image %s page %d is %gx%g"
+                                            % (
+                                                resource_name,
+                                                resource_width,
+                                                resource_height,
+                                                location,
+                                                page_num,
+                                                img_width,
+                                                img_height,
+                                            )
+                                        )
 
                                         if DEBUG_PDF_PAGE_SIZE:
-                                            show_pdf_page_boxes(image_data, resource_name, page_num)
+                                            show_pdf_page_boxes(
+                                                image_data, resource_name, page_num
+                                            )
                                 else:
-                                    if (img_width and img_height and resource_width and resource_height and
-                                            (img_width != resource_width or img_height != resource_height)):
-                                        log.warning("Resource %s dimensions %gx%g, image %s is %gx%g" % (
-                                            resource_name, resource_width, resource_height, location, img_width, img_height))
+                                    if (
+                                        img_width
+                                        and img_height
+                                        and resource_width
+                                        and resource_height
+                                        and (
+                                            img_width != resource_width
+                                            or img_height != resource_height
+                                        )
+                                    ):
+                                        log.warning(
+                                            "Resource %s dimensions %gx%g, image %s is %gx%g"
+                                            % (
+                                                resource_name,
+                                                resource_width,
+                                                resource_height,
+                                                location,
+                                                img_width,
+                                                img_height,
+                                            )
+                                        )
 
                                 if img_transparent and not self.is_magazine:
-                                    log.warning("Image at location %s has transparency" % location)
+                                    log.warning(
+                                        "Image at location %s has transparency"
+                                        % location
+                                    )
 
                                 if img_animated and img_format != "webp":
-                                    log.warning("Image at location %s has animation" % location)
+                                    log.warning(
+                                        "Image at location %s has animation" % location
+                                    )
                             else:
-                                log.warning("Resource %s has unexpected image format: %s" % (
-                                        resource_name, img_format))
+                                log.warning(
+                                    "Resource %s has unexpected image format: %s"
+                                    % (resource_name, img_format)
+                                )
                         else:
-                            log.warning("Resource %s location %s has bad image" % (resource_name, location))
+                            log.warning(
+                                "Resource %s location %s has bad image"
+                                % (resource_name, location)
+                            )
 
         yj_hdv = self.get_feature_value("yj_hdv")
         if has_tiles and yj_hdv is None:
             log.warning("HDV image tiles detected without yj_hdv feature")
-        elif (has_hdv_image and yj_hdv is None and self.get_feature_value("yj_non_pdf_fixed_layout") is None and
-                self.get_feature_value("yj_fixed_layout") is None and
-                not (self.is_illustrated_layout or self.is_pdf_backed_fixed_layout)):
-            log.warning("HDV size image detected without yj_hdv or yj_non_pdf_fixed_layout or KIM feature")
+        elif (
+            has_hdv_image
+            and yj_hdv is None
+            and self.get_feature_value("yj_non_pdf_fixed_layout") is None
+            and self.get_feature_value("yj_fixed_layout") is None
+            and not (self.is_illustrated_layout or self.is_pdf_backed_fixed_layout)
+        ):
+            log.warning(
+                "HDV size image detected without yj_hdv or yj_non_pdf_fixed_layout or KIM feature"
+            )
         elif has_overlapped_tiles and (yj_hdv is None or yj_hdv < 2):
             log.warning("HDV overlapped tiles detected without yj_hdv-2 feature")
         elif yj_hdv is not None and not (has_tiles or has_hdv_image):
-            log.info("Feature/content mismatch: yj_hdv-%s without HDV image/tiles" % str(yj_hdv))
+            log.info(
+                "Feature/content mismatch: yj_hdv-%s without HDV image/tiles"
+                % str(yj_hdv)
+            )
 
         yj_jpg_rst_marker_present = self.get_feature_value("yj_jpg_rst_marker_present")
         if (yj_jpg_rst_marker_present is not None) is not has_jpeg_rst_marker:
-            log.warning("Feature/content mismatch: yj_jpg_rst_marker_present=%s has_jpeg_rst_marker=%s" % (
-                yj_jpg_rst_marker_present, has_jpeg_rst_marker))
+            log.warning(
+                "Feature/content mismatch: yj_jpg_rst_marker_present=%s has_jpeg_rst_marker=%s"
+                % (yj_jpg_rst_marker_present, has_jpeg_rst_marker)
+            )
 
         yj_jpegxr_sd = self.get_feature_value("yj_jpegxr_sd")
         if (yj_jpegxr_sd is not None) is not has_jpeg_xr_image:
-            log.warning("Feature/content mismatch: yj_jpegxr_sd=%s has_jpeg_xr_image=%s" % (
-                yj_jpegxr_sd, has_jpeg_xr_image))
+            log.warning(
+                "Feature/content mismatch: yj_jpegxr_sd=%s has_jpeg_xr_image=%s"
+                % (yj_jpegxr_sd, has_jpeg_xr_image)
+            )
 
         if REPORT_NON_JPEG_JFIF_COVER:
             cover_image_data = self.get_cover_image_data()
             if cover_image_data is not None:
                 cover_fmt = jpeg_type(cover_image_data[1], cover_image_data[0])
                 if cover_fmt != "JPEG":
-                    log.warning("Incorrect cover image format for Kindle lockscreen display: %s" % cover_fmt.upper())
+                    log.warning(
+                        "Incorrect cover image format for Kindle lockscreen display: %s"
+                        % cover_fmt.upper()
+                    )
 
         if self.has_pdf_resource:
             if self.get_feature_value("yj_non_pdf_fixed_layout") is not None:
@@ -650,7 +964,9 @@ class BookStructure(object):
                 log.warning("yj_pdf_support feature present without PDF resource")
 
             if self.get_feature_value("yj_pdf_backed_fixed_layout") is not None:
-                log.warning("yj_pdf_backed_fixed_layout feature present without PDF resource")
+                log.warning(
+                    "yj_pdf_backed_fixed_layout feature present without PDF resource"
+                )
 
         has_textBlock = False
         format_capability_sets = set()
@@ -665,11 +981,17 @@ class BookStructure(object):
             format_capability_sets.add(tuple(sorted(fcxs)))
 
         if len(format_capability_sets) > 1:
-            log.error("Book has %d different format capabilities" % len(format_capability_sets))
+            log.error(
+                "Book has %d different format capabilities"
+                % len(format_capability_sets)
+            )
             log.info(str(format_capability_sets))
 
         if has_textBlock is not has_content_fragment:
-            log.error("textBlock=%s content_fragment=%s" % (has_textBlock, has_content_fragment))
+            log.error(
+                "textBlock=%s content_fragment=%s"
+                % (has_textBlock, has_content_fragment)
+            )
 
         for fragment in self.fragments.get_all("$597"):
             if len(set(fragment.value.keys()) - {"$258", "$598"}) > 0:
@@ -696,9 +1018,14 @@ class BookStructure(object):
             for kcb_category, kcb_category_data in self.kpf_container.kcb_data.items():
                 if kcb_category != "content_hash":
                     for kcb_key, kcb_values in kcb_category_data.items():
-                        for kcb_value in (kcb_values if isinstance(kcb_values, list) else [kcb_values]):
+                        for kcb_value in (
+                            kcb_values if isinstance(kcb_values, list) else [kcb_values]
+                        ):
                             if not is_known_kcb_data(kcb_category, kcb_key, kcb_value):
-                                log.warning("Unknown KCB data: %s/%s=%s" % (kcb_category, kcb_key, kcb_value))
+                                log.warning(
+                                    "Unknown KCB data: %s/%s=%s"
+                                    % (kcb_category, kcb_key, kcb_value)
+                                )
 
     def extract_fragment_id_from_value(self, ftype, value):
         if ion_type(value) is IonStruct and ftype in FRAGMENT_ID_KEYS:
@@ -754,14 +1081,16 @@ class BookStructure(object):
                     mandatory_refs = set()
                     optional_refs = set()
 
-                    self.walk_fragment(fragment, mandatory_refs, optional_refs, eid_defs, eid_refs)
+                    self.walk_fragment(
+                        fragment, mandatory_refs, optional_refs, eid_defs, eid_refs
+                    )
 
                     visited.add(fragment)
                     mandatory_references[fragment] = mandatory_refs
                     optional_references[fragment] = optional_refs
                     discovered |= mandatory_refs | optional_refs
 
-            missing |= (next_visits - visited)
+            missing |= next_visits - visited
 
         for key in sorted(list(missing)):
             if key.ftype == "$597":
@@ -780,21 +1109,32 @@ class BookStructure(object):
                     if fragment.ftype in ["$270", "$593"]:
                         continue
 
-                    if ion_data_eq(fragment.value, already_processed[fragment].value, report_errors=False):
+                    if ion_data_eq(
+                        fragment.value,
+                        already_processed[fragment].value,
+                        report_errors=False,
+                    ):
                         if fragment.ftype == "$597":
-                            self.log_known_error("Duplicate fragment: %s" % str(fragment))
+                            self.log_known_error(
+                                "Duplicate fragment: %s" % str(fragment)
+                            )
                         else:
                             log.warning("Duplicate fragment: %s" % str(fragment))
                         continue
                     else:
-                        log.error("Duplicate fragment key with different content: %s" % str(fragment))
+                        log.error(
+                            "Duplicate fragment key with different content: %s"
+                            % str(fragment)
+                        )
                         diff_dupe_fragments = True
                 else:
                     already_processed[fragment] = fragment
 
             if fragment in visited:
                 referenced_fragments.append(fragment)
-            elif (fragment.ftype in CONTAINER_FRAGMENT_TYPES) or (fragment.fid == fragment.ftype):
+            elif (fragment.ftype in CONTAINER_FRAGMENT_TYPES) or (
+                fragment.fid == fragment.ftype
+            ):
                 log.error("Unexpected root fragment: %s" % str(fragment))
             elif fragment.ftype == "$597" and (self.is_sample or self.is_dictionary):
                 pass
@@ -807,10 +1147,14 @@ class BookStructure(object):
                     unreferenced_fragments.remove(fragment)
 
         if unreferenced_fragments:
-            log.error("Unreferenced fragments: %s" % list_truncated(unreferenced_fragments))
+            log.error(
+                "Unreferenced fragments: %s" % list_truncated(unreferenced_fragments)
+            )
 
         if diff_dupe_fragments:
-            raise Exception("Book appears to have KFX containers from multiple books. (duplicate fragments)")
+            raise Exception(
+                "Book appears to have KFX containers from multiple books. (duplicate fragments)"
+            )
             pass
 
         undefined_eids = eid_refs - eid_defs
@@ -826,8 +1170,12 @@ class BookStructure(object):
                     if container_id_:
                         container_ids.add(container_id_)
 
-                    kfxgen_application_version = fragment.value.get("$587") or kfxgen_application_version
-                    kfxgen_package_version = fragment.value.get("$588") or kfxgen_package_version
+                    kfxgen_application_version = (
+                        fragment.value.get("$587") or kfxgen_application_version
+                    )
+                    kfxgen_package_version = (
+                        fragment.value.get("$588") or kfxgen_package_version
+                    )
                     version = fragment.value.get("version") or version
                     referenced_fragments.discard(fragment)
 
@@ -839,23 +1187,42 @@ class BookStructure(object):
                 if not container_id:
                     container_id = self.create_container_id()
 
-                referenced_fragments.append(YJFragment(ftype="$270", value=IonStruct(
-                    IS("$409"), container_id,
-                    IS("$161"), CONTAINER_FORMAT_KFX_MAIN,
-                    IS("$587"), kfxgen_application_version or "kfxlib-%s" % __version__,
-                    IS("$588"), kfxgen_package_version or "",
-                    IS("version"), version or KfxContainer.VERSION)))
+                referenced_fragments.append(
+                    YJFragment(
+                        ftype="$270",
+                        value=IonStruct(
+                            IS("$409"),
+                            container_id,
+                            IS("$161"),
+                            CONTAINER_FORMAT_KFX_MAIN,
+                            IS("$587"),
+                            kfxgen_application_version or "kfxlib-%s" % __version__,
+                            IS("$588"),
+                            kfxgen_package_version or "",
+                            IS("version"),
+                            version or KfxContainer.VERSION,
+                        ),
+                    )
+                )
 
             self.fragments = YJFragmentList(sorted(referenced_fragments))
 
             if not (self.is_dictionary or self.is_scribe_notebook):
-                self.rebuild_container_entity_map(container_id, self.determine_entity_dependencies(mandatory_references, optional_references))
+                self.rebuild_container_entity_map(
+                    container_id,
+                    self.determine_entity_dependencies(
+                        mandatory_references, optional_references
+                    ),
+                )
 
     def create_container_id(self):
-        return "CR!%s" % "".join(random.choice(string.ascii_uppercase + string.digits) for _ in range(28))
+        return "CR!%s" % "".join(
+            random.choice(string.ascii_uppercase + string.digits) for _ in range(28)
+        )
 
-    def walk_fragment(self, fragment, mandatory_frag_refs, optional_frag_refs, eid_defs, eid_refs):
-
+    def walk_fragment(
+        self, fragment, mandatory_frag_refs, optional_frag_refs, eid_defs, eid_refs
+    ):
         def walk(data, container=None, container_parent=None, top_level=False):
             data_type = ion_type(data)
 
@@ -865,12 +1232,25 @@ class BookStructure(object):
             if data_type is IonAnnotation:
                 if not top_level:
                     if len(data.annotations) != 1:
-                        self.log_error_once("Found multiple annotations in %s of %s fragment" % (container, fragment.ftype))
+                        self.log_error_once(
+                            "Found multiple annotations in %s of %s fragment"
+                            % (container, fragment.ftype)
+                        )
 
                     for annot in data.annotations:
-                        if ((fragment.ftype, container, annot) not in EXPECTED_ANNOTATIONS and
-                                (self.is_dictionary and (fragment.ftype, container, annot) not in EXPECTED_DICTIONARY_ANNOTATIONS)):
-                            self.log_error_once("Found unexpected IonAnnotation %s in %s of %s fragment" % (annot, container, fragment.ftype))
+                        if (
+                            fragment.ftype,
+                            container,
+                            annot,
+                        ) not in EXPECTED_ANNOTATIONS and (
+                            self.is_dictionary
+                            and (fragment.ftype, container, annot)
+                            not in EXPECTED_DICTIONARY_ANNOTATIONS
+                        ):
+                            self.log_error_once(
+                                "Found unexpected IonAnnotation %s in %s of %s fragment"
+                                % (annot, container, fragment.ftype)
+                            )
 
                 walk(data.value, container, container_parent)
 
@@ -894,7 +1274,10 @@ class BookStructure(object):
                 if container == "$155" or (self.is_kpf_prepub and container == "$174"):
                     eid_defs.add(data)
 
-                if container_parent == fragment.ftype and container in FRAGMENT_ID_KEYS.get(fragment.ftype, []):
+                if (
+                    container_parent == fragment.ftype
+                    and container in FRAGMENT_ID_KEYS.get(fragment.ftype, [])
+                ):
                     pass
                 else:
                     frag_ref = None
@@ -904,43 +1287,69 @@ class BookStructure(object):
                         frag_ref = special_refs.get(container)
 
                     if frag_ref is None:
-                        special_refs = SPECIAL_PARENT_FRAGMENT_REFERENCES.get(fragment.ftype)
+                        special_refs = SPECIAL_PARENT_FRAGMENT_REFERENCES.get(
+                            fragment.ftype
+                        )
                         if special_refs is not None:
                             frag_ref = special_refs.get(container_parent)
 
                     if frag_ref is None:
-                        frag_ref = NESTED_FRAGMENT_REFERENCES.get((container_parent, container))
+                        frag_ref = NESTED_FRAGMENT_REFERENCES.get(
+                            (container_parent, container)
+                        )
 
                     if frag_ref is None:
                         frag_ref = COMMON_FRAGMENT_REFERENCES.get(container)
 
                     if frag_ref is not None and frag_ref is not False:
                         if container == "name" and container_parent in ["$249", "$692"]:
-                            mandatory_frag_refs.add(YJFragmentKey(ftype="$692", fid=data))
-                        elif (container == "$165" and self.fragments.get(ftype="$418", fid=data, first=True) is not None):
-                            mandatory_frag_refs.add(YJFragmentKey(ftype="$418", fid=data))
+                            mandatory_frag_refs.add(
+                                YJFragmentKey(ftype="$692", fid=data)
+                            )
+                        elif (
+                            container == "$165"
+                            and self.fragments.get(ftype="$418", fid=data, first=True)
+                            is not None
+                        ):
+                            mandatory_frag_refs.add(
+                                YJFragmentKey(ftype="$418", fid=data)
+                            )
                         elif container == "$635":
-                            optional_frag_refs.add(YJFragmentKey(ftype=frag_ref, fid=data))
+                            optional_frag_refs.add(
+                                YJFragmentKey(ftype=frag_ref, fid=data)
+                            )
                         else:
-                            mandatory_frag_refs.add(YJFragmentKey(ftype=frag_ref, fid=data))
+                            mandatory_frag_refs.add(
+                                YJFragmentKey(ftype=frag_ref, fid=data)
+                            )
 
                         if frag_ref == "$260":
-                            for ref_key in [YJFragmentKey(ftype="$609", fid=data),
-                                            YJFragmentKey(ftype="$609", fid=data + "-spm"),
-                                            YJFragmentKey(ftype="$597", fid=data + "-ad"),
-                                            YJFragmentKey(ftype="$597", fid=data),
-                                            YJFragmentKey(ftype="$267", fid=data),
-                                            YJFragmentKey(ftype="$387", fid=data)]:
+                            for ref_key in [
+                                YJFragmentKey(ftype="$609", fid=data),
+                                YJFragmentKey(ftype="$609", fid=data + "-spm"),
+                                YJFragmentKey(ftype="$597", fid=data + "-ad"),
+                                YJFragmentKey(ftype="$597", fid=data),
+                                YJFragmentKey(ftype="$267", fid=data),
+                                YJFragmentKey(ftype="$387", fid=data),
+                            ]:
                                 if self.fragments.get(ref_key, first=True) is not None:
                                     mandatory_frag_refs.add(ref_key)
 
             if data_type is IonInt or data_type is IonSymbol:
-                if (container in {"$155", "$598"} and fragment.ftype not in {
-                        "$550", "$265", "$264", "$609",
-                        "$610", "$621", "$611"}):
+                if container in {"$155", "$598"} and fragment.ftype not in {
+                    "$550",
+                    "$265",
+                    "$264",
+                    "$609",
+                    "$610",
+                    "$621",
+                    "$611",
+                }:
                     eid_defs.add(data)
                 elif container in EID_REFERENCES:
-                    if not (data_type is IonInt and data == 0 and fragment.ftype == "$265"):
+                    if not (
+                        data_type is IonInt and data == 0 and fragment.ftype == "$265"
+                    ):
                         eid_refs.add(data)
 
         try:
@@ -979,8 +1388,7 @@ class BookStructure(object):
             mandatory_dependencies = []
             optional_dependencies = []
 
-            for depends, dependant in [("$260", "$164"),
-                                       ("$164", "$417")]:
+            for depends, dependant in [("$260", "$164"), ("$164", "$417")]:
                 if fragment.ftype == depends:
                     for ref_fragment in sorted(deep_references[fragment]):
                         if ref_fragment.ftype == dependant:
@@ -992,19 +1400,22 @@ class BookStructure(object):
                                     optional_dependencies.append(opt_ref_fragment.fid)
 
             if mandatory_dependencies:
-                entity_dependencies.append(IonStruct(
-                            IS("$155"), fragment.fid,
-                            IS("$254"), mandatory_dependencies))
+                entity_dependencies.append(
+                    IonStruct(
+                        IS("$155"), fragment.fid, IS("$254"), mandatory_dependencies
+                    )
+                )
 
             if optional_dependencies:
-                entity_dependencies.append(IonStruct(
-                            IS("$155"), fragment.fid,
-                            IS("$255"), optional_dependencies))
+                entity_dependencies.append(
+                    IonStruct(
+                        IS("$155"), fragment.fid, IS("$255"), optional_dependencies
+                    )
+                )
 
         return entity_dependencies
 
     def rebuild_container_entity_map(self, container_id, entity_dependencies=None):
-
         old_entity_dependencies = None
         new_fragments = YJFragmentList()
         entity_ids = []
@@ -1016,8 +1427,11 @@ class BookStructure(object):
             else:
                 new_fragments.append(fragment)
 
-                if (fragment.ftype not in CONTAINER_FRAGMENT_TYPES and fragment.fid != fragment.ftype and
-                        fragment.fid not in entity_ids):
+                if (
+                    fragment.ftype not in CONTAINER_FRAGMENT_TYPES
+                    and fragment.fid != fragment.ftype
+                    and fragment.fid not in entity_ids
+                ):
                     entity_ids.append(fragment.fid)
 
         if entity_dependencies is None:
@@ -1031,7 +1445,6 @@ class BookStructure(object):
             container_entity_map[IS("$253")] = entity_dependencies
 
         if entity_ids or entity_dependencies:
-
             new_fragments.append(YJFragment(ftype="$419", value=container_entity_map))
 
         else:
@@ -1043,45 +1456,77 @@ class BookStructure(object):
         if self.symtab.is_shared_symbol(IS(name)):
             return SYM_TYPE.SHARED
 
-        if (name in [APPROXIMATE_PAGE_LIST, "crop_bleed", DICTIONARY_RULES_SYMBOL, "mkfx_id",
-                     "page_list_entry", "srl_created_by_stampler", "yj.dictionary.text",
-                     "note_template_collection"] or
-                re.match(r"^content_[0-9]+$", name) or
-                re.match(r"^eidbucket_[0-9]+$", name) or
-                re.match(r"^PAGE_LIST_[0-9]{10,}$", name) or
-                re.match(UUID_MATCH_RE, name) or
-                re.match(r"^yj\.(authoring|conversion|print|semantics)\.", name) or
-                re.match(r"^nmdl\.", name) or
-                name.startswith(KFX_COVER_RESOURCE)):
+        if (
+            name
+            in [
+                APPROXIMATE_PAGE_LIST,
+                "crop_bleed",
+                DICTIONARY_RULES_SYMBOL,
+                "mkfx_id",
+                "page_list_entry",
+                "srl_created_by_stampler",
+                "yj.dictionary.text",
+                "note_template_collection",
+            ]
+            or re.match(r"^content_[0-9]+$", name)
+            or re.match(r"^eidbucket_[0-9]+$", name)
+            or re.match(r"^PAGE_LIST_[0-9]{10,}$", name)
+            or re.match(UUID_MATCH_RE, name)
+            or re.match(r"^yj\.(authoring|conversion|print|semantics)\.", name)
+            or re.match(r"^nmdl\.", name)
+            or name.startswith(KFX_COVER_RESOURCE)
+        ):
             return SYM_TYPE.COMMON
 
-        if (re.match(r"^G[0-9]+(-spm)?$", name) or
-                re.match(r"^yj\.dictionary\.", name)):
+        if re.match(r"^G[0-9]+(-spm)?$", name) or re.match(r"^yj\.dictionary\.", name):
             return SYM_TYPE.DICTIONARY
 
-        if (re.match(r"^V_[0-9]_[0-9](-PARA|-CHAR)?-[0-9]_[0-9]_[0-9a-f]{12,16}_[0-9a-f]{1,5}", name) or
-                re.match(r"^(fonts/|images/|resource/)?(res|resource)_[0-9]_[0-9]_[0-9a-f]{12,16}_[0-9a-f]{1,5}_", name) or
-                re.match(r"^(anchor-|section-|story-|style-|navContainer|navUnit)[0-9]_[0-9]_[0-9a-f]{12,16}_[0-9a-f]{1,5}", name) or
-                re.match(r"^anchor-[a-z0-9_-]+-[0-9]{17,19}-[0-9]{1,2}$", name) or
-                re.match(r"^anchor-[a-z0-9_-]+_[0-9]_[0-9a-f]{12,16}_[0-9a-f]{1,5}$", name) or
-                re.match(r"^(LANDMARKS_|TOC_)[0-9]{10,}$", name) or
-                re.match(r"^(LazyLoadStoryLineForPage-|TargetSectionForPage-|TargetStoryLineForPage-)[0-9]+$", name) or
-                re.match(r"^slice_[0-9]+\.pdf$", name) or
-                re.match(r"^Target_pg_[0-9]+_g_2$", name) or
-                re.match(r"^KFXConditionalNavGroupUnit_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", name) or
-                name in ["order-1", "TargetReadingOrder", "PageLabels", "toc_entry"]):
+        if (
+            re.match(
+                r"^V_[0-9]_[0-9](-PARA|-CHAR)?-[0-9]_[0-9]_[0-9a-f]{12,16}_[0-9a-f]{1,5}",
+                name,
+            )
+            or re.match(
+                r"^(fonts/|images/|resource/)?(res|resource)_[0-9]_[0-9]_[0-9a-f]{12,16}_[0-9a-f]{1,5}_",
+                name,
+            )
+            or re.match(
+                r"^(anchor-|section-|story-|style-|navContainer|navUnit)[0-9]_[0-9]_[0-9a-f]{12,16}_[0-9a-f]{1,5}",
+                name,
+            )
+            or re.match(r"^anchor-[a-z0-9_-]+-[0-9]{17,19}-[0-9]{1,2}$", name)
+            or re.match(
+                r"^anchor-[a-z0-9_-]+_[0-9]_[0-9a-f]{12,16}_[0-9a-f]{1,5}$", name
+            )
+            or re.match(r"^(LANDMARKS_|TOC_)[0-9]{10,}$", name)
+            or re.match(
+                r"^(LazyLoadStoryLineForPage-|TargetSectionForPage-|TargetStoryLineForPage-)[0-9]+$",
+                name,
+            )
+            or re.match(r"^slice_[0-9]+\.pdf$", name)
+            or re.match(r"^Target_pg_[0-9]+_g_2$", name)
+            or re.match(
+                r"^KFXConditionalNavGroupUnit_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+                name,
+            )
+            or name in ["order-1", "TargetReadingOrder", "PageLabels", "toc_entry"]
+        ):
             return SYM_TYPE.ORIGINAL
 
-        if (re.match(
-                r"^(resource/|[ctliz])?[A-Za-z0-9_-]{22}[A-Z0-9]{0,6}"
-                r"((-hd|-first-frame|-thumb)?(-resized-[0-9]+-[0-9]+|-hd-tile-[0-9]+-[0-9]+)?|"
-                r"-ad|-spm|_thumbnail|-transcoded|(_thumb)?\.jpg|\.ttf|\.otf|\.woff|\.woff2|\.eot|\.dfont|\.bin)?$", name)):
+        if re.match(
+            r"^(resource/|[ctliz])?[A-Za-z0-9_-]{22}[A-Z0-9]{0,6}"
+            r"((-hd|-first-frame|-thumb)?(-resized-[0-9]+-[0-9]+|-hd-tile-[0-9]+-[0-9]+)?|"
+            r"-ad|-spm|_thumbnail|-transcoded|(_thumb)?\.jpg|\.ttf|\.otf|\.woff|\.woff2|\.eot|\.dfont|\.bin)?$",
+            name,
+        ):
             return SYM_TYPE.BASE64
 
-        if (re.match(
-                r"^(resource/rsrc|resource/e|rsrc|[a-z])[A-Z0-9]{1,6}"
-                r"((-hd|-first-frame|-thumb)?(-resized-[0-9]+-[0-9]+|-hd-tile-[0-9]+-[0-9]+)?|"
-                r"-ad|-spm|_thumbnail|-transcoded|(_thumb)?\.jpg|\.ttf|\.otf|\.woff|\.woff2|\.eot|\.dfont|\.bin)?$", name)):
+        if re.match(
+            r"^(resource/rsrc|resource/e|rsrc|[a-z])[A-Z0-9]{1,6}"
+            r"((-hd|-first-frame|-thumb)?(-resized-[0-9]+-[0-9]+|-hd-tile-[0-9]+-[0-9]+)?|"
+            r"-ad|-spm|_thumbnail|-transcoded|(_thumb)?\.jpg|\.ttf|\.otf|\.woff|\.woff2|\.eot|\.dfont|\.bin)?$",
+            name,
+        ):
             return SYM_TYPE.SHORT
 
         return SYM_TYPE.UNKNOWN
@@ -1091,7 +1536,12 @@ class BookStructure(object):
 
     def create_local_symbol(self, name):
         sym_type = self.classify_symbol(name)
-        if sym_type not in [SYM_TYPE.COMMON, SYM_TYPE.DICTIONARY, SYM_TYPE.BASE64, SYM_TYPE.SHORT]:
+        if sym_type not in [
+            SYM_TYPE.COMMON,
+            SYM_TYPE.DICTIONARY,
+            SYM_TYPE.BASE64,
+            SYM_TYPE.SHORT,
+        ]:
             log.error("Invalid local symbol created: %s (type=%s)" % (name, sym_type))
 
         return self.symtab.create_local_symbol(name)
@@ -1117,27 +1567,47 @@ class BookStructure(object):
             missing_symbols -= set(self.symtab.get_local_symbols())
 
         if missing_symbols and not (self.is_dictionary or self.is_kpf_prepub):
-            log.error("Symbol table is missing symbols: %s" % list_truncated(missing_symbols, 20))
+            log.error(
+                "Symbol table is missing symbols: %s"
+                % list_truncated(missing_symbols, 20)
+            )
 
         unused_symbols = original_symbols - new_symbols
         if unused_symbols and not ignore_unused:
             expected_unused_symbols = set()
             for symbol in list(unused_symbols):
-                if (symbol == "mkfx_id" or re.match(UUID_MATCH_RE, symbol) or
-                        symbol.startswith("PAGE_LIST_") or symbol == "page_list_entry" or
-                        (self.is_sample and symbol.endswith("-ad")) or
-                        (self.is_kpf_prepub and (symbol.startswith("yj.print.") or symbol.startswith("yj.semantics."))) or
-                        symbol in self.reported_missing_fids):
+                if (
+                    symbol == "mkfx_id"
+                    or re.match(UUID_MATCH_RE, symbol)
+                    or symbol.startswith("PAGE_LIST_")
+                    or symbol == "page_list_entry"
+                    or (self.is_sample and symbol.endswith("-ad"))
+                    or (
+                        self.is_kpf_prepub
+                        and (
+                            symbol.startswith("yj.print.")
+                            or symbol.startswith("yj.semantics.")
+                        )
+                    )
+                    or symbol in self.reported_missing_fids
+                ):
                     unused_symbols.remove(symbol)
                     expected_unused_symbols.add(symbol)
 
             if unused_symbols:
-                log.warning("Symbol table contains %d unused symbols: %s" % (
-                        len(unused_symbols), list_truncated(unused_symbols, 5)))
+                log.warning(
+                    "Symbol table contains %d unused symbols: %s"
+                    % (len(unused_symbols), list_truncated(unused_symbols, 5))
+                )
 
             if expected_unused_symbols:
-                self.log_known_error("Symbol table contains %d expected unused symbols: %s" % (
-                        len(expected_unused_symbols), list_truncated(expected_unused_symbols, 5)))
+                self.log_known_error(
+                    "Symbol table contains %d expected unused symbols: %s"
+                    % (
+                        len(expected_unused_symbols),
+                        list_truncated(expected_unused_symbols, 5),
+                    )
+                )
 
         if rebuild:
             book_symbols = []
@@ -1145,7 +1615,9 @@ class BookStructure(object):
                 if self.symtab.get_id(symbol, used=False) >= self.symtab.local_min_id:
                     book_symbols.append(str(symbol))
 
-            self.symtab.replace_local_symbols(sorted(book_symbols, key=natural_sort_key))
+            self.symtab.replace_local_symbols(
+                sorted(book_symbols, key=natural_sort_key)
+            )
             self.replace_symbol_table_import()
 
     def replace_symbol_table_import(self):
@@ -1189,7 +1661,9 @@ class BookStructure(object):
         return [] if metadata is None else metadata.value.get("$169", [])
 
     def reading_order_names(self):
-        return [reading_order.get("$178", "") for reading_order in self.get_reading_orders()]
+        return [
+            reading_order.get("$178", "") for reading_order in self.get_reading_orders()
+        ]
 
     def ordered_section_names(self):
         section_names = []
@@ -1222,7 +1696,9 @@ class BookStructure(object):
                     else:
                         _extract_story_names(fv)
 
-        _extract_story_names(self.fragments[YJFragmentKey(ftype="$260", fid=section_name)])
+        _extract_story_names(
+            self.fragments[YJFragmentKey(ftype="$260", fid=section_name)]
+        )
         return story_names
 
     def has_illustrated_layout_page_template_condition(self):
@@ -1239,9 +1715,16 @@ class BookStructure(object):
 
             elif data_type is IonStruct:
                 for fk, fv in data.items():
-                    if (fk == "$171" and ion_type(fv) is IonSExp and len(fv) == 3 and fv[1] == "$183" and
-                            ion_type(fv[2]) is IonSExp and len(fv[2]) == 2 and fv[2][0] == "$266" and
-                            fv[0] in ["$294", "$299", "$298"]):
+                    if (
+                        fk == "$171"
+                        and ion_type(fv) is IonSExp
+                        and len(fv) == 3
+                        and fv[1] == "$183"
+                        and ion_type(fv[2]) is IonSExp
+                        and len(fv[2]) == 2
+                        and fv[2][0] == "$266"
+                        and fv[0] in ["$294", "$299", "$298"]
+                    ):
                         return True
 
                     if _scan_section(fv):
@@ -1260,7 +1743,8 @@ class BookStructure(object):
             raise Exception("Book is not fixed-layout")
 
         content_pos_info = self.collect_content_position_info(
-            skip_non_rendered_content=True, include_background_images=True)
+            skip_non_rendered_content=True, include_background_images=True
+        )
 
         ordered_image_resources = []
         ordered_image_resource_pids = []
@@ -1283,7 +1767,9 @@ class BookStructure(object):
 
         for section_name, chunk_list in section_images.items():
             if len(chunk_list) > 2:
-                raise Exception("Section %s contains more than two images" % section_name)
+                raise Exception(
+                    "Section %s contains more than two images" % section_name
+                )
 
             has_foreground_image = has_background_image = False
             for chunk in chunk_list:
@@ -1293,7 +1779,10 @@ class BookStructure(object):
                     has_background_image = True
 
             if has_foreground_image and has_background_image:
-                raise Exception("Section %s contains both background and foreground images" % section_name)
+                raise Exception(
+                    "Section %s contains both background and foreground images"
+                    % section_name
+                )
 
         return (ordered_image_resources, ordered_image_resource_pids, content_pos_info)
 

@@ -3,20 +3,28 @@ import copy
 import decimal
 import re
 
-from .epub_output import (EPUB_Output)
+from epub_output import EPUB_Output
 
-from .ion import (ion_type, IonAnnotation, IonList, IonSExp, IonString, IonStruct, IonSymbol)
-from .message_logging import log
-from .utilities import (check_empty, list_symbols, UUID_MATCH_RE)
-from .yj_structure import SYM_TYPE
-from .yj_to_epub_content import KFX_EPUB_Content
-from .yj_to_epub_illustrated_layout import KFX_EPUB_Illustrated_Layout
-from .yj_to_epub_metadata import KFX_EPUB_Metadata
-from .yj_to_epub_misc import KFX_EPUB_Misc
-from .yj_to_epub_navigation import KFX_EPUB_Navigation
-from .yj_to_epub_notebook import KFX_EPUB_Notebook
-from .yj_to_epub_properties import KFX_EPUB_Properties
-from .yj_to_epub_resources import KFX_EPUB_Resources
+from ion import (
+    ion_type,
+    IonAnnotation,
+    IonList,
+    IonSExp,
+    IonString,
+    IonStruct,
+    IonSymbol,
+)
+from message_logging import log
+from utilities import check_empty, list_symbols, UUID_MATCH_RE
+from yj_structure import SYM_TYPE
+from yj_to_epub_content import KFX_EPUB_Content
+from yj_to_epub_illustrated_layout import KFX_EPUB_Illustrated_Layout
+from yj_to_epub_metadata import KFX_EPUB_Metadata
+from yj_to_epub_misc import KFX_EPUB_Misc
+from yj_to_epub_navigation import KFX_EPUB_Navigation
+from yj_to_epub_notebook import KFX_EPUB_Notebook
+from yj_to_epub_properties import KFX_EPUB_Properties
+from yj_to_epub_resources import KFX_EPUB_Resources
 
 
 __license__ = "GPL v3"
@@ -36,20 +44,33 @@ FRAGMENT_NAME_SYMBOL = {
     "$608": "$598",
     "$259": "$176",
     "$157": "$173",
-    }
+}
 
 
 PROGRESS_FTYPES = {"$260", "$259", "$164"}
 
 
 class KFX_EPUB(
-        KFX_EPUB_Content, KFX_EPUB_Illustrated_Layout, KFX_EPUB_Metadata, KFX_EPUB_Misc,
-        KFX_EPUB_Navigation, KFX_EPUB_Notebook, KFX_EPUB_Properties, KFX_EPUB_Resources,
-        EPUB_Output):
-
+    KFX_EPUB_Content,
+    KFX_EPUB_Illustrated_Layout,
+    KFX_EPUB_Metadata,
+    KFX_EPUB_Misc,
+    KFX_EPUB_Navigation,
+    KFX_EPUB_Notebook,
+    KFX_EPUB_Properties,
+    KFX_EPUB_Resources,
+    EPUB_Output,
+):
     DEBUG = False
 
-    def __init__(self, book, epub2_desired=False, force_cover=False, metadata_only=False, progress=None):
+    def __init__(
+        self,
+        book,
+        epub2_desired=False,
+        force_cover=False,
+        metadata_only=False,
+        progress=None,
+    ):
         decimal.getcontext().prec = 6
         KFX_EPUB_Content.__init__(self)
         KFX_EPUB_Illustrated_Layout.__init__(self)
@@ -65,7 +86,9 @@ class KFX_EPUB(
         self.book_symbols = set()
         self.book_data = self.organize_fragments_by_type(book.fragments)
         self.is_kpf = book.kpf_container is not None
-        self.book_has_illustrated_layout_conditional_page_template = book.has_illustrated_layout_conditional_page_template
+        self.book_has_illustrated_layout_conditional_page_template = (
+            book.has_illustrated_layout_conditional_page_template
+        )
         self.used_fragments = {}
 
         self.progress = progress
@@ -93,7 +116,9 @@ class KFX_EPUB(
         self.process_reading_order()
 
         if self.cover_resource and not self.html_cover:
-            self.process_external_resource(self.cover_resource).manifest_entry.is_cover_image = True
+            self.process_external_resource(
+                self.cover_resource
+            ).manifest_entry.is_cover_image = True
 
         self.fixup_anchors_and_hrefs()
         self.fixup_illustrated_layout_anchors()
@@ -168,10 +193,15 @@ class KFX_EPUB(
 
         missing_font_names = self.used_font_names - self.present_font_names
         if missing_font_names:
-            log.warning("Missing font family names: %s" % list_symbols(missing_font_names))
+            log.warning(
+                "Missing font family names: %s" % list_symbols(missing_font_names)
+            )
 
             if self.present_font_names:
-                log.info("Present referenced font family names: %s" % list_symbols(self.present_font_names))
+                log.info(
+                    "Present referenced font family names: %s"
+                    % list_symbols(self.present_font_names)
+                )
 
     def decompile_to_epub(self):
         return self.generate_epub()
@@ -186,7 +216,10 @@ class KFX_EPUB(
             self.book_symbols.add(id)
 
             if fragment.ftype == "$270":
-                id = last_container_id = IonSymbol("%s:%s" % (fragment.value.get("$161", ""), fragment.value.get("$409", "")))
+                id = last_container_id = IonSymbol(
+                    "%s:%s"
+                    % (fragment.value.get("$161", ""), fragment.value.get("$409", ""))
+                )
             elif fragment.ftype == "$593":
                 id = last_container_id
             elif fragment.ftype == "$262":
@@ -208,7 +241,10 @@ class KFX_EPUB(
                 if id == category:
                     categorized_data[category] = categorized_data[category][id]
             elif None in ids:
-                log.error("Fragment list contains mixed null/non-null ids of type '%s'" % category)
+                log.error(
+                    "Fragment list contains mixed null/non-null ids of type '%s'"
+                    % category
+                )
 
         return categorized_data
 
@@ -221,10 +257,16 @@ class KFX_EPUB(
 
         sym_type_counts[SYM_TYPE.ORIGINAL] += sym_type_counts[SYM_TYPE.UNKNOWN] // 10
 
-        symbol_quarum = (sym_type_counts[SYM_TYPE.DICTIONARY] + sym_type_counts[SYM_TYPE.SHORT] +
-                         sym_type_counts[SYM_TYPE.BASE64] + sym_type_counts[SYM_TYPE.ORIGINAL]) // 2
+        symbol_quarum = (
+            sym_type_counts[SYM_TYPE.DICTIONARY]
+            + sym_type_counts[SYM_TYPE.SHORT]
+            + sym_type_counts[SYM_TYPE.BASE64]
+            + sym_type_counts[SYM_TYPE.ORIGINAL]
+        ) // 2
 
-        if sym_type_counts[SYM_TYPE.SHORT] >= symbol_quarum or "max_id" in self.book_data.get("$538", {}):
+        if sym_type_counts[
+            SYM_TYPE.SHORT
+        ] >= symbol_quarum or "max_id" in self.book_data.get("$538", {}):
             self.book_symbol_format = SYM_TYPE.SHORT
         elif sym_type_counts[SYM_TYPE.DICTIONARY] >= symbol_quarum:
             self.book_symbol_format = SYM_TYPE.DICTIONARY
@@ -247,8 +289,18 @@ class KFX_EPUB(
         elif self.book_symbol_format == SYM_TYPE.BASE64:
             name = re.sub(r"^(resource/)?[a-zA-Z0-9_-]{22}", "", name, count=1)
         else:
-            name = re.sub(r"^V_[0-9]_[0-9](-PARA|-CHAR)?-[0-9]_[0-9]_[0-9a-f]{12,16}_[0-9a-f]{1,5}", "", name, count=1)
-            name = re.sub(r"^(fonts/|images/)?(res|resource)_[0-9]_[0-9]_[0-9a-f]{12,16}_[0-9a-f]{1,5}_", "", name, count=1)
+            name = re.sub(
+                r"^V_[0-9]_[0-9](-PARA|-CHAR)?-[0-9]_[0-9]_[0-9a-f]{12,16}_[0-9a-f]{1,5}",
+                "",
+                name,
+                count=1,
+            )
+            name = re.sub(
+                r"^(fonts/|images/)?(res|resource)_[0-9]_[0-9]_[0-9a-f]{12,16}_[0-9a-f]{1,5}_",
+                "",
+                name,
+                count=1,
+            )
             name = re.sub(UUID_MATCH_RE, "", name, count=1)
 
         while name.startswith("-") or name.startswith("_"):
@@ -260,7 +312,9 @@ class KFX_EPUB(
         if not unique_part:
             return prefix
 
-        if re.match("^[A-Za-z0-9]+(-.+)?$", unique_part) or not re.match("^[A-Za-z]", unique_part):
+        if re.match("^[A-Za-z0-9]+(-.+)?$", unique_part) or not re.match(
+            "^[A-Za-z]", unique_part
+        ):
             return "%s_%s" % (prefix, unique_part)
 
         return unique_part
@@ -300,12 +354,16 @@ class KFX_EPUB(
         else:
             fragment_container = {}
 
-        data = fragment_container.pop(fid, None) if delete else fragment_container.get(fid)
+        data = (
+            fragment_container.pop(fid, None) if delete else fragment_container.get(fid)
+        )
         if data is None:
             used_data = self.used_fragments.get((ftype, fid))
             if used_data is not None:
                 if RETAIN_USED_FRAGMENTS:
-                    log.warning("book fragment used multiple times: %s %s" % (ftype, fid))
+                    log.warning(
+                        "book fragment used multiple times: %s %s" % (ftype, fid)
+                    )
                     data = used_data
                 else:
                     log.error("book fragment used multiple times: %s %s" % (ftype, fid))
@@ -314,7 +372,9 @@ class KFX_EPUB(
                 log.error("book is missing fragment: %s %s" % (ftype, fid))
                 data = IonStruct()
         else:
-            self.used_fragments[(ftype, fid)] = copy.deepcopy(data) if RETAIN_USED_FRAGMENTS else True
+            self.used_fragments[(ftype, fid)] = (
+                copy.deepcopy(data) if RETAIN_USED_FRAGMENTS else True
+            )
 
         data_name = self.get_fragment_name(data, ftype, delete=False)
         if data_name and data_name != fid:
@@ -326,7 +386,11 @@ class KFX_EPUB(
         return data
 
     def get_named_fragment(self, structure, ftype=None, delete=True, name_symbol=None):
-        return self.get_fragment(ftype=ftype, fid=structure.pop(name_symbol or FRAGMENT_NAME_SYMBOL[ftype]), delete=delete)
+        return self.get_fragment(
+            ftype=ftype,
+            fid=structure.pop(name_symbol or FRAGMENT_NAME_SYMBOL[ftype]),
+            delete=delete,
+        )
 
     def check_fragment_name(self, fragment_data, ftype, fid, delete=True):
         name = self.get_fragment_name(fragment_data, ftype, delete)
@@ -334,10 +398,14 @@ class KFX_EPUB(
             log.error("Fragment %s %s has incorrect name %s" % (ftype, fid, name))
 
     def get_fragment_name(self, fragment_data, ftype, delete=True):
-        return self.get_structure_name(fragment_data, FRAGMENT_NAME_SYMBOL[ftype], delete)
+        return self.get_structure_name(
+            fragment_data, FRAGMENT_NAME_SYMBOL[ftype], delete
+        )
 
     def get_structure_name(self, structure, name_key, delete=True):
-        return structure.pop(name_key, None) if delete else structure.get(name_key, None)
+        return (
+            structure.pop(name_key, None) if delete else structure.get(name_key, None)
+        )
 
     def check_empty(self, a_dict, dict_name):
         check_empty(a_dict, dict_name)
@@ -350,4 +418,6 @@ class KFX_EPUB(
 
     def update_progress(self):
         if self.progress is not None:
-            self.progress.update_count(round((self.progress_limit - self.progress_countdown()) * 0.95))
+            self.progress.update_count(
+                round((self.progress_limit - self.progress_countdown()) * 0.95)
+            )

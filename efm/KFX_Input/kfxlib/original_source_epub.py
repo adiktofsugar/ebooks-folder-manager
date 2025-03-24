@@ -1,7 +1,15 @@
-from .resources import font_file_ext
-from .utilities import (
-        dirname, get_url_filename, locale_decode, natural_sort_key,
-        quote_name, root_path, unroot_path, urlabspath, urlrelpath)
+from resources import font_file_ext
+from utilities import (
+    dirname,
+    get_url_filename,
+    locale_decode,
+    natural_sort_key,
+    quote_name,
+    root_path,
+    unroot_path,
+    urlabspath,
+    urlrelpath,
+)
 
 import collections
 import io
@@ -11,15 +19,15 @@ import posixpath
 import re
 import traceback
 import urllib.parse
-from zipfile import (ZipFile, ZipInfo, ZIP_DEFLATED, ZIP_STORED)
+from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED, ZIP_STORED
 
 try:
     import calibre.utils.soupparser as soupparser
 except ImportError:
     import lxml.html.soupparser as soupparser
 
-from .message_logging import log
-from .utilities import sha1
+from message_logging import log
+from utilities import sha1
 
 
 __license__ = "GPL v3"
@@ -69,13 +77,11 @@ LANGUAGE_FIXUPS = {
     "gla": "gd",
     "spa": "es",
     "swe": "sv",
-
     "guj": "gu",
     "hin": "hi",
     "mal": "ml",
     "mar": "mr",
     "tam": "ta",
-
     "bel": "be",
     "ben": "bn",
     "bos": "bs",
@@ -101,66 +107,85 @@ LANGUAGE_FIXUPS = {
     "tha": "th",
     "tur": "tr",
     "vie": "vi",
-
     "us": "en",
     "und": "en",
 }
 
 KPR_SUPPORTED_LANGUAGES = [
-
-    "af", "afr",
+    "af",
+    "afr",
     "gsw",
-    "ar", "ara",
-    "eu", "eus",
+    "ar",
+    "ara",
+    "eu",
+    "eus",
     "nb",
-    "br", "bre",
-    "ca", "cat",
-    "zh", "zho",
+    "br",
+    "bre",
+    "ca",
+    "cat",
+    "zh",
+    "zho",
     "zh-hant",
     "kw",
-    "co", "cos",
-    "da", "dan",
-    "nl", "nld",
+    "co",
+    "cos",
+    "da",
+    "dan",
+    "nl",
+    "nld",
     "frs",
-    "en", "eng",
-    "fi", "fin",
-    "fr", "fra",
+    "en",
+    "eng",
+    "fi",
+    "fin",
+    "fr",
+    "fra",
     "fy",
-    "gl", "glg",
-    "de", "deu",
+    "gl",
+    "glg",
+    "de",
+    "deu",
     "gu",
     "hi",
-    "is", "isl",
+    "is",
+    "isl",
     "ga",
-    "it", "ita",
+    "it",
+    "ita",
     "ja",
     "lb",
     "ml",
     "gv",
     "mr",
     "frr",
-    "no", "nor",
-    "nn", "nno",
+    "no",
+    "nor",
+    "nn",
+    "nno",
     "pt",
     "frp",
     "rm",
-    "ru", "rus",
+    "ru",
+    "rus",
     "sco",
     "gd",
     "es",
     "sw",
     "sv",
     "ta",
-    "uk", "ukr",
-    "cy", "cym",
-    ]
+    "uk",
+    "ukr",
+    "cy",
+    "cym",
+]
 
 
 ENCODING_PATS = [
-    r'''(<\?[^<>]+encoding\s*=\s*[\'"])(.*?)([\'"][^<>]*>)''',
-    r'''(<meta\s+charset=['"])([-_a-z0-9]+)(['"][^<>]*>(?:\s*</meta>){0,1})''',
-    r'''(<meta\s+?[^<>]*?content\s*=\s*['"][^'"]*?charset=)([-_a-z0-9]+)([^'"]*?['"][^<>]*>(?:\s*</meta>){0,1})''',
-    ]
+    r"""(<\?[^<>]+encoding\s*=\s*[\'"])(.*?)([\'"][^<>]*>)""",
+    r"""(<meta\s+charset=['"])([-_a-z0-9]+)(['"][^<>]*>(?:\s*</meta>){0,1})""",
+    r"""(<meta\s+?[^<>]*?content\s*=\s*['"][^'"]*?charset=)([-_a-z0-9]+)([^'"]*?['"][^<>]*>(?:\s*</meta>){0,1})""",
+]
 
 NON_XML_ENTITIES = [
     (b"&nbsp;", "\u00a0".encode("utf-8")),
@@ -172,13 +197,13 @@ NON_XML_ENTITIES = [
     (b"&ldquo;", "\u201c".encode("utf-8")),
     (b"&rdquo;", "\u201d".encode("utf-8")),
     (b"&hellip;", "\u2026".encode("utf-8")),
-    ]
+]
 
 
 DICTIONARY_NSMAP = {
     "mbp": "https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.pdf",
     "idx": "https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.pdf",
-    }
+}
 
 
 class EPUBZippedFile(object):
@@ -200,7 +225,9 @@ class EPUBZippedFile(object):
         self.filename = locale_decode(self.info.filename)
         self.is_file = not self.filename.endswith("/")
         self.name = posixpath.split(self.filename)[1]
-        self.ext = posixpath.splitext(self.filename)[1].lower()[1:] if self.is_file else "dir"
+        self.ext = (
+            posixpath.splitext(self.filename)[1].lower()[1:] if self.is_file else "dir"
+        )
 
 
 class AdobeAlgorithm(object):
@@ -246,7 +273,9 @@ class SourceEpub(object):
         self.id_map = {}
         self.id_replace = {}
         self.spine_ids = set()
-        self.is_dictionary = self.is_kim = self.is_vertical_rl = self.is_fixed_layout = self.issue_date = False
+        self.is_dictionary = self.is_kim = self.is_vertical_rl = (
+            self.is_fixed_layout
+        ) = self.issue_date = False
         self.book_type = "book"
         self.authors = []
         self.original_language = None
@@ -258,7 +287,9 @@ class SourceEpub(object):
                 self.read_opf(self.opf_file)
             except Exception as e:
                 traceback.print_exc()
-                log.warning("Failed to read EPUB OPF %s: %s" % (self.opf_file.filename, repr(e)))
+                log.warning(
+                    "Failed to read EPUB OPF %s: %s" % (self.opf_file.filename, repr(e))
+                )
 
         if self.is_dictionary:
             self.full_book_type = "dictionary"
@@ -270,18 +301,25 @@ class SourceEpub(object):
             self.full_book_type = "book"
 
     def prepare_for_previewer(self, outfile, conversion_application, sequence_name):
-        log.info("Preparing %s %s for conversion" % (self.full_book_type, quote_name(self.infile)))
+        log.info(
+            "Preparing %s %s for conversion"
+            % (self.full_book_type, quote_name(self.infile))
+        )
 
-        self.prevent_self_closed_divs = (sequence_name == "EpubAdapter")
+        self.prevent_self_closed_divs = sequence_name == "EpubAdapter"
 
         self.fix_gif = self.copy_page_numbers = (
-                conversion_application.TOOL_NAME == "KPR" and
-                conversion_application.program_version_sort < natural_sort_key("3.23.0"))
+            conversion_application.TOOL_NAME == "KPR"
+            and conversion_application.program_version_sort < natural_sort_key("3.23.0")
+        )
 
         self.fix_webkit_box_shadow = (
-                conversion_application.TOOL_NAME == "KPR" and
-                conversion_application.program_version_sort >= natural_sort_key("3.31.0") and
-                conversion_application.program_version_sort <= natural_sort_key("3.37.0"))
+            conversion_application.TOOL_NAME == "KPR"
+            and conversion_application.program_version_sort
+            >= natural_sort_key("3.31.0")
+            and conversion_application.program_version_sort
+            <= natural_sort_key("3.37.0")
+        )
 
         self.pages = []
         for page_type in range(3):
@@ -299,8 +337,13 @@ class SourceEpub(object):
                     elif page_type == 2:
                         if f.is_page_map:
                             self.get_page_map_pages(f)
-                        elif f.name == "page-map.xml" or f.mimetype == "application/oebps-page-map+xml":
-                            log.warning("Ignoring unlinked EPUB page-map: %s" % f.filename)
+                        elif (
+                            f.name == "page-map.xml"
+                            or f.mimetype == "application/oebps-page-map+xml"
+                        ):
+                            log.warning(
+                                "Ignoring unlinked EPUB page-map: %s" % f.filename
+                            )
 
                 except Exception as e:
                     traceback.print_exc()
@@ -310,41 +353,65 @@ class SourceEpub(object):
                 break
 
         for f in self.data_files.values():
-            if f.ext in ["htm", "html", "xhtml"] or f.mimetype == "application/xhtml+xml":
+            if (
+                f.ext in ["htm", "html", "xhtml"]
+                or f.mimetype == "application/xhtml+xml"
+            ):
                 try:
                     self.prepare_xhtml_pt1(f)
                 except Exception as e:
                     traceback.print_exc()
-                    log.warning("Failed to read EPUB content %s: %s" % (f.filename, repr(e)))
+                    log.warning(
+                        "Failed to read EPUB content %s: %s" % (f.filename, repr(e))
+                    )
 
             if f.ext == "css" or f.mimetype == "text/css":
                 try:
                     self.prepare_css(f)
                 except Exception as e:
                     traceback.print_exc()
-                    log.warning("Failed to prepare EPUB CSS %s: %s" % (f.filename, repr(e)))
+                    log.warning(
+                        "Failed to prepare EPUB CSS %s: %s" % (f.filename, repr(e))
+                    )
 
         for f in self.data_files.values():
-            if self.opf_identifiers and f.ext in ["otf", "ttf", "woff", "woff2", "eot", "dfont"]:
+            if self.opf_identifiers and f.ext in [
+                "otf",
+                "ttf",
+                "woff",
+                "woff2",
+                "eot",
+                "dfont",
+            ]:
                 try:
                     self.deobfuscate_font(f)
                 except Exception as e:
                     traceback.print_exc()
-                    log.warning("Failed to de-obfuscate EPUB font %s: %s" % (f.filename, repr(e)))
+                    log.warning(
+                        "Failed to de-obfuscate EPUB font %s: %s"
+                        % (f.filename, repr(e))
+                    )
 
-            if f.ext in ["htm", "html", "xhtml"] or f.mimetype == "application/xhtml+xml":
+            if (
+                f.ext in ["htm", "html", "xhtml"]
+                or f.mimetype == "application/xhtml+xml"
+            ):
                 try:
                     self.prepare_xhtml_pt2(f)
                 except Exception as e:
                     traceback.print_exc()
-                    log.warning("Failed to prepare EPUB content %s: %s" % (f.filename, repr(e)))
+                    log.warning(
+                        "Failed to prepare EPUB content %s: %s" % (f.filename, repr(e))
+                    )
 
             if self.fix_gif and (f.ext == "gif" or f.mimetype == "image/gif"):
                 try:
                     self.prepare_gif(f)
                 except Exception as e:
                     traceback.print_exc()
-                    log.warning("Failed to prepare EPUB GIF %s: %s" % (f.filename, repr(e)))
+                    log.warning(
+                        "Failed to prepare EPUB GIF %s: %s" % (f.filename, repr(e))
+                    )
 
         self.clean_pages()
 
@@ -376,7 +443,9 @@ class SourceEpub(object):
     def find_opf(self):
         CONTAINER_FILENAME = "META-INF/container.xml"
         if CONTAINER_FILENAME in self.data_files:
-            container = etree.fromstring(self.data_files[CONTAINER_FILENAME].data, parser=self.xml_parser)
+            container = etree.fromstring(
+                self.data_files[CONTAINER_FILENAME].data, parser=self.xml_parser
+            )
             rootfiles = container.find("{*}rootfiles")
             if rootfiles is not None:
                 for rootfile in rootfiles.iterfind(".//{*}rootfile"):
@@ -391,11 +460,14 @@ class SourceEpub(object):
 
                     if CONTAINER_FILENAME not in self.data_files:
                         xml_str = (
-                                "<?xml version='1.0' encoding='utf-8' standalone='yes'?>\n"
-                                "<container version=\"1.0\" xmlns=\"urn:oasis:names:tc:opendocument:xmlns:container\">"
-                                "<rootfiles><rootfile full-path=\"%s\" media-type=\"application/oebps-package+xml\" />"
-                                "</rootfiles></container>") % f.filename
-                        self.data_files[CONTAINER_FILENAME] = EPUBZippedFile(ZipInfo(CONTAINER_FILENAME), xml_str.encode("utf-8"))
+                            "<?xml version='1.0' encoding='utf-8' standalone='yes'?>\n"
+                            '<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">'
+                            '<rootfiles><rootfile full-path="%s" media-type="application/oebps-package+xml" />'
+                            "</rootfiles></container>"
+                        ) % f.filename
+                        self.data_files[CONTAINER_FILENAME] = EPUBZippedFile(
+                            ZipInfo(CONTAINER_FILENAME), xml_str.encode("utf-8")
+                        )
 
                     return f
 
@@ -417,7 +489,11 @@ class SourceEpub(object):
                     label_text = nav_label.find("{*}text")
                     if label_text is not None:
                         self.pages.append(
-                            (label_text.text or page_target.get("value"), urlabspath(content.get("src"), working_dir=base_dir)))
+                            (
+                                label_text.text or page_target.get("value"),
+                                urlabspath(content.get("src"), working_dir=base_dir),
+                            )
+                        )
 
     def get_page_map_pages(self, f):
         log.info("Found EPUB page-map")
@@ -426,7 +502,9 @@ class SourceEpub(object):
         page_map = etree.fromstring(f.data, parser=self.xml_parser)
 
         for page in page_map.iterfind("{*}page"):
-            self.pages.append((page.get("name"), urlabspath(page.get("href"), working_dir=base_dir)))
+            self.pages.append(
+                (page.get("name"), urlabspath(page.get("href"), working_dir=base_dir))
+            )
 
     def get_nav_pages(self, f):
         base_dir = dirname(root_path(f.filename))
@@ -439,7 +517,12 @@ class SourceEpub(object):
                 for li in nav.iterfind(".//{*}li"):
                     anchor = li.find("{*}a")
                     if (anchor is not None) and anchor.text and "href" in anchor.attrib:
-                        self.pages.append((anchor.text, urlabspath(anchor.get("href"), working_dir=base_dir)))
+                        self.pages.append(
+                            (
+                                anchor.text,
+                                urlabspath(anchor.get("href"), working_dir=base_dir),
+                            )
+                        )
 
     def read_opf(self, f):
         base_dir = dirname(root_path(f.filename))
@@ -487,7 +570,9 @@ class SourceEpub(object):
                 if ncx_file is not None:
                     ncx_file.is_ncx = True
 
-                page_map_file = self.data_files.get(self.id_map.get(spine.get("page-map")))
+                page_map_file = self.data_files.get(
+                    self.id_map.get(spine.get("page-map"))
+                )
                 if page_map_file is not None:
                     page_map_file.is_page_map = True
 
@@ -508,17 +593,23 @@ class SourceEpub(object):
             known_authors = set()
             sequenced_authors = []
             for creator in metadata.iterfind(".//{*}creator"):
-
                 if creator.text and creator.text not in known_authors:
                     creator_id = creator.get("id")
                     if creator_id:
                         creator_fragment = "#" + creator_id
                         for meta in metadata.iterfind(".//{*}meta"):
-                            if meta.get("property", "") == "display-seq" and meta.get("refines", "") == creator_fragment and meta.text:
+                            if (
+                                meta.get("property", "") == "display-seq"
+                                and meta.get("refines", "") == creator_fragment
+                                and meta.text
+                            ):
                                 if re.match("^[0-9]+$", meta.text):
                                     display_seq = int(meta.text)
                                 else:
-                                    log.warning("Unexpected display-seq %s for creator %s" % (meta.text, creator.text))
+                                    log.warning(
+                                        "Unexpected display-seq %s for creator %s"
+                                        % (meta.text, creator.text)
+                                    )
                                 break
 
                     known_authors.add(creator.text)
@@ -545,11 +636,16 @@ class SourceEpub(object):
                 if meta_name == "book-type" and meta_content != "none":
                     self.book_type = meta_content
 
-                if ((meta_name == "fixed-layout" and meta_content == "true") or
-                        (meta.get("property", "") == "rendition:layout" and meta.text == "pre-paginated")):
+                if (meta_name == "fixed-layout" and meta_content == "true") or (
+                    meta.get("property", "") == "rendition:layout"
+                    and meta.text == "pre-paginated"
+                ):
                     self.is_fixed_layout = True
 
-                if meta_name == "primary-writing-mode" and meta_content == "vertical-rl":
+                if (
+                    meta_name == "primary-writing-mode"
+                    and meta_content == "vertical-rl"
+                ):
                     self.is_vertical_rl = True
 
                 if meta_name == "original-language":
@@ -569,15 +665,30 @@ class SourceEpub(object):
                     id = item.get("id")
                     href = item.get("href", "")
                     mimetype = item.get("media-type")
-                    if (id and id not in self.spine_ids and (
-                            href.endswith(".htm") or href.endswith(".html") or href.endswith(".xhtml") or
-                            mimetype == "application/xhtml+xml")):
+                    if (
+                        id
+                        and id not in self.spine_ids
+                        and (
+                            href.endswith(".htm")
+                            or href.endswith(".html")
+                            or href.endswith(".xhtml")
+                            or mimetype == "application/xhtml+xml"
+                        )
+                    ):
                         manifest_file = self.data_files.get(self.id_map.get(id))
                         is_possible_cover_file = (
-                            manifest_file and len(manifest_file.data) < 2000 and
-                            len(re.findall(b"<img ", manifest_file.data)) + len(re.findall(b"<svg ", manifest_file.data)) == 1)
+                            manifest_file
+                            and len(manifest_file.data) < 2000
+                            and len(re.findall(b"<img ", manifest_file.data))
+                            + len(re.findall(b"<svg ", manifest_file.data))
+                            == 1
+                        )
 
-                        if is_possible_cover_file or "cover" in id.lower() or "cover" in href.lower():
+                        if (
+                            is_possible_cover_file
+                            or "cover" in id.lower()
+                            or "cover" in href.lower()
+                        ):
                             log.info("Removing extra leftover cover %s" % href)
                             item.getparent().remove(item)
                             self.id_map.pop(id, None)
@@ -589,8 +700,17 @@ class SourceEpub(object):
                 for meta in metadata.findall("{*}meta"):
                     if meta.get("name", "") == "cover":
                         cover_file = self.id_map.get(meta.get("content", None), None)
-                        if cover_file and cover_file in self.data_files and not self.data_files[cover_file].mimetype.startswith("image/"):
-                            log.info("Removing meta cover '%s' of incorrect type '%s'" % (cover_file, self.data_files[cover_file].mimetype))
+                        if (
+                            cover_file
+                            and cover_file in self.data_files
+                            and not self.data_files[cover_file].mimetype.startswith(
+                                "image/"
+                            )
+                        ):
+                            log.info(
+                                "Removing meta cover '%s' of incorrect type '%s'"
+                                % (cover_file, self.data_files[cover_file].mimetype)
+                            )
                             meta.getparent().remove(meta)
                             fixed = True
 
@@ -599,45 +719,78 @@ class SourceEpub(object):
 
                 for lang in metadata.findall("{*}language"):
                     if FIX_LANGUAGE_CODE:
-                        short_language = lang.text.lower().partition(" ")[0].partition("-")[0]
+                        short_language = (
+                            lang.text.lower().partition(" ")[0].partition("-")[0]
+                        )
                         fixed_language = LANGUAGE_FIXUPS.get(short_language)
                         if fixed_language is not None:
-                            log.info("Fixed EPUB language from '%s' to '%s'" % (lang.text, fixed_language))
+                            log.info(
+                                "Fixed EPUB language from '%s' to '%s'"
+                                % (lang.text, fixed_language)
+                            )
                             lang.text = fixed_language
-                            short_language = fixed_language.lower().partition(" ")[0].partition("-")[0]
+                            short_language = (
+                                fixed_language.lower()
+                                .partition(" ")[0]
+                                .partition("-")[0]
+                            )
                             fixed = True
 
                         if short_language not in KPR_SUPPORTED_LANGUAGES:
                             if not add_original_language:
                                 add_original_language = short_language
 
-                            log.info("Changed EPUB language from '%s' to 'en' to allow conversion" % lang.text)
+                            log.info(
+                                "Changed EPUB language from '%s' to 'en' to allow conversion"
+                                % lang.text
+                            )
                             lang.text = "en"
                             fixed = True
 
                     if FIX_LANGUAGE_SUFFIX and "-" not in lang.text:
-                        current_language_pattern = re.compile(re.escape(lang.text) + "(-.+)?$", re.IGNORECASE)
+                        current_language_pattern = re.compile(
+                            re.escape(lang.text) + "(-.+)?$", re.IGNORECASE
+                        )
                         best_language_variant, best_language_count = lang.text, 0
 
                         for language, count in self.content_languages.items():
-                            if count > best_language_count and re.match(current_language_pattern, language):
-                                best_language_variant, best_language_count = language, count
+                            if count > best_language_count and re.match(
+                                current_language_pattern, language
+                            ):
+                                best_language_variant, best_language_count = (
+                                    language,
+                                    count,
+                                )
 
                         if best_language_variant.lower() == "zh-tw":
                             best_language_variant = "zh-hant"
 
                         if best_language_variant != lang.text:
-                            log.info("Changed EPUB language from '%s' to '%s'" % (lang.text, best_language_variant))
+                            log.info(
+                                "Changed EPUB language from '%s' to '%s'"
+                                % (lang.text, best_language_variant)
+                            )
                             lang.text = best_language_variant
                             fixed = True
 
-                    if FIX_VERTICAL_CHINESE and lang.text.lower().startswith("zh") and self.is_vertical_rl:
+                    if (
+                        FIX_VERTICAL_CHINESE
+                        and lang.text.lower().startswith("zh")
+                        and self.is_vertical_rl
+                    ):
                         add_original_language = lang.text
-                        log.info("Changed EPUB language from '%s' to 'ja' for vertical text conversion" % lang.text)
+                        log.info(
+                            "Changed EPUB language from '%s' to 'ja' for vertical text conversion"
+                            % lang.text
+                        )
                         lang.text = "ja"
                         fixed = True
 
-                    if languages and (not languages[0].lower().startswith("en")) and lang.text.lower().startswith("en"):
+                    if (
+                        languages
+                        and (not languages[0].lower().startswith("en"))
+                        and lang.text.lower().startswith("en")
+                    ):
                         languages.insert(0, lang.text)
                         fix_language_order = True
                     else:
@@ -663,14 +816,18 @@ class SourceEpub(object):
                     fixed = True
 
                 title_count = 0
-                for title in metadata.findall("{http://purl.org/dc/elements/1.1/}title"):
+                for title in metadata.findall(
+                    "{http://purl.org/dc/elements/1.1/}title"
+                ):
                     title_count += 1
                     if title_count > 1:
                         log.info("Removed extra EPUB title '%s'" % title.text)
                         title.getparent().remove(title)
                         fixed = True
                     elif not title.text:
-                        log.info("Changed EPUB title from '%s' to 'Unknown'" % title.text)
+                        log.info(
+                            "Changed EPUB title from '%s' to 'Unknown'" % title.text
+                        )
                         title.text = "Unknown"
                         fixed = True
 
@@ -682,7 +839,9 @@ class SourceEpub(object):
                         title_text = "Unknown"
 
                     log.info("Added EPUB title '%s'" % title_text)
-                    title = etree.SubElement(metadata, "{http://purl.org/dc/elements/1.1/}title")
+                    title = etree.SubElement(
+                        metadata, "{http://purl.org/dc/elements/1.1/}title"
+                    )
                     title.text = title_text
                     fixed = True
 
@@ -710,12 +869,15 @@ class SourceEpub(object):
                 fixed = True
 
         if FIX_DUPLICATE_OPF_IDS and self.id_replace:
+
             def replace(elem, attrib, name, fixed):
                 orig_id = elem.get(attrib)
                 if orig_id is not None:
                     new_id = self.id_replace.get(orig_id)
                     if new_id is not None:
-                        log.info("Replacing OPF %s id %s with %s" % (name, orig_id, new_id))
+                        log.info(
+                            "Replacing OPF %s id %s with %s" % (name, orig_id, new_id)
+                        )
                         elem.set(attrib, new_id)
                         return True
 
@@ -741,7 +903,9 @@ class SourceEpub(object):
                         fixed = replace(meta, "content", "cover", fixed)
 
         if fixed:
-            f.data = etree.tostring(document, encoding="utf-8", pretty_print=True, xml_declaration=True)
+            f.data = etree.tostring(
+                document, encoding="utf-8", pretty_print=True, xml_declaration=True
+            )
 
     def prepare_ncx(self, f):
         base_dir = dirname(root_path(f.filename))
@@ -771,18 +935,26 @@ class SourceEpub(object):
                         tf, tid, sort_key = self.ref_file_id_and_key(src)
 
                         if sort_key is None:
-                            log.info("Removed NCX TOC reference to non-existent target: %s" % orig_src)
+                            log.info(
+                                "Removed NCX TOC reference to non-existent target: %s"
+                                % orig_src
+                            )
                             self.delete_navpoint(nav_point)
                             fixed = True
 
                         elif tid and (label == "Midpoint"):
-                            log.info("Removed NCX TOC reference to 'Midpoint': %s" % orig_src)
+                            log.info(
+                                "Removed NCX TOC reference to 'Midpoint': %s" % orig_src
+                            )
                             self.delete_navpoint(nav_point)
                             fixed = True
 
                         elif FIX_BODY_ID_REF and tid and (tf.body_id == tid):
                             fixed_src = orig_src.rpartition("#")[0]
-                            log.info("Adjusted NCX TOC reference to body element id: %s --> %s" % (orig_src, fixed_src))
+                            log.info(
+                                "Adjusted NCX TOC reference to body element id: %s --> %s"
+                                % (orig_src, fixed_src)
+                            )
                             content.set("src", fixed_src)
                             fixed = True
 
@@ -807,33 +979,45 @@ class SourceEpub(object):
                             page_urls.add(src)
 
                             nav_label = page_target.find("{*}navLabel")
-                            navlabel_text = nav_label.find("{*}text") if nav_label is not None else None
-                            label = (navlabel_text.text if navlabel_text is not None else "") or ""
+                            navlabel_text = (
+                                nav_label.find("{*}text")
+                                if nav_label is not None
+                                else None
+                            )
+                            label = (
+                                navlabel_text.text if navlabel_text is not None else ""
+                            ) or ""
 
                             if not is_page_label(label):
-                                log.info("Removing NCX pageTarget with incorrect or missing label: \"%s\"" % label)
+                                log.info(
+                                    'Removing NCX pageTarget with incorrect or missing label: "%s"'
+                                    % label
+                                )
                                 page_list.remove(page_target)
                                 fixed = True
 
                             elif label in page_labels:
-                                log.info("Removing NCX pageTarget with duplicate label: \"%s\"" % label)
+                                log.info(
+                                    'Removing NCX pageTarget with duplicate label: "%s"'
+                                    % label
+                                )
                                 page_list.remove(page_target)
                                 fixed = True
                             else:
                                 page_labels.add(label)
 
         if fixed:
-            f.data = etree.tostring(ncx, encoding="utf-8", pretty_print=True, xml_declaration=True)
+            f.data = etree.tostring(
+                ncx, encoding="utf-8", pretty_print=True, xml_declaration=True
+            )
 
     def prepare_nav(self, f):
-
         base_dir = dirname(root_path(f.filename))
         fixed = False
         document = self.parse_xhtml_file(f)
         body = tfind(document, "body")
 
         if COPY_PAGE_NUMBERS_TO_GUIDE and self.copy_page_numbers and self.pages:
-
             for nav in body.findall(".//{*}nav"):
                 if get_epub_type(nav) == "landmarks":
                     parent = nav.getparent()
@@ -848,9 +1032,14 @@ class SourceEpub(object):
                         a = li.find(".//{*}a")
                         if a is not None:
                             orig_href = a.get("href")
-                            sort_key = self.ref_file_id_and_key(urlabspath(orig_href, working_dir=base_dir))[2]
+                            sort_key = self.ref_file_id_and_key(
+                                urlabspath(orig_href, working_dir=base_dir)
+                            )[2]
                             if sort_key is None:
-                                log.info("Removed NAV TOC reference to non-existent target: %s" % orig_href)
+                                log.info(
+                                    "Removed NAV TOC reference to non-existent target: %s"
+                                    % orig_href
+                                )
                                 li.getparent().remove(li)
                                 fixed = True
 
@@ -874,18 +1063,26 @@ class SourceEpub(object):
                                 if len(a) == 0:
                                     label = a.text or ""
                                     if not is_page_label(label):
-                                        log.info("Removing NAV page with missing or incorrect label: \"%s\"" % label)
+                                        log.info(
+                                            'Removing NAV page with missing or incorrect label: "%s"'
+                                            % label
+                                        )
                                         li.getparent().remove(li)
                                         fixed = True
                                     elif label in page_labels:
-                                        log.info("Removing NAV page with with duplicate label: \"%s\"" % label)
+                                        log.info(
+                                            'Removing NAV page with with duplicate label: "%s"'
+                                            % label
+                                        )
                                         li.getparent().remove(li)
                                         fixed = True
                                     else:
                                         page_labels.add(label)
 
         if fixed:
-            f.data = etree.tostring(document, encoding="utf-8", pretty_print=False, xml_declaration=True)
+            f.data = etree.tostring(
+                document, encoding="utf-8", pretty_print=False, xml_declaration=True
+            )
 
     def prepare_page_map(self, f):
         if not FIX_PAGE_MAP:
@@ -897,7 +1094,6 @@ class SourceEpub(object):
         page_urls = set()
 
         for page in page_map.findall("{*}page"):
-
             fixed = self.fix_href(page, "page-map", base_dir) or fixed
             href = page.get("href")
             if href in page_urls:
@@ -909,12 +1105,17 @@ class SourceEpub(object):
 
                 name = page.get("name", "")
                 if not is_page_label(name):
-                    log.info("Removing page-map entry with missing or incorrect name: \"%s\"" % name)
+                    log.info(
+                        'Removing page-map entry with missing or incorrect name: "%s"'
+                        % name
+                    )
                     page_map.remove(page)
                     fixed = True
 
         if fixed:
-            f.data = etree.tostring(page_map, encoding="utf-8", pretty_print=True, xml_declaration=True)
+            f.data = etree.tostring(
+                page_map, encoding="utf-8", pretty_print=True, xml_declaration=True
+            )
 
     def clean_pages(self):
         used_names = set()
@@ -924,7 +1125,11 @@ class SourceEpub(object):
         for name, href in self.pages:
             if name and href:
                 sort_key = self.ref_key(href)
-                if (sort_key is not None) and (name not in used_names) and (href not in used_hrefs):
+                if (
+                    (sort_key is not None)
+                    and (name not in used_names)
+                    and (href not in used_hrefs)
+                ):
                     used_hrefs.add(href)
                     used_names.add(name)
                     good_pages.append((sort_key, name, href))
@@ -1000,7 +1205,10 @@ class SourceEpub(object):
         if font_key is None:
             return False
 
-        new_data = xor_data(font_key, algorithm.ofs_data_len, f.data) + f.data[algorithm.ofs_data_len:]
+        new_data = (
+            xor_data(font_key, algorithm.ofs_data_len, f.data)
+            + f.data[algorithm.ofs_data_len :]
+        )
 
         if not font_file_ext(new_data):
             return False
@@ -1037,7 +1245,10 @@ class SourceEpub(object):
                 if enc == "utf-8":
                     log.warning("Content failed to decode as UTF-8 in %s" % f.name)
                 else:
-                    log.info("Changed encoding from %s to UTF-8 in %s" % (enc.upper(), f.name))
+                    log.info(
+                        "Changed encoding from %s to UTF-8 in %s"
+                        % (enc.upper(), f.name)
+                    )
 
                 new_text = new_data.decode(enc, errors="replace")
 
@@ -1045,9 +1256,14 @@ class SourceEpub(object):
                 for pat in ENCODING_PATS:
                     new_text, i = re.subn(pat, r"\1utf-8\3", new_text, re.IGNORECASE)
                     if i:
-                        log.info("Changed encoding declaration from %s to UTF-8 in %s" % (enc.upper(), f.name))
+                        log.info(
+                            "Changed encoding declaration from %s to UTF-8 in %s"
+                            % (enc.upper(), f.name)
+                        )
 
-            if (f.ext == "xhtml" or f.mimetype == "application/xhtml+xml") and not new_text.strip().startswith("<?xml"):
+            if (
+                f.ext == "xhtml" or f.mimetype == "application/xhtml+xml"
+            ) and not new_text.strip().startswith("<?xml"):
                 new_text = "<?xml version='1.0' encoding='utf-8'?>" + new_text
                 log.info("Added XML declaration to %s" % f.name)
 
@@ -1067,13 +1283,20 @@ class SourceEpub(object):
             html = tfind(document, "html")
             for ns, url in DICTIONARY_NSMAP.items():
                 if ns not in html.nsmap and ("<%s:" % ns).encode("utf8") in f.data:
-                    f.data = f.data.replace(b"<html", ("<html xmlns:%s=\"%s\"" % (ns, url)).encode("utf8"), 1)
+                    f.data = f.data.replace(
+                        b"<html", ('<html xmlns:%s="%s"' % (ns, url)).encode("utf8"), 1
+                    )
                     log.info("Added %s XML namespace to %s" % (ns, f.name))
 
             if not f.data.startswith(b"<?xml"):
                 log.info("Parsing %s as HTML soup" % f.name)
                 document = soupparser.fromstring(f.data)
-                f.data = etree.tostring(document, encoding="utf-8", pretty_print=False, xml_declaration=False)
+                f.data = etree.tostring(
+                    document,
+                    encoding="utf-8",
+                    pretty_print=False,
+                    xml_declaration=False,
+                )
 
     def prepare_xhtml_pt2(self, f):
         base_dir = dirname(root_path(f.filename))
@@ -1100,11 +1323,20 @@ class SourceEpub(object):
                 if id:
                     f.ids.append(id)
 
-                fixed = self.fix_href(elem, "HTML", base_dir, fix_spaces=f.is_nav) or fixed
+                fixed = (
+                    self.fix_href(elem, "HTML", base_dir, fix_spaces=f.is_nav) or fixed
+                )
 
-            if FIX_CALIBRE_CLASS_IN_BR and tag == "br" and set(elem.get("class", "").split()) & self.display_block_classes:
+            if (
+                FIX_CALIBRE_CLASS_IN_BR
+                and tag == "br"
+                and set(elem.get("class", "").split()) & self.display_block_classes
+            ):
                 orig_style = elem.get("style", "")
-                elem.set("style", orig_style + ("; " if orig_style else "") + "display: inline")
+                elem.set(
+                    "style",
+                    orig_style + ("; " if orig_style else "") + "display: inline",
+                )
                 br_fix_count += 1
                 fixed = True
 
@@ -1112,7 +1344,10 @@ class SourceEpub(object):
                 src = elem.get("src")
                 if src and re.match(r"^[a-zA-Z]:", src):
                     elem.set("src", src[2:])
-                    log.info("Removed '%s' from image reference in %s" % (src[0:2], f.filename))
+                    log.info(
+                        "Removed '%s' from image reference in %s"
+                        % (src[0:2], f.filename)
+                    )
                     fixed = True
 
             if FIX_MISSING_IMG_SRC and tag == "img" and "src" not in elem.attrib:
@@ -1124,7 +1359,10 @@ class SourceEpub(object):
                 for removed_attrib in ["data-AmznRemoved", "data-AmznRemoved-M8"]:
                     if removed_attrib in elem.attrib:
                         elem.attrib.pop(removed_attrib, None)
-                        log.info("Removed '%s' attribute from '%s' in %s" % (removed_attrib, elem.tag, f.filename))
+                        log.info(
+                            "Removed '%s' attribute from '%s' in %s"
+                            % (removed_attrib, elem.tag, f.filename)
+                        )
                         fixed = True
 
             if FIX_LANGUAGE_SUFFIX and tag in ["html", "body"]:
@@ -1139,7 +1377,10 @@ class SourceEpub(object):
 
             if FIX_TFOOT_LOCATION and tag == "tfoot":
                 parent = elem.getparent()
-                if localname(parent.tag) == "table" and parent.index(elem) != len(parent) - 1:
+                if (
+                    localname(parent.tag) == "table"
+                    and parent.index(elem) != len(parent) - 1
+                ):
                     parent.remove(elem)
                     parent.append(elem)
                     log.info("Moved 'tfoot' to end of 'table' in %s" % f.filename)
@@ -1171,8 +1412,14 @@ class SourceEpub(object):
             log.info("Added display:inline to %d br in %s" % (br_fix_count, f.filename))
 
         if fixed:
-            is_xml = (f.ext == "xhtml" or f.mimetype == "application/xhtml+xml" or f.data[:32].startswith(b"<?xml"))
-            f.data = etree.tostring(document, encoding="utf-8", pretty_print=False, xml_declaration=is_xml)
+            is_xml = (
+                f.ext == "xhtml"
+                or f.mimetype == "application/xhtml+xml"
+                or f.data[:32].startswith(b"<?xml")
+            )
+            f.data = etree.tostring(
+                document, encoding="utf-8", pretty_print=False, xml_declaration=is_xml
+            )
 
     def prepare_css(self, f):
         self.inventory_css_styles(f.data)
@@ -1184,18 +1431,25 @@ class SourceEpub(object):
         if isinstance(data, bytes):
             data = data.decode("utf-8", errors="ignore")
 
-        for class_name in re.findall("[.]([A-Za-z0-9_-]*)\\s*{[^}]*display\\s*:\\s*block\\s*[;}]", data):
+        for class_name in re.findall(
+            "[.]([A-Za-z0-9_-]*)\\s*{[^}]*display\\s*:\\s*block\\s*[;}]", data
+        ):
             self.display_block_classes.add(class_name)
 
     def fix_styles(self, data, filename):
         if FIX_WEBKIT_BOX_SHADOW and self.fix_webkit_box_shadow:
+
             def enc(s):
                 return s.encode("ascii") if isinstance(data, bytes) else s
 
-            data, num_subs = re.subn(enc("-webkit-box-shadow\\s?:"), enc("box-shadow:"), data)
+            data, num_subs = re.subn(
+                enc("-webkit-box-shadow\\s?:"), enc("box-shadow:"), data
+            )
 
             if num_subs:
-                log.info("Replaced -webkit-box-shadow with box-shadow in %s" % (filename))
+                log.info(
+                    "Replaced -webkit-box-shadow with box-shadow in %s" % (filename)
+                )
                 return data
 
         return None
@@ -1218,7 +1472,10 @@ class SourceEpub(object):
                 tf, tid, sort_key = self.ref_file_id_and_key(src)
                 if FIX_BODY_ID_REF and tf and tid and (tf.body_id == tid):
                     fixed_href = href.rpartition("#")[0]
-                    log.info("Adjusted %s reference to body element id: %s --> %s" % (ftype, href, fixed_href))
+                    log.info(
+                        "Adjusted %s reference to body element id: %s --> %s"
+                        % (ftype, href, fixed_href)
+                    )
                     elem.set("href", fixed_href)
                     fixed = True
 
@@ -1246,7 +1503,6 @@ class SourceEpub(object):
         return False
 
     def prepare_gif(self, f):
-
         if not FIX_GIF_CONTENT:
             return
 
@@ -1257,7 +1513,7 @@ class SourceEpub(object):
 
             palette = im.getpalette()
             trans = im.info["transparency"] * 3
-            palette[trans:trans+3] = [255, 255, 255]
+            palette[trans : trans + 3] = [255, 255, 255]
             im.putpalette(palette)
 
             bg = Image.new("RGB", im.size, (255, 255, 255))
@@ -1267,7 +1523,11 @@ class SourceEpub(object):
             f.data = outfile.getvalue()
 
     def parse_xhtml_file(self, f):
-        if f.ext == "xhtml" or f.mimetype == "application/xhtml+xml" or b"xml" in f.data[:32]:
+        if (
+            f.ext == "xhtml"
+            or f.mimetype == "application/xhtml+xml"
+            or b"xml" in f.data[:32]
+        ):
             tree = etree.fromstring(f.data, parser=self.xml_parser)
         else:
             tree = None
@@ -1286,9 +1546,9 @@ def is_page_label(s):
     if not s:
         return False
 
-    return (
-        re.match("^[0-9\u0660-\u0669\u06f0-\u06f9]+$", s) or
-        re.match("^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$", s, re.IGNORECASE))
+    return re.match("^[0-9\u0660-\u0669\u06f0-\u06f9]+$", s) or re.match(
+        "^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$", s, re.IGNORECASE
+    )
 
 
 def xor_data(font_key, ofs_data_len, data):

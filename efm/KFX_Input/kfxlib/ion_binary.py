@@ -1,14 +1,34 @@
 import decimal
 import struct
 
-from .ion import (
-        ion_type, IonAnnotation, IonBLOB, IonBool, IonCLOB, IonDecimal,
-        IonFloat, IonInt, IonList, IonNop, IonNull, IonSExp, IonString, IonStruct, IonSymbol, IonTimestamp,
-        IonTimestampTZ, ION_TIMESTAMP_Y, ION_TIMESTAMP_YM, ION_TIMESTAMP_YMD, ION_TIMESTAMP_YMDHM,
-        ION_TIMESTAMP_YMDHMS, ION_TIMESTAMP_YMDHMSF)
-from .ion_text import IonSerial
-from .message_logging import log
-from .utilities import (bytes_to_separated_hex, Deserializer, Serializer)
+from ion import (
+    ion_type,
+    IonAnnotation,
+    IonBLOB,
+    IonBool,
+    IonCLOB,
+    IonDecimal,
+    IonFloat,
+    IonInt,
+    IonList,
+    IonNop,
+    IonNull,
+    IonSExp,
+    IonString,
+    IonStruct,
+    IonSymbol,
+    IonTimestamp,
+    IonTimestampTZ,
+    ION_TIMESTAMP_Y,
+    ION_TIMESTAMP_YM,
+    ION_TIMESTAMP_YMD,
+    ION_TIMESTAMP_YMDHM,
+    ION_TIMESTAMP_YMDHMS,
+    ION_TIMESTAMP_YMDHMSF,
+)
+from ion_text import IonSerial
+from message_logging import log
+from utilities import bytes_to_separated_hex, Deserializer, Serializer
 
 
 __license__ = "GPL v3"
@@ -22,11 +42,13 @@ class IonBinary(IonSerial):
     MAJOR_VERSION = 1
     MINOR_VERSION = 0
 
-    VERSION_MARKER = 0xe0
+    VERSION_MARKER = 0xE0
 
-    SIGNATURE = bytes([VERSION_MARKER, MAJOR_VERSION, MINOR_VERSION, 0xea])
+    SIGNATURE = bytes([VERSION_MARKER, MAJOR_VERSION, MINOR_VERSION, 0xEA])
 
-    def deserialize_multiple_values(self, data, import_symbols=False, with_offsets=False):
+    def deserialize_multiple_values(
+        self, data, import_symbols=False, with_offsets=False
+    ):
         values = self.deserialize_multiple_values_(data, import_symbols, with_offsets)
 
         return values
@@ -53,14 +75,20 @@ class IonBinary(IonSerial):
 
         ion_signature = serial.extract(4)
         if ion_signature != IonBinary.SIGNATURE:
-            raise Exception("Ion signature is incorrect (%s)" % bytes_to_separated_hex(ion_signature))
+            raise Exception(
+                "Ion signature is incorrect (%s)"
+                % bytes_to_separated_hex(ion_signature)
+            )
 
         result = []
         while len(serial):
             if serial.extract(1, advance=False) == IonBinary.VERSION_MARKER:
                 ion_signature = serial.unpack("4s")
                 if ion_signature != IonBinary.SIGNATURE:
-                    raise Exception("Embedded Ion signature is incorrect (%s)" % bytes_to_separated_hex(ion_signature))
+                    raise Exception(
+                        "Embedded Ion signature is incorrect (%s)"
+                        % bytes_to_separated_hex(ion_signature)
+                    )
             else:
                 value_offset = serial.offset
                 value = self.deserialize_value(serial)
@@ -72,7 +100,11 @@ class IonBinary(IonSerial):
                         self.symtab.catalog.create_shared_symbol_table(value.value)
 
                 if not isinstance(value, IonNop):
-                    result.append([value_offset, serial.offset - value_offset, value] if with_offsets else value)
+                    result.append(
+                        [value_offset, serial.offset - value_offset, value]
+                        if with_offsets
+                        else value
+                    )
 
         return result
 
@@ -88,28 +120,44 @@ class IonBinary(IonSerial):
         if length < IonBinary.VARIABLE_LEN_FLAG:
             return descriptor(signature, length) + data
 
-        return descriptor(signature, IonBinary.VARIABLE_LEN_FLAG) + serialize_vluint(length) + data
+        return (
+            descriptor(signature, IonBinary.VARIABLE_LEN_FLAG)
+            + serialize_vluint(length)
+            + data
+        )
 
     def deserialize_value(self, serial):
-
         descriptor = serial.unpack("B")
         if descriptor == IonBinary.VERSION_MARKER:
             raise Exception("Unexpected Ion version marker within data stream")
 
         signature = descriptor >> 4
-        flag = descriptor & 0x0f
+        flag = descriptor & 0x0F
         if DEBUG:
-            log.debug("IonBinary 0x%02x: signature=%d flag=%d data=%s" % (
-                    descriptor, signature, flag, bytes_to_separated_hex(serial.extract(advance=False)[:16])))
+            log.debug(
+                "IonBinary 0x%02x: signature=%d flag=%d data=%s"
+                % (
+                    descriptor,
+                    signature,
+                    flag,
+                    bytes_to_separated_hex(serial.extract(advance=False)[:16]),
+                )
+            )
 
         extract_data, deserializer, name = IonBinary.VALUE_DESERIALIZERS[signature]
 
         if flag == IonBinary.NULL_FLAG and signature != IonBinary.NULL_VALUE_SIGNATURE:
             log.error("IonBinary: Deserialized null of type %s" % name)
-            extract_data, deserializer, name = IonBinary.VALUE_DESERIALIZERS[IonBinary.NULL_VALUE_SIGNATURE]
+            extract_data, deserializer, name = IonBinary.VALUE_DESERIALIZERS[
+                IonBinary.NULL_VALUE_SIGNATURE
+            ]
 
         if extract_data:
-            length = deserialize_vluint(serial) if flag == IonBinary.VARIABLE_LEN_FLAG else flag
+            length = (
+                deserialize_vluint(serial)
+                if flag == IonBinary.VARIABLE_LEN_FLAG
+                else flag
+            )
             return deserializer(self, serial.extract(length))
 
         return deserializer(self, flag, serial)
@@ -123,7 +171,9 @@ class IonBinary(IonSerial):
         if flag == IonBinary.NULL_FLAG:
             return None
 
-        length = deserialize_vluint(serial) if flag == IonBinary.VARIABLE_LEN_FLAG else flag
+        length = (
+            deserialize_vluint(serial) if flag == IonBinary.VARIABLE_LEN_FLAG else flag
+        )
         serial.extract(length)
         return IonNop()
 
@@ -139,8 +189,11 @@ class IonBinary(IonSerial):
         return flag != 0
 
     def serialize_int_value(self, value):
-        return ((IonBinary.POSINT_VALUE_SIGNATURE, serialize_unsignedint(value)) if value >= 0 else
-                (IonBinary.NEGINT_VALUE_SIGNATURE, serialize_unsignedint(-value)))
+        return (
+            (IonBinary.POSINT_VALUE_SIGNATURE, serialize_unsignedint(value))
+            if value >= 0
+            else (IonBinary.NEGINT_VALUE_SIGNATURE, serialize_unsignedint(-value))
+        )
 
     POSINT_VALUE_SIGNATURE = 2
 
@@ -154,14 +207,20 @@ class IonBinary(IonSerial):
             log.error("BinaryIonNegInt has no data")
 
         if data[0] == 0:
-            log.error("BinaryIonNegInt data starts with 0x00: %s" % bytes_to_separated_hex(data))
+            log.error(
+                "BinaryIonNegInt data starts with 0x00: %s"
+                % bytes_to_separated_hex(data)
+            )
 
         return -deserialize_unsignedint(data)
 
     FLOAT_VALUE_SIGNATURE = 4
 
     def serialize_float_value(self, value):
-        return (IonBinary.FLOAT_VALUE_SIGNATURE, b"" if value == 0.0 else struct.pack(">d", value))
+        return (
+            IonBinary.FLOAT_VALUE_SIGNATURE,
+            b"" if value == 0.0 else struct.pack(">d", value),
+        )
 
     def deserialize_float_value(self, data):
         if len(data) == 0:
@@ -173,7 +232,9 @@ class IonBinary(IonSerial):
         if len(data) == 8:
             return struct.unpack_from(">d", data)[0]
 
-        raise Exception("IonFloat unexpected data length: %s" % bytes_to_separated_hex(data))
+        raise Exception(
+            "IonFloat unexpected data length: %s" % bytes_to_separated_hex(data)
+        )
 
     DECIMAL_VALUE_SIGNATURE = 5
 
@@ -182,8 +243,11 @@ class IonBinary(IonSerial):
             return (IonBinary.DECIMAL_VALUE_SIGNATURE, b"")
 
         vt = value.as_tuple()
-        return (IonBinary.DECIMAL_VALUE_SIGNATURE, serialize_vlsint(vt.exponent) +
-                serialize_signedint(combine_decimal_digits(vt.digits, vt.sign)))
+        return (
+            IonBinary.DECIMAL_VALUE_SIGNATURE,
+            serialize_vlsint(vt.exponent)
+            + serialize_signedint(combine_decimal_digits(vt.digits, vt.sign)),
+        )
 
     def deserialize_decimal_value(self, data):
         if len(data) == 0:
@@ -204,7 +268,11 @@ class IonBinary(IonSerial):
             format_len = len(value.tzinfo.format())
             fraction_exponent = -value.tzinfo.fraction_len()
         else:
-            offset_minutes = int(value.utcoffset().total_seconds()) // 60 if value.utcoffset() is not None else None
+            offset_minutes = (
+                int(value.utcoffset().total_seconds()) // 60
+                if value.utcoffset() is not None
+                else None
+            )
             format_len = len(ION_TIMESTAMP_YMDHMSF)
             fraction_exponent = -3
 
@@ -226,8 +294,12 @@ class IonBinary(IonSerial):
 
                         if format_len >= len(ION_TIMESTAMP_YMDHMSF):
                             serial.append(serialize_vlsint(fraction_exponent))
-                            serial.append(serialize_signedint(
-                                    (value.microsecond * int(10 ** -fraction_exponent)) // 1000000))
+                            serial.append(
+                                serialize_signedint(
+                                    (value.microsecond * int(10**-fraction_exponent))
+                                    // 1000000
+                                )
+                            )
 
         return (IonBinary.TIMESTAMP_VALUE_SIGNATURE, serial.serialize())
 
@@ -244,19 +316,32 @@ class IonBinary(IonSerial):
 
         if len(serial) > 0:
             fraction_exponent = deserialize_vlsint(serial)
-            fraction_coefficient = deserialize_signedint(serial.extract()) if len(serial) > 0 else 0
+            fraction_coefficient = (
+                deserialize_signedint(serial.extract()) if len(serial) > 0 else 0
+            )
 
             if fraction_coefficient == 0 and fraction_exponent > -1:
                 microsecond = None
             else:
                 if fraction_exponent < -6 or fraction_exponent > -1:
-                    log.error("Unexpected IonTimestamp fraction exponent %d coefficient %d: %s" % (
-                            fraction_exponent, fraction_coefficient, bytes_to_separated_hex(data)))
+                    log.error(
+                        "Unexpected IonTimestamp fraction exponent %d coefficient %d: %s"
+                        % (
+                            fraction_exponent,
+                            fraction_coefficient,
+                            bytes_to_separated_hex(data),
+                        )
+                    )
 
-                microsecond = (fraction_coefficient * 1000000) // int(10 ** -fraction_exponent)
+                microsecond = (fraction_coefficient * 1000000) // int(
+                    10**-fraction_exponent
+                )
 
                 if microsecond < 0 or microsecond > 999999:
-                    log.error("Incorrect IonTimestamp fraction %d usec: %s" % (microsecond, bytes_to_separated_hex(data)))
+                    log.error(
+                        "Incorrect IonTimestamp fraction %d usec: %s"
+                        % (microsecond, bytes_to_separated_hex(data))
+                    )
                     microsecond = None
                     fraction_exponent = 0
         else:
@@ -280,14 +365,15 @@ class IonBinary(IonSerial):
             format = ION_TIMESTAMP_YMDHMSF
 
         return IonTimestamp(
-                year,
-                month if month is not None else 1,
-                day if day is not None else 1,
-                hour if hour is not None else 0,
-                minute if hour is not None else 0,
-                second if second is not None else 0,
-                microsecond if microsecond is not None else 0,
-                IonTimestampTZ(offset_minutes, format, -fraction_exponent))
+            year,
+            month if month is not None else 1,
+            day if day is not None else 1,
+            hour if hour is not None else 0,
+            minute if hour is not None else 0,
+            second if second is not None else 0,
+            microsecond if microsecond is not None else 0,
+            IonTimestampTZ(offset_minutes, format, -fraction_exponent),
+        )
 
     SYMBOL_VALUE_SIGNATURE = 7
 
@@ -350,7 +436,10 @@ class IonBinary(IonSerial):
     SEXP_VALUE_SIGNATURE = 12
 
     def serialize_sexp_value(self, value):
-        return (IonBinary.SEXP_VALUE_SIGNATURE, self.serialize_list_value(list(value))[1])
+        return (
+            IonBinary.SEXP_VALUE_SIGNATURE,
+            self.serialize_list_value(list(value))[1],
+        )
 
     def deserialize_sexp_value(self, data):
         return IonSExp(self.deserialize_list_value(data))
@@ -371,7 +460,13 @@ class IonBinary(IonSerial):
             log.error("BinaryIonStruct: Sorted IonStruct encountered")
             flag = IonBinary.VARIABLE_LEN_FLAG
 
-        serial2 = Deserializer(serial.extract(deserialize_vluint(serial) if flag == IonBinary.VARIABLE_LEN_FLAG else flag))
+        serial2 = Deserializer(
+            serial.extract(
+                deserialize_vluint(serial)
+                if flag == IonBinary.VARIABLE_LEN_FLAG
+                else flag
+            )
+        )
         result = IonStruct()
 
         while len(serial2):
@@ -416,11 +511,16 @@ class IonBinary(IonSerial):
 
         ion_value = self.deserialize_value(serial)
         if len(serial):
-            raise Exception("IonAnnotation has excess data: %s" % bytes_to_separated_hex(serial.extract()))
+            raise Exception(
+                "IonAnnotation has excess data: %s"
+                % bytes_to_separated_hex(serial.extract())
+            )
 
         annotations = []
         while len(annotation_data):
-            annotations.append(self.symtab.get_symbol(deserialize_vluint(annotation_data)))
+            annotations.append(
+                self.symtab.get_symbol(deserialize_vluint(annotation_data))
+            )
 
         if len(annotations) == 0:
             raise Exception("IonAnnotation has no annotations")
@@ -430,7 +530,9 @@ class IonBinary(IonSerial):
     RESERVED_VALUE_SIGNATURE = 15
 
     def deserialize_reserved_value(self, data):
-        raise Exception("Deserialize reserved ion value signature %d" % self.value_signature)
+        raise Exception(
+            "Deserialize reserved ion value signature %d" % self.value_signature
+        )
 
     VALUE_DESERIALIZERS = {
         NULL_VALUE_SIGNATURE: (False, deserialize_null_value, "null"),
@@ -449,7 +551,7 @@ class IonBinary(IonSerial):
         STRUCT_VALUE_SIGNATURE: (False, deserialize_struct_value, "struct"),
         ANNOTATION_VALUE_SIGNATURE: (True, deserialize_annotation_value, "annotation"),
         RESERVED_VALUE_SIGNATURE: (True, deserialize_reserved_value, "reserved"),
-        }
+    }
 
     ION_TYPE_HANDLERS = {
         IonAnnotation: serialize_annotation_value,
@@ -466,11 +568,11 @@ class IonBinary(IonSerial):
         IonStruct: serialize_struct_value,
         IonSymbol: serialize_symbol_value,
         IonTimestamp: serialize_timestamp_value,
-        }
+    }
 
 
 def descriptor(signature, flag):
-    if flag < 0 or flag > 0x0f:
+    if flag < 0 or flag > 0x0F:
         raise Exception("Serialize bad descriptor flag: %d" % flag)
 
     return bytes([(signature << 4) + flag])
@@ -501,7 +603,7 @@ def deserialize_signedint(data):
         return 0
 
     if (data[0] & 0x80) != 0:
-        return -(struct.unpack_from(">Q", lpad0(and_first_byte(data, 0x7f), 8))[0])
+        return -(struct.unpack_from(">Q", lpad0(and_first_byte(data, 0x7F), 8))[0])
 
     return struct.unpack_from(">Q", lpad0(data, 8))[0]
 
@@ -510,20 +612,20 @@ def serialize_vluint(value):
     if value < 0:
         raise Exception("Cannot serialize negative value as IonVLUInt: %d" % value)
 
-    datalst = [(value & 0x7f) + 0x80]
+    datalst = [(value & 0x7F) + 0x80]
     while True:
         value = value >> 7
         if value == 0:
             return bytes(datalst)
 
-        datalst.insert(0, value & 0x7f)
+        datalst.insert(0, value & 0x7F)
 
 
 def deserialize_vluint(serial):
     value = 0
     while True:
         i = serial.unpack("B")
-        value = (value << 7) | (i & 0x7f)
+        value = (value << 7) | (i & 0x7F)
 
         if i & 0x80:
             return value
@@ -531,7 +633,7 @@ def deserialize_vluint(serial):
         if value == 0:
             raise Exception("IonVLUInt padded with 0x00")
 
-        if value > 0x7fffffffffffff:
+        if value > 0x7FFFFFFFFFFFFF:
             raise Exception("IonVLUInt data value is too large, missing terminator")
 
 
@@ -552,7 +654,7 @@ def serialize_vlsint(value):
 
 def deserialize_vlsint(serial, allow_minus_zero=False):
     first = serial.unpack("B")
-    ibyte = first & 0xbf
+    ibyte = first & 0xBF
 
     datalst = []
     if ibyte != 0:
@@ -579,11 +681,14 @@ def lpad0(data, size):
     if len(data) > size:
         extra = len(data) - size
         if data[:size] != b"\x00" * extra:
-            raise Exception("lpad0, length (%d) > max (%d): %s" % (len(data), size, bytes_to_separated_hex(data)))
+            raise Exception(
+                "lpad0, length (%d) > max (%d): %s"
+                % (len(data), size, bytes_to_separated_hex(data))
+            )
 
         return data[:size]
 
-    return (b"\x00" * (size - len(data)) + data)
+    return b"\x00" * (size - len(data)) + data
 
 
 def ltrim0(data):

@@ -3,13 +3,13 @@ import operator
 import re
 import urllib.parse
 
-from .epub_output import (qname, SVG, SVG_NAMESPACES, SVG_NS_URI, XLINK_HREF, value_str)
-from .ion import (ion_type, IonSExp, IonStruct, IonSymbol)
-from .ion_symbol_table import LocalSymbolTable
-from .ion_text import IonText
-from .message_logging import log
-from .utilities import (get_url_filename, type_name, urlabspath, urlrelpath)
-from .yj_versions import KNOWN_SUPPORTED_FEATURES
+from epub_output import qname, SVG, SVG_NAMESPACES, SVG_NS_URI, XLINK_HREF, value_str
+from ion import ion_type, IonSExp, IonStruct, IonSymbol
+from ion_symbol_table import LocalSymbolTable
+from ion_text import IonText
+from message_logging import log
+from utilities import get_url_filename, type_name, urlabspath, urlrelpath
+from yj_versions import KNOWN_SUPPORTED_FEATURES
 
 
 __license__ = "GPL v3"
@@ -45,12 +45,10 @@ class KFX_EPUB_Misc(object):
             "$525": (0, (screen_width > screen_height)),
             "$526": (0, (screen_width < screen_height)),
             "$660": (0, True),
-
             "$293": (1, operator.not_),
             "$266": (1, None),
             "$750": (1, None),
             "$659": (None, None),
-
             "$292": (2, operator.and_),
             "$291": (2, operator.or_),
             "$294": (2, operator.eq),
@@ -63,12 +61,15 @@ class KFX_EPUB_Misc(object):
             "$517": (2, operator.sub),
             "$518": (2, operator.mul),
             "$519": (2, operator.truediv),
-            }
+        }
 
     def evaluate_binary_condition(self, condition):
         value = self.evaluate_condition(condition)
         if value not in {True, False}:
-            log.error("Condition has non-binary result (%s): %s" % (str(value), str(condition)))
+            log.error(
+                "Condition has non-binary result (%s): %s"
+                % (str(value), str(condition))
+            )
             return False
 
         return value
@@ -96,7 +97,9 @@ class KFX_EPUB_Misc(object):
                 return False
 
         if nargs != num:
-            log.error("Condition operator has wrong number of arguments: %s" % str(condition))
+            log.error(
+                "Condition operator has wrong number of arguments: %s" % str(condition)
+            )
             return False
 
         if nargs == 0:
@@ -118,17 +121,26 @@ class KFX_EPUB_Misc(object):
 
             return func(self.evaluate_condition(condition[1]))
 
-        return func(self.evaluate_condition(condition[1]), self.evaluate_condition(condition[2]))
+        return func(
+            self.evaluate_condition(condition[1]), self.evaluate_condition(condition[2])
+        )
 
-    def add_svg_wrapper_to_block_image(self, content_elem, book_part, fixed_height=0, fixed_width=0):
-
+    def add_svg_wrapper_to_block_image(
+        self, content_elem, book_part, fixed_height=0, fixed_width=0
+    ):
         if len(content_elem) != 1:
-            log.error("Incorrect div content for SVG wrapper: %s" % etree.tostring(content_elem))
+            log.error(
+                "Incorrect div content for SVG wrapper: %s"
+                % etree.tostring(content_elem)
+            )
             return
 
         for image_div in content_elem.findall("*"):
-
-            if image_div.tag == "div" and len(image_div) == 1 and image_div[0].tag == "img":
+            if (
+                image_div.tag == "div"
+                and len(image_div) == 1
+                and image_div[0].tag == "img"
+            ):
                 div_style = self.get_style(image_div)
                 div_style.pop("-kfx-style-name", "")
                 div_style.pop("font-size", "")
@@ -143,63 +155,124 @@ class KFX_EPUB_Misc(object):
                 iheight = img_style.pop("height", "")
                 iwidth = img_style.pop("width", "")
 
-                img_file = self.oebps_files[get_url_filename(urlabspath(img.get("src"), ref_from=book_part.filename))]
+                img_file = self.oebps_files[
+                    get_url_filename(
+                        urlabspath(img.get("src"), ref_from=book_part.filename)
+                    )
+                ]
                 img_height = img_file.height
                 img_width = img_file.width
 
                 orig_int_height = int_height = self.px_to_int(iheight)
                 orig_int_width = int_width = self.px_to_int(iwidth)
 
-                if ((int_height and fixed_height and int_height != fixed_height) or
-                        (int_width and fixed_width and int_width != fixed_width)):
-                    log.error("Unexpected image style for SVG wrapper (fixed h=%d, w=%d): %s" % (
-                            fixed_height, fixed_width, etree.tostring(image_div)))
+                if (int_height and fixed_height and int_height != fixed_height) or (
+                    int_width and fixed_width and int_width != fixed_width
+                ):
+                    log.error(
+                        "Unexpected image style for SVG wrapper (fixed h=%d, w=%d): %s"
+                        % (fixed_height, fixed_width, etree.tostring(image_div))
+                    )
 
                 if int_height and int_width:
                     img_aspect = float(int_height) / float(int_width)
                     svg_aspect = float(img_height) / float(img_width)
                     if abs(img_aspect - svg_aspect) > 0.01:
-                        log.error("Image (h=%d, w=%d) aspect ratio %f does not match SVG wrapper (h=%d, w=%d) %f" % (
-                            img_height, img_width, img_aspect, int_height, int_width, svg_aspect))
+                        log.error(
+                            "Image (h=%d, w=%d) aspect ratio %f does not match SVG wrapper (h=%d, w=%d) %f"
+                            % (
+                                img_height,
+                                img_width,
+                                img_aspect,
+                                int_height,
+                                int_width,
+                                svg_aspect,
+                            )
+                        )
                 else:
                     int_height = img_height
                     int_width = img_width
 
-                if not (div_style.pop("text-align", "center") == "center" and div_style.pop("text-indent", "0") == "0" and
-                        img_style.pop("position", "absolute") == "absolute" and
-                        img_style.pop("top", "0") == "0" and img_style.pop("left", "0") == "0" and
-                        (iheight == "" or orig_int_height) and
-                        (iwidth == "" or orig_int_width or re.match(r"^(100|9[5-9].*)%$", iwidth)) and
-                        len(img_style) == 0 and len(div_style) == 0):
-                    log.error("Unexpected image style for SVG wrapper (img h=%d, w=%d): %s" % (
-                            img_height, img_width, etree.tostring(image_div)))
+                if not (
+                    div_style.pop("text-align", "center") == "center"
+                    and div_style.pop("text-indent", "0") == "0"
+                    and img_style.pop("position", "absolute") == "absolute"
+                    and img_style.pop("top", "0") == "0"
+                    and img_style.pop("left", "0") == "0"
+                    and (iheight == "" or orig_int_height)
+                    and (
+                        iwidth == ""
+                        or orig_int_width
+                        or re.match(r"^(100|9[5-9].*)%$", iwidth)
+                    )
+                    and len(img_style) == 0
+                    and len(div_style) == 0
+                ):
+                    log.error(
+                        "Unexpected image style for SVG wrapper (img h=%d, w=%d): %s"
+                        % (img_height, img_width, etree.tostring(image_div))
+                    )
 
                 image_div.remove(img)
 
-                svg = etree.SubElement(image_div, SVG, nsmap=SVG_NAMESPACES, attrib={
-                    "version": "1.1", "preserveAspectRatio": "xMidYMid meet", "viewBox": "0 0 %d %d" % (int_width, int_height),
-                    "height": "100%", "width": "100%"})
+                svg = etree.SubElement(
+                    image_div,
+                    SVG,
+                    nsmap=SVG_NAMESPACES,
+                    attrib={
+                        "version": "1.1",
+                        "preserveAspectRatio": "xMidYMid meet",
+                        "viewBox": "0 0 %d %d" % (int_width, int_height),
+                        "height": "100%",
+                        "width": "100%",
+                    },
+                )
 
                 self.move_anchors(img, svg)
 
-                etree.SubElement(svg, qname(SVG_NS_URI, "image"), attrib={
-                    XLINK_HREF: img.get("src"),
-                    "height": "%d" % int_height, "width": "%d" % int_width})
+                etree.SubElement(
+                    svg,
+                    qname(SVG_NS_URI, "image"),
+                    attrib={
+                        XLINK_HREF: img.get("src"),
+                        "height": "%d" % int_height,
+                        "width": "%d" % int_width,
+                    },
+                )
 
             else:
-                log.error("Incorrect image content for SVG wrapper: %s" % etree.tostring(image_div))
+                log.error(
+                    "Incorrect image content for SVG wrapper: %s"
+                    % etree.tostring(image_div)
+                )
 
     def horizontal_fxl_block_images(self, content_elem, book_part):
         left = 0
         for image_div in content_elem.findall("*"):
-
-            if image_div.tag == "div" and len(image_div) == 1 and image_div[0].tag == "img":
+            if (
+                image_div.tag == "div"
+                and len(image_div) == 1
+                and image_div[0].tag == "img"
+            ):
                 img = image_div[0]
-                img_file = self.oebps_files[get_url_filename(urlabspath(img.get("src"), ref_from=book_part.filename))]
+                img_file = self.oebps_files[
+                    get_url_filename(
+                        urlabspath(img.get("src"), ref_from=book_part.filename)
+                    )
+                ]
                 img_style = self.get_style(img)
 
-                if "position" in img_style or "top" in img_style or "left" in img_style or "height" in img_style or "width" in img_style:
-                    log.error("Unexpected image style for horizontal fxl: %s" % etree.tostring(image_div))
+                if (
+                    "position" in img_style
+                    or "top" in img_style
+                    or "left" in img_style
+                    or "height" in img_style
+                    or "width" in img_style
+                ):
+                    log.error(
+                        "Unexpected image style for horizontal fxl: %s"
+                        % etree.tostring(image_div)
+                    )
 
                 img_style["position"] = "absolute"
                 img_style["top"] = value_str(0, "px")
@@ -211,13 +284,19 @@ class KFX_EPUB_Misc(object):
                 left += img_file.width
 
             else:
-                log.error("Incorrect image content for horizontal fxl: %s" % etree.tostring(image_div))
+                log.error(
+                    "Incorrect image content for horizontal fxl: %s"
+                    % etree.tostring(image_div)
+                )
 
     def process_kvg_shape(self, parent, shape, content_list, book_part, writing_mode):
         shape_type = shape.pop("$159")
         if shape_type == "$273":
-            elem = etree.SubElement(parent, qname(SVG_NS_URI, "path"), attrib={
-                    "d": self.process_path(shape.pop("$249"))})
+            elem = etree.SubElement(
+                parent,
+                qname(SVG_NS_URI, "path"),
+                attrib={"d": self.process_path(shape.pop("$249"))},
+            )
 
         elif shape_type == "$270":
             source = shape.pop("$474")
@@ -247,19 +326,24 @@ class KFX_EPUB_Misc(object):
             return
 
         for yj_property_name, svg_attrib in [
-                    ("$70", "fill"),
-                    ("$72", "fill-opacity"),
-                    ("$75", "stroke"),
-                    ("$531", "stroke-dasharray"),
-                    ("$532", "stroke-dashoffset"),
-                    ("$77", "stroke-linecap"),
-                    ("$529", "stroke-linejoin"),
-                    ("$530", "stroke-miterlimit"),
-                    ("$76", "stroke-width"),
-                    ("$98", "transform"),
-                    ]:
+            ("$70", "fill"),
+            ("$72", "fill-opacity"),
+            ("$75", "stroke"),
+            ("$531", "stroke-dasharray"),
+            ("$532", "stroke-dashoffset"),
+            ("$77", "stroke-linecap"),
+            ("$529", "stroke-linejoin"),
+            ("$530", "stroke-miterlimit"),
+            ("$76", "stroke-width"),
+            ("$98", "transform"),
+        ]:
             if yj_property_name in shape:
-                elem.set(svg_attrib, self.property_value(yj_property_name, shape.pop(yj_property_name), svg=True))
+                elem.set(
+                    svg_attrib,
+                    self.property_value(
+                        yj_property_name, shape.pop(yj_property_name), svg=True
+                    ),
+                )
 
         if "stroke" in elem.attrib and "fill" not in elem.attrib:
             elem.set("fill", "none")
@@ -272,11 +356,16 @@ class KFX_EPUB_Misc(object):
             path_index = path.pop("$403")
             self.check_empty(path, "path")
 
-            if "$692" not in self.book_data or path_bundle_name not in self.book_data["$692"]:
+            if (
+                "$692" not in self.book_data
+                or path_bundle_name not in self.book_data["$692"]
+            ):
                 log.error("Missing book path_bundle: %s" % path_bundle_name)
                 return ""
 
-            return self.process_path(self.book_data["$692"][path_bundle_name]["$693"][path_index])
+            return self.process_path(
+                self.book_data["$692"][path_bundle_name]["$693"][path_index]
+            )
 
         p = list(path)
         d = []
@@ -313,7 +402,9 @@ class KFX_EPUB_Misc(object):
                 process_instruction("Z", 0)
 
             else:
-                log.error("Unexpected path instruction %s in %s" % (str(inst), str(path)))
+                log.error(
+                    "Unexpected path instruction %s in %s" % (str(inst), str(path))
+                )
                 break
 
         return " ".join(d)
@@ -333,20 +424,24 @@ class KFX_EPUB_Misc(object):
                     log.error("Bad path instruction in %s" % str(path))
                     break
 
-                d.append("%s %s" % (percent_value_str(path[i+1]), percent_value_str(path[i+2])))
+                d.append(
+                    "%s %s"
+                    % (percent_value_str(path[i + 1]), percent_value_str(path[i + 2]))
+                )
                 i += 3
 
             elif inst == 4:
                 i += 1
 
             else:
-                log.error("Unexpected path instruction %s in %s" % (str(inst), str(path)))
+                log.error(
+                    "Unexpected path instruction %s in %s" % (str(inst), str(path))
+                )
                 break
 
         return "polygon(%s)" % (", ".join(d))
 
     def process_transform(self, vals, svg):
-
         if svg:
             px = ""
             sep = " "
@@ -358,27 +453,33 @@ class KFX_EPUB_Misc(object):
             vals[4] = self.adjust_pixel_value(vals[4])
             vals[5] = self.adjust_pixel_value(vals[5])
 
-            if vals[4:6] == [0., 0.]:
+            if vals[4:6] == [0.0, 0.0]:
                 translate = ""
             else:
-                translate = "translate(%s%s%s) " % (value_str(vals[4], px), sep, value_str(vals[5], px))
+                translate = "translate(%s%s%s) " % (
+                    value_str(vals[4], px),
+                    sep,
+                    value_str(vals[5], px),
+                )
 
-            if vals[0:4] == [1., 0., 0., 1.] and translate:
+            if vals[0:4] == [1.0, 0.0, 0.0, 1.0] and translate:
                 return translate.strip()
 
-            if vals[1:3] == [0., 0.]:
+            if vals[1:3] == [0.0, 0.0]:
                 if vals[0] == vals[3]:
                     return translate + ("scale(%s)" % value_str(vals[0]))
 
-                return translate + ("scale(%s%s%s)" % (value_str(vals[0]), sep, value_str(vals[3])))
+                return translate + (
+                    "scale(%s%s%s)" % (value_str(vals[0]), sep, value_str(vals[3]))
+                )
 
-            if vals[0:4] == [0., 1., -1., 0.]:
+            if vals[0:4] == [0.0, 1.0, -1.0, 0.0]:
                 return translate + "rotate(-90deg)"
 
-            if vals[0:4] == [0., -1., 1., 0.]:
+            if vals[0:4] == [0.0, -1.0, 1.0, 0.0]:
                 return translate + "rotate(90deg)"
 
-            if vals[0:4] == [-1., 0., 0., -1.]:
+            if vals[0:4] == [-1.0, 0.0, 0.0, -1.0]:
                 return translate + "rotate(180deg)"
 
             log.warning("Unexpected transform matrix: %s" % str(vals))
@@ -387,26 +488,48 @@ class KFX_EPUB_Misc(object):
         log.error("Unexpected transform: %s" % str(vals))
         return "?"
 
-    def process_plugin(self, resource_name, alt_text, content_elem, book_part, is_html=False):
+    def process_plugin(
+        self, resource_name, alt_text, content_elem, book_part, is_html=False
+    ):
         res = self.process_external_resource(resource_name, save=False, is_plugin=True)
 
         if is_html or res.mime == "plugin/kfx-html-article":
-
-            src = urlrelpath(self.process_external_resource(resource_name, is_plugin=True, save_referred=True).filename, ref_from=book_part.filename)
+            src = urlrelpath(
+                self.process_external_resource(
+                    resource_name, is_plugin=True, save_referred=True
+                ).filename,
+                ref_from=book_part.filename,
+            )
 
             if RENDER_HTML_PLUGIN_AS == "iframe":
                 content_elem.tag = "iframe"
                 content_elem.set("src", src)
-                self.add_style(content_elem, {
-                        "height": "100%", "width": "100%", "border-bottom-style": "none", "border-left-style": "none",
-                        "border-right-style": "none", "border-top-style": "none"})
+                self.add_style(
+                    content_elem,
+                    {
+                        "height": "100%",
+                        "width": "100%",
+                        "border-bottom-style": "none",
+                        "border-left-style": "none",
+                        "border-right-style": "none",
+                        "border-top-style": "none",
+                    },
+                )
             elif RENDER_HTML_PLUGIN_AS == "object":
                 content_elem.tag = "object"
                 content_elem.set("data", src)
                 content_elem.set("type", "text/html")
-                self.add_style(content_elem, {
-                        "height": "100%", "width": "100%", "border-bottom-style": "none", "border-left-style": "none",
-                        "border-right-style": "none", "border-top-style": "none"})
+                self.add_style(
+                    content_elem,
+                    {
+                        "height": "100%",
+                        "width": "100%",
+                        "border-bottom-style": "none",
+                        "border-left-style": "none",
+                        "border-right-style": "none",
+                        "border-top-style": "none",
+                    },
+                )
             else:
                 content_elem.tag = "a"
                 content_elem.set("href", src)
@@ -414,16 +537,26 @@ class KFX_EPUB_Misc(object):
 
         elif res.format == "$284":
             content_elem.tag = "img"
-            content_elem.set("src", urlrelpath(self.process_external_resource(resource_name).filename, ref_from=book_part.filename))
+            content_elem.set(
+                "src",
+                urlrelpath(
+                    self.process_external_resource(resource_name).filename,
+                    ref_from=book_part.filename,
+                ),
+            )
             content_elem.set("alt", alt_text)
 
         else:
             manifest_raw_media = res.raw_media.decode("utf-8")
 
-            manifest_symtab = LocalSymbolTable(context="plugin %s" % resource_name, ignore_undef=True)
+            manifest_symtab = LocalSymbolTable(
+                context="plugin %s" % resource_name, ignore_undef=True
+            )
 
             try:
-                manifest_ = IonText(symtab=manifest_symtab).deserialize_annotated_value(manifest_raw_media, import_symbols=None)
+                manifest_ = IonText(symtab=manifest_symtab).deserialize_annotated_value(
+                    manifest_raw_media, import_symbols=None
+                )
             except Exception:
                 log.error("Exception processing plugin %s" % resource_name)
                 raise
@@ -433,11 +566,15 @@ class KFX_EPUB_Misc(object):
             manifest = manifest_.value
 
             if plugin_type == "audio":
-                self.process_external_resource(resource_name, save=False, is_plugin=True, process_referred=True)
+                self.process_external_resource(
+                    resource_name, save=False, is_plugin=True, process_referred=True
+                )
 
                 content_elem.tag = "audio"
                 content_elem.set("controls", "")
-                src = self.uri_reference(manifest["facets"]["media"]["uri"], manifest_external_refs=True)
+                src = self.uri_reference(
+                    manifest["facets"]["media"]["uri"], manifest_external_refs=True
+                )
                 content_elem.set("src", urlrelpath(src, ref_from=book_part.filename))
 
                 player = manifest["facets"]["player"]
@@ -451,11 +588,20 @@ class KFX_EPUB_Misc(object):
 
                 for image in manifest["facets"]["images"]:
                     if image["role"] != "upstate":
-                        log.warning("Unknown button image role %s in %s" % (image["role"], resource_name))
+                        log.warning(
+                            "Unknown button image role %s in %s"
+                            % (image["role"], resource_name)
+                        )
 
                     if RENDER_BUTTON_PLUGIN:
                         img = etree.SubElement(content_elem, "img")
-                        img.set("src", urlrelpath(self.uri_reference(image["uri"]), ref_from=book_part.filename))
+                        img.set(
+                            "src",
+                            urlrelpath(
+                                self.uri_reference(image["uri"]),
+                                ref_from=book_part.filename,
+                            ),
+                        )
                         img.set("alt", alt_text)
                         self.add_style(img, {"max-width": "100%"})
                     else:
@@ -463,11 +609,16 @@ class KFX_EPUB_Misc(object):
 
                 clicks = manifest["events"]["click"]
 
-                for click in (clicks if isinstance(clicks, list) else [clicks]):
+                for click in clicks if isinstance(clicks, list) else [clicks]:
                     if click["name"] != "change_state":
-                        log.warning("Unknown button event click name %s in %s" % (click["name"], resource_name))
+                        log.warning(
+                            "Unknown button event click name %s in %s"
+                            % (click["name"], resource_name)
+                        )
 
-                self.process_external_resource(resource_name, is_plugin=True, save=False, process_referred=True)
+                self.process_external_resource(
+                    resource_name, is_plugin=True, save=False, process_referred=True
+                )
 
             elif plugin_type == "hyperlink":
                 content_elem.tag = "a"
@@ -475,18 +626,28 @@ class KFX_EPUB_Misc(object):
 
                 uri = manifest["facets"]["uri"]
                 if uri:
-                    content_elem.set("href", urlrelpath(self.uri_reference(uri), ref_from=book_part.filename))
+                    content_elem.set(
+                        "href",
+                        urlrelpath(
+                            self.uri_reference(uri), ref_from=book_part.filename
+                        ),
+                    )
 
             elif plugin_type == "image_sequence":
                 content_elem.tag = "div"
 
                 for image in manifest["facets"]["images"]:
                     img = etree.SubElement(content_elem, "img")
-                    img.set("src", urlrelpath(self.uri_reference(image["uri"]), ref_from=book_part.filename))
+                    img.set(
+                        "src",
+                        urlrelpath(
+                            self.uri_reference(image["uri"]),
+                            ref_from=book_part.filename,
+                        ),
+                    )
                     img.set("alt", alt_text)
 
             elif plugin_type in ["scrollable", "slideshow"]:
-
                 content_elem.tag = "div"
 
                 if manifest["properties"].get("initial_visibility") == "hide":
@@ -496,10 +657,14 @@ class KFX_EPUB_Misc(object):
                     alt_text = manifest["properties"]["alt_text"]
 
                 for child in manifest["facets"]["children"]:
-                    self.process_plugin_uri(child["uri"], child["bounds"], content_elem, book_part)
+                    self.process_plugin_uri(
+                        child["uri"], child["bounds"], content_elem, book_part
+                    )
 
                 if plugin_type == "scrollable":
-                    self.process_external_resource(resource_name, is_plugin=True, save=False, process_referred=True)
+                    self.process_external_resource(
+                        resource_name, is_plugin=True, save=False, process_referred=True
+                    )
 
             elif plugin_type == "video":
                 content_elem.tag = "video"
@@ -507,21 +672,37 @@ class KFX_EPUB_Misc(object):
                 if manifest["properties"].get("user_interaction") == "enabled":
                     content_elem.set("controls", "")
 
-                if manifest.get("events", {}).get("enter_view", {}).get("name") == "start":
+                if (
+                    manifest.get("events", {}).get("enter_view", {}).get("name")
+                    == "start"
+                ):
                     content_elem.set("autoplay", "")
 
-                if manifest["properties"].get("play_context", {}).get("loop_count", 0) < 0:
+                if (
+                    manifest["properties"].get("play_context", {}).get("loop_count", 0)
+                    < 0
+                ):
                     content_elem.set("loop", "")
 
                 if "poster" in manifest["facets"]:
-                    content_elem.set("poster", urlrelpath(self.uri_reference(manifest["facets"]["poster"]["uri"]), ref_from=book_part.filename))
+                    content_elem.set(
+                        "poster",
+                        urlrelpath(
+                            self.uri_reference(manifest["facets"]["poster"]["uri"]),
+                            ref_from=book_part.filename,
+                        ),
+                    )
 
                 if "first_frame" in manifest["facets"]:
-                    self.uri_reference(manifest["facets"]["first_frame"]["uri"], save=False)
+                    self.uri_reference(
+                        manifest["facets"]["first_frame"]["uri"], save=False
+                    )
 
                 alt_text = alt_text or "Cannot display %s content" % plugin_type
 
-                src = self.uri_reference(manifest["facets"]["media"]["uri"], manifest_external_refs=True)
+                src = self.uri_reference(
+                    manifest["facets"]["media"]["uri"], manifest_external_refs=True
+                )
 
                 content_elem.set("src", urlrelpath(src, ref_from=book_part.filename))
 
@@ -534,47 +715,77 @@ class KFX_EPUB_Misc(object):
                 self.move_anchors(dummy_elem, content_elem)
 
             elif plugin_type == "webview":
-                self.process_external_resource(resource_name, is_plugin=True, save=False, save_referred=True)
+                self.process_external_resource(
+                    resource_name, is_plugin=True, save=False, save_referred=True
+                )
                 purl = urllib.parse.urlparse(manifest["facets"]["uri"])
 
                 if purl.scheme == "kfx":
-                    self.process_plugin(urllib.parse.unquote(purl.netloc + purl.path), alt_text, content_elem, book_part, is_html=True)
+                    self.process_plugin(
+                        urllib.parse.unquote(purl.netloc + purl.path),
+                        alt_text,
+                        content_elem,
+                        book_part,
+                        is_html=True,
+                    )
                 else:
                     log.error("Unexpected webview plugin URI scheme: %s" % uri)
 
             elif plugin_type == "zoomable":
                 content_elem.tag = "img"
-                content_elem.set("src", urlrelpath(self.uri_reference(manifest["facets"]["media"]["uri"]), ref_from=book_part.filename))
+                content_elem.set(
+                    "src",
+                    urlrelpath(
+                        self.uri_reference(manifest["facets"]["media"]["uri"]),
+                        ref_from=book_part.filename,
+                    ),
+                )
                 content_elem.set("alt", alt_text)
 
             else:
-                log.error("Unknown plugin type %s in resource %s" % (plugin_type, resource_name))
+                log.error(
+                    "Unknown plugin type %s in resource %s"
+                    % (plugin_type, resource_name)
+                )
 
                 content_elem.tag = "object"
-                src = self.process_external_resource(resource_name, is_plugin=True, save_referred=True).filename
+                src = self.process_external_resource(
+                    resource_name, is_plugin=True, save_referred=True
+                ).filename
                 content_elem.set("data", urlrelpath(src, ref_from=book_part.filename))
                 content_elem.set("type", self.oebps_files[src].mimetype)
 
                 if len(content_elem) == 0:
-                    content_elem.text = alt_text or "Cannot display %s content" % plugin_type
+                    content_elem.text = (
+                        alt_text or "Cannot display %s content" % plugin_type
+                    )
 
     def process_plugin_uri(self, uri, bounds, content_elem, book_part):
         purl = urllib.parse.urlparse(uri)
 
         if purl.scheme == "kfx":
             child_elem = etree.SubElement(content_elem, "plugin-temp")
-            self.process_plugin(urllib.parse.unquote(purl.netloc + purl.path), "", child_elem, book_part)
+            self.process_plugin(
+                urllib.parse.unquote(purl.netloc + purl.path), "", child_elem, book_part
+            )
             self.process_bounds(child_elem, bounds)
         else:
             log.error("Unexpected plugin URI scheme: %s" % uri)
 
     def process_bounds(self, elem, bounds):
-        for bound, property_name in [("x", "left"), ("y", "top"), ("h", "height"), ("w", "width")]:
+        for bound, property_name in [
+            ("x", "left"),
+            ("y", "top"),
+            ("h", "height"),
+            ("w", "width"),
+        ]:
             if bound in bounds:
                 bound_value = bounds[bound]
                 if ion_type(bound_value) is IonStruct:
                     unit = bound_value.pop("unit")
-                    value = value_str(bound_value.pop("value"), "%" if unit == "percent" else unit)
+                    value = value_str(
+                        bound_value.pop("value"), "%" if unit == "percent" else unit
+                    )
                     self.check_empty(bound_value, "Bound %s value" % property_name)
 
                     self.add_style(elem, {property_name: value}, replace=True)
@@ -582,7 +793,10 @@ class KFX_EPUB_Misc(object):
                     if bound in ["x", "y"]:
                         self.add_style(elem, {"position": "absolute"})
                 else:
-                    log.error("Unexpected bound data type %s: %s" % (type_name(bound), repr(bound)))
+                    log.error(
+                        "Unexpected bound data type %s: %s"
+                        % (type_name(bound), repr(bound))
+                    )
 
     def px_to_int(self, s):
         return int(round(self.px_to_float(s)))

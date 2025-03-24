@@ -1,8 +1,8 @@
 import collections
 import functools
 
-from .ion import (ion_type, IonAnnotation, IonAnnots, IonBLOB, IonList, IonSymbol)
-from .utilities import (list_symbols, type_name)
+from ion import ion_type, IonAnnotation, IonAnnots, IonBLOB, IonList, IonSymbol
+from utilities import list_symbols, type_name
 
 
 __license__ = "GPL v3"
@@ -30,7 +30,6 @@ PREFERED_FRAGMENT_TYPE_ORDER = [
     "$538",
     "$389",
     "$390",
-
     "$260",
     "$259",
     "$608",
@@ -38,11 +37,9 @@ PREFERED_FRAGMENT_TYPE_ORDER = [
     "$756",
     "$692",
     "$157",
-
     "$391",
     "$266",
     "$394",
-
     "$264",
     "$265",
     "$550",
@@ -50,21 +47,16 @@ PREFERED_FRAGMENT_TYPE_ORDER = [
     "$621",
     "$611",
     "$610",
-
     "$597",
     "$267",
     "$387",
-
     "$395",
-
     "$262",
     "$164",
-
     "$418",
     "$417",
-
     "$419",
-    ]
+]
 
 
 ROOT_FRAGMENT_TYPES = {
@@ -85,15 +77,14 @@ ROOT_FRAGMENT_TYPES = {
     "$390",
     "$621",
     "$611",
-
-    }
+}
 
 
 SINGLETON_FRAGMENT_TYPES = ROOT_FRAGMENT_TYPES - {
     "$270",
     "$262",
     "$593",
-    }
+}
 
 
 REQUIRED_BOOK_FRAGMENT_TYPES = {
@@ -108,7 +99,7 @@ REQUIRED_BOOK_FRAGMENT_TYPES = {
     "$265",
     "$264",
     "$611",
-    }
+}
 
 
 ALLOWED_BOOK_FRAGMENT_TYPES = {
@@ -136,7 +127,7 @@ ALLOWED_BOOK_FRAGMENT_TYPES = {
     "$608",
     "$157",
     "$621",
-    }
+}
 
 
 KNOWN_FRAGMENT_TYPES = REQUIRED_BOOK_FRAGMENT_TYPES | ALLOWED_BOOK_FRAGMENT_TYPES
@@ -147,11 +138,10 @@ CONTAINER_FRAGMENT_TYPES = [
     "$593",
     "$ion_symbol_table",
     "$419",
-    ]
+]
 
 
 class YJContainer(object):
-
     def __init__(self, symtab, datafile=None, fragments=None):
         self.symtab = symtab
         self.datafile = datafile
@@ -163,7 +153,6 @@ class YJContainer(object):
 
 @functools.total_ordering
 class YJFragmentKey(IonAnnots):
-
     def __new__(cls, arg=None, ftype=None, fid=None, annot=None):
         if arg is not None:
             raise Exception("YJFragmentKey initializer missing keyword")
@@ -180,8 +169,12 @@ class YJFragmentKey(IonAnnots):
         return IonAnnots.__new__(cls, [IonSymbol(fid), IonSymbol(ftype)])
 
     def sort_key(self):
-        return (PREFERED_FRAGMENT_TYPE_ORDER.index(self.ftype) if self.ftype in PREFERED_FRAGMENT_TYPE_ORDER else
-                len(PREFERED_FRAGMENT_TYPE_ORDER), self.fid)
+        return (
+            PREFERED_FRAGMENT_TYPE_ORDER.index(self.ftype)
+            if self.ftype in PREFERED_FRAGMENT_TYPE_ORDER
+            else len(PREFERED_FRAGMENT_TYPE_ORDER),
+            self.fid,
+        )
 
     def __eq__(self, other):
         if isinstance(other, YJFragment):
@@ -223,12 +216,13 @@ class YJFragmentKey(IonAnnots):
 
 @functools.total_ordering
 class YJFragment(IonAnnotation):
-
     def __init__(self, arg=None, ftype=None, fid=None, value=None):
         if isinstance(arg, YJFragmentKey):
             IonAnnotation.__init__(self, arg, value)
         elif isinstance(arg, IonAnnotation):
-            IonAnnotation.__init__(self, YJFragmentKey(annot=arg.annotations), arg.value)
+            IonAnnotation.__init__(
+                self, YJFragmentKey(annot=arg.annotations), arg.value
+            )
         else:
             IonAnnotation.__init__(self, YJFragmentKey(ftype=ftype, fid=fid), value)
 
@@ -283,7 +277,9 @@ class YJFragmentList(IonList):
 
         for f in self:
             if not isinstance(f, YJFragment):
-                raise Exception("YJFragmentList contains non-YJFragment: %s" % type_name(f))
+                raise Exception(
+                    "YJFragmentList contains non-YJFragment: %s" % type_name(f)
+                )
 
             self.yj_ftype_index[f.ftype].append(f)
             self.yj_fragment_index[f].append(f)
@@ -317,7 +313,10 @@ class YJFragmentList(IonList):
             return default
 
         if len(matches) > 1 and not first:
-            raise KeyError("YJFragmentList get has multiple matches for %s: %s" % (repr(key), list_symbols(matches)))
+            raise KeyError(
+                "YJFragmentList get has multiple matches for %s: %s"
+                % (repr(key), list_symbols(matches))
+            )
 
         return matches[0]
 
@@ -330,14 +329,18 @@ class YJFragmentList(IonList):
 
     def append(self, value):
         if not isinstance(value, YJFragment):
-            raise Exception("YJFragmentList append non-YJFragment: %s" % type_name(value))
+            raise Exception(
+                "YJFragmentList append non-YJFragment: %s" % type_name(value)
+            )
 
         IonList.append(self, value)
         self.yj_dirty = True
 
     def extend(self, values):
         if not isinstance(values, YJFragmentList):
-            raise Exception("YJFragmentList extend non-YJFragmentList: %s" % type_name(values))
+            raise Exception(
+                "YJFragmentList extend non-YJFragmentList: %s" % type_name(values)
+            )
 
         IonList.extend(self, values)
         self.yj_dirty = True
@@ -348,7 +351,9 @@ class YJFragmentList(IonList):
 
     def discard(self, value):
         if not isinstance(value, YJFragment):
-            raise Exception("YJFragmentList remove non-YJFragment: %s" % type_name(value))
+            raise Exception(
+                "YJFragmentList remove non-YJFragment: %s" % type_name(value)
+            )
 
         for i, f in enumerate(self):
             if f is value:
@@ -374,8 +379,16 @@ class YJFragmentList(IonList):
                 if omit_resources:
                     continue
 
-                if omit_large_blobs and ion_type(fragment.value) is IonBLOB and fragment.value.is_large():
-                    fragment = YJFragment(ftype=fragment.ftype, fid=fragment.fid, value=repr(fragment.value))
+                if (
+                    omit_large_blobs
+                    and ion_type(fragment.value) is IonBLOB
+                    and fragment.value.is_large()
+                ):
+                    fragment = YJFragment(
+                        ftype=fragment.ftype,
+                        fid=fragment.fid,
+                        value=repr(fragment.value),
+                    )
 
             filtered_fragments.append(fragment)
 

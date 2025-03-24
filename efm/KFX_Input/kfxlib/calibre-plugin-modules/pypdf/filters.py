@@ -31,6 +31,7 @@ Implementation of stream filters for PDF.
 
 See TABLE H.1 Abbreviations for standard filter names
 """
+
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
@@ -41,21 +42,21 @@ from base64 import a85decode
 from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
-from ._codecs._codecs import LzwCodec as _LzwCodec
-from ._utils import (
+from _codecs._codecs import LzwCodec as _LzwCodec
+from _utils import (
     WHITESPACES_AS_BYTES,
     deprecate,
     deprecation_no_replacement,
     logger_warning,
 )
-from .constants import CcittFaxDecodeParameters as CCITT
-from .constants import FilterTypeAbbreviations as FTA
-from .constants import FilterTypes as FT
-from .constants import ImageAttributes as IA
-from .constants import LzwFilterParameters as LZW
-from .constants import StreamAttributes as SA
-from .errors import DeprecationError, PdfReadError, PdfStreamError
-from .generic import (
+from constants import CcittFaxDecodeParameters as CCITT
+from constants import FilterTypeAbbreviations as FTA
+from constants import FilterTypes as FT
+from constants import ImageAttributes as IA
+from constants import LzwFilterParameters as LZW
+from constants import StreamAttributes as SA
+from errors import DeprecationError, PdfReadError, PdfStreamError
+from generic import (
     ArrayObject,
     DictionaryObject,
     IndirectObject,
@@ -667,7 +668,7 @@ def _xobj_to_image(x_object_obj: Dict[str, Any]) -> Tuple[Optional[str], bytes, 
         Tuple[file extension, bytes, PIL.Image.Image]
 
     """
-    from ._xobj_image_helpers import (
+    from _xobj_image_helpers import (
         Image,
         UnidentifiedImageError,
         _apply_decode,

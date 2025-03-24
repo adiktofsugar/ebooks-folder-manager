@@ -26,6 +26,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 """Utility functions for PDF library."""
+
 __author__ = "Mathieu Fenniak"
 __author_email__ = "biziqe@mathieu.fenniak.net"
 
@@ -56,7 +57,7 @@ if sys.version_info[:2] >= (3, 10):
 else:
     from typing_extensions import TypeAlias
 
-from .errors import (
+from errors import (
     STREAM_TRUNCATED_PREMATURELY,
     DeprecationError,
     PdfStreamError,
@@ -345,18 +346,15 @@ def mark_location(stream: StreamType) -> None:
 
 
 @overload
-def ord_(b: str) -> int:
-    ...
+def ord_(b: str) -> int: ...
 
 
 @overload
-def ord_(b: bytes) -> bytes:
-    ...
+def ord_(b: bytes) -> bytes: ...
 
 
 @overload
-def ord_(b: int) -> int:
-    ...
+def ord_(b: int) -> int: ...
 
 
 def ord_(b: Union[int, str, bytes]) -> Union[int, bytes]:
@@ -532,7 +530,7 @@ class classproperty:  # noqa: N801
 
 @dataclass
 class File:
-    from .generic import IndirectObject
+    from generic import IndirectObject
 
     name: str = ""
     """

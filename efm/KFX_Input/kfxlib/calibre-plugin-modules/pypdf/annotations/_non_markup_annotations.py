@@ -9,7 +9,7 @@ from ..generic._base import (
 from ..generic._data_structures import ArrayObject, DictionaryObject
 from ..generic._fit import DEFAULT_FIT, Fit
 from ..generic._rectangle import RectangleObject
-from ._base import AnnotationDictionary
+from _base import AnnotationDictionary
 
 
 class Link(AnnotationDictionary):

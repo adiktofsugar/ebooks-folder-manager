@@ -1,7 +1,7 @@
 from typing import Any, Tuple, Union
 
-from ._base import FloatObject, NumberObject
-from ._data_structures import ArrayObject
+from _base import FloatObject, NumberObject
+from _data_structures import ArrayObject
 
 
 class RectangleObject(ArrayObject):

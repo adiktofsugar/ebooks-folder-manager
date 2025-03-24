@@ -1,13 +1,13 @@
 from typing import Any, List, Optional, Tuple, Union
 
-from ._base import is_null_or_none
+from _base import is_null_or_none
 
 
 class Fit:
     def __init__(
         self, fit_type: str, fit_args: Tuple[Union[None, float, Any], ...] = ()
     ):
-        from ._base import FloatObject, NameObject, NullObject, NumberObject
+        from _base import FloatObject, NameObject, NullObject, NumberObject
 
         self.fit_type = NameObject(fit_type)
         self.fit_args: List[Union[NullObject, FloatObject, NumberObject]] = [

@@ -2,8 +2,8 @@ import collections
 import math
 from PIL import Image
 
-from .jxr_misc import (Deserializer, bytes_to_separated_hex)
-from .message_logging import log
+from jxr_misc import Deserializer, bytes_to_separated_hex
+from message_logging import log
 
 
 __copyright__ = "2016-2025, John Howell <jhowell@acm.org>, based on pseudo-code in the ITU-T T.832 08/2016 specification with corrections"
@@ -27,8 +27,13 @@ YUVK = 4
 NCOMPONENT = 6
 
 INTERNAL_COLOR_NAME = {
-    YONLY: "Y", YUV420: "YUV420", YUV422: "YUV422", YUV444: "YUV444",
-    YUVK: "YUK", NCOMPONENT: "NCOMPONENT"}
+    YONLY: "Y",
+    YUV420: "YUV420",
+    YUV422: "YUV422",
+    YUV444: "YUV444",
+    YUVK: "YUK",
+    NCOMPONENT: "NCOMPONENT",
+}
 
 YONLY = 0
 YUV420 = 1
@@ -41,8 +46,16 @@ RGB = 7
 RGBE = 8
 
 OUTPUT_COLOR_NAME = {
-    YONLY: "Y", YUV420: "YUV420", "YUV422": YUV422, YUV444: "YUV444",
-    CMYK: "CMYK", CMYKDIRECT: "CMYK Direct", NCOMPONENT: "NCOMPONENT", RGB: "RGB", RGBE: "RGBE"}
+    YONLY: "Y",
+    YUV420: "YUV420",
+    "YUV422": YUV422,
+    YUV444: "YUV444",
+    CMYK: "CMYK",
+    CMYKDIRECT: "CMYK Direct",
+    NCOMPONENT: "NCOMPONENT",
+    RGB: "RGB",
+    RGBE: "RGBE",
+}
 
 
 BD1WHITE1 = 0
@@ -58,21 +71,40 @@ BD565 = 10
 BD1BLACK1 = 15
 
 OUTPUT_BITDEPTH_NAME = {
-    BD1WHITE1: "BD1WHITE1", BD8: "BD8", BD16: "BD16", BD16S: "BD16S", BD16F: "BD16F",
-    BD32S: "BD32S", BD32F: "BD32F", BD5: "BD5", BD10: "BD10", BD565: "BD565", BD1BLACK1: "BD1BLACK1"}
+    BD1WHITE1: "BD1WHITE1",
+    BD8: "BD8",
+    BD16: "BD16",
+    BD16S: "BD16S",
+    BD16F: "BD16F",
+    BD32S: "BD32S",
+    BD32F: "BD32F",
+    BD5: "BD5",
+    BD10: "BD10",
+    BD565: "BD565",
+    BD1BLACK1: "BD1BLACK1",
+}
 
 UNIFORM = 0
 SEPARATE = 1
 INDEPENDENT = 2
 
-COMPONENT_MODE_NAMES = {UNIFORM: "UNIFORM", SEPARATE: "SEPARATE", INDEPENDENT: "INDEPENDENT"}
+COMPONENT_MODE_NAMES = {
+    UNIFORM: "UNIFORM",
+    SEPARATE: "SEPARATE",
+    INDEPENDENT: "INDEPENDENT",
+}
 
 ALL_BANDS = 0
 NOFLEXBITS = 1
 NOHIGHPASS = 2
 DCONLY = 3
 
-PRESENT_BAND_NAMES = {ALL_BANDS: "ALL_BANDS", NOFLEXBITS: "NOFLEXBITS", NOHIGHPASS: "NOHIGHPASS", DCONLY: "DCONLY"}
+PRESENT_BAND_NAMES = {
+    ALL_BANDS: "ALL_BANDS",
+    NOFLEXBITS: "NOFLEXBITS",
+    NOHIGHPASS: "NOHIGHPASS",
+    DCONLY: "DCONLY",
+}
 
 PREDICT_FROM_LEFT = 0
 PREDICT_FROM_TOP = 1
@@ -80,18 +112,32 @@ PREDICT_FROM_TOP_LEFT = 2
 NO_PREDICTION = 3
 
 PREDICT_NAME = {
-    PREDICT_FROM_LEFT: "PREDICT_FROM_LEFT", PREDICT_FROM_TOP: "PREDICT_FROM_TOP",
-    PREDICT_FROM_TOP_LEFT: "PREDICT_FROM_TOP_LEFT", NO_PREDICTION: "NO_PREDICTION"}
+    PREDICT_FROM_LEFT: "PREDICT_FROM_LEFT",
+    PREDICT_FROM_TOP: "PREDICT_FROM_TOP",
+    PREDICT_FROM_TOP_LEFT: "PREDICT_FROM_TOP_LEFT",
+    NO_PREDICTION: "NO_PREDICTION",
+}
 
-XFRM_SUBORDINATE_NAME = {0: "TL", 1: "BL", 2: "TR", 3: "BR", 4: "RT", 5: "RB", 6: "LT", 7: "LB"}
+XFRM_SUBORDINATE_NAME = {
+    0: "TL",
+    1: "BL",
+    2: "TR",
+    3: "BR",
+    4: "RT",
+    5: "RB",
+    6: "LT",
+    7: "LB",
+}
 
 NO_OVERLAP_FILTERING = 0
 SECOND_LEVEL_OVERLAP_FILTERING = 1
 FIRST_AND_SECOND_LEVEL_OVERLAP_FILTERING = 2
 
 OVERLAP_MODE_NAME = {
-    NO_OVERLAP_FILTERING: "NO_OVERLAP_FILTERING", SECOND_LEVEL_OVERLAP_FILTERING: "SECOND_LEVEL_OVERLAP_FILTERING",
-    FIRST_AND_SECOND_LEVEL_OVERLAP_FILTERING: "FIRST_AND_SECOND_LEVEL_OVERLAP_FILTERING"}
+    NO_OVERLAP_FILTERING: "NO_OVERLAP_FILTERING",
+    SECOND_LEVEL_OVERLAP_FILTERING: "SECOND_LEVEL_OVERLAP_FILTERING",
+    FIRST_AND_SECOND_LEVEL_OVERLAP_FILTERING: "FIRST_AND_SECOND_LEVEL_OVERLAP_FILTERING",
+}
 
 ICT4x4InvPermArr = [0, 8, 4, 13, 2, 15, 3, 14, 1, 12, 5, 9, 7, 11, 6, 10]
 ICT4x4PermArr = [0, 8, 4, 6, 2, 10, 14, 12, 1, 11, 15, 13, 9, 3, 7, 5]
@@ -113,8 +159,42 @@ NumBlkCBPHPDelta1 = [[0, -1, 0, 1, 1]]
 
 NumBlkCBPHPDelta2 = [[2, 2, 1, 1, -1, -2, -2, -2, -3]]
 
-YX4 = [(0, 0), (0, 1), (0, 2), (0, 3), (1, 0), (1, 1), (1, 2), (1, 3), (2, 0), (2, 1), (2, 2), (2, 3), (3, 0), (3, 1), (3, 2), (3, 3)]
-XY4 = [(0, 0), (1, 0), (2, 0), (3, 0), (0, 1), (1, 1), (2, 1), (3, 1), (0, 2), (1, 2), (2, 2), (3, 2), (0, 3), (1, 3), (2, 3), (3, 3)]
+YX4 = [
+    (0, 0),
+    (0, 1),
+    (0, 2),
+    (0, 3),
+    (1, 0),
+    (1, 1),
+    (1, 2),
+    (1, 3),
+    (2, 0),
+    (2, 1),
+    (2, 2),
+    (2, 3),
+    (3, 0),
+    (3, 1),
+    (3, 2),
+    (3, 3),
+]
+XY4 = [
+    (0, 0),
+    (1, 0),
+    (2, 0),
+    (3, 0),
+    (0, 1),
+    (1, 1),
+    (2, 1),
+    (3, 1),
+    (0, 2),
+    (1, 2),
+    (2, 2),
+    (3, 2),
+    (0, 3),
+    (1, 3),
+    (2, 3),
+    (3, 3),
+]
 
 XY2 = [(0, 0), (1, 0), (0, 1), (1, 1)]
 YX2 = [(0, 0), (0, 1), (1, 0), (1, 1)]
@@ -131,49 +211,147 @@ def HBIN(stbl):
     return btbl
 
 
-VAL_DC_YUV = HBIN({"10": 0, "001": 1, "00001": 2, "0001": 3, "11": 4, "010": 5, "00000": 6, "011": 7})
+VAL_DC_YUV = HBIN(
+    {"10": 0, "001": 1, "00001": 2, "0001": 3, "11": 4, "010": 5, "00000": 6, "011": 7}
+)
 
 
 NUM_CBPHP = [
     HBIN({"1": 0, "01": 1, "001": 2, "0000": 3, "0001": 4}),
-    HBIN({"1": 0, "000": 1, "001": 2, "010": 3, "011": 4})]
+    HBIN({"1": 0, "000": 1, "001": 2, "010": 3, "011": 4}),
+]
 
 NUM_BLKCBPHP1 = NUM_CBPHP
 
 NUM_BLKCBPHP2 = [
-    HBIN({"010": 0, "00000": 1, "0010": 2, "00001": 3, "00010": 4, "1": 5, "011": 6, "00011": 7, "0011": 8}),
-    HBIN({"1": 0, "001": 1, "010": 2, "0001": 3, "000001": 4, "011": 5, "00001": 6, "0000000": 7, "0000001": 8})]
+    HBIN(
+        {
+            "010": 0,
+            "00000": 1,
+            "0010": 2,
+            "00001": 3,
+            "00010": 4,
+            "1": 5,
+            "011": 6,
+            "00011": 7,
+            "0011": 8,
+        }
+    ),
+    HBIN(
+        {
+            "1": 0,
+            "001": 1,
+            "010": 2,
+            "0001": 3,
+            "000001": 4,
+            "011": 5,
+            "00001": 6,
+            "0000000": 7,
+            "0000001": 8,
+        }
+    ),
+]
 
 NumCBPHPDelta = [[0, -1, 0, 1, 1]]
 
 FIRST_INDEX = [
-    HBIN({"00001": 0, "000001": 1, "0000000": 2, "0000001": 3, "00100": 4, "010": 5,
-         "00101": 6, "1": 7, "00110": 8, "0001": 9, "00111": 10, "011": 11}),
-    HBIN({"0010": 0, "00010": 1, "000000": 2, "000001": 3, "0011": 4, "010": 5,
-         "00011": 6, "11": 7, "011": 8, "100": 9, "00001": 10, "101": 11}),
-    HBIN({"11": 0, "001": 1, "0000000": 2, "0000001": 3, "00001": 4, "010": 5,
-         "0000010": 6, "011": 7, "100": 8, "101": 9, "0000011": 10, "0001": 11}),
-    HBIN({"001": 0, "11": 1, "0000000": 2, "00001": 3, "00010": 4, "010": 5,
-         "0000001": 6, "011": 7, "00011": 8, "100": 9, "000001": 10, "101": 11}),
-    HBIN({"010": 0, "1": 1, "0000001": 2, "0001": 3, "0000010": 4, "011": 5,
-         "00000000": 6, "0010": 7, "0000011": 8, "0011": 9, "00000001": 10, "00001": 11})]
+    HBIN(
+        {
+            "00001": 0,
+            "000001": 1,
+            "0000000": 2,
+            "0000001": 3,
+            "00100": 4,
+            "010": 5,
+            "00101": 6,
+            "1": 7,
+            "00110": 8,
+            "0001": 9,
+            "00111": 10,
+            "011": 11,
+        }
+    ),
+    HBIN(
+        {
+            "0010": 0,
+            "00010": 1,
+            "000000": 2,
+            "000001": 3,
+            "0011": 4,
+            "010": 5,
+            "00011": 6,
+            "11": 7,
+            "011": 8,
+            "100": 9,
+            "00001": 10,
+            "101": 11,
+        }
+    ),
+    HBIN(
+        {
+            "11": 0,
+            "001": 1,
+            "0000000": 2,
+            "0000001": 3,
+            "00001": 4,
+            "010": 5,
+            "0000010": 6,
+            "011": 7,
+            "100": 8,
+            "101": 9,
+            "0000011": 10,
+            "0001": 11,
+        }
+    ),
+    HBIN(
+        {
+            "001": 0,
+            "11": 1,
+            "0000000": 2,
+            "00001": 3,
+            "00010": 4,
+            "010": 5,
+            "0000001": 6,
+            "011": 7,
+            "00011": 8,
+            "100": 9,
+            "000001": 10,
+            "101": 11,
+        }
+    ),
+    HBIN(
+        {
+            "010": 0,
+            "1": 1,
+            "0000001": 2,
+            "0001": 3,
+            "0000010": 4,
+            "011": 5,
+            "00000000": 6,
+            "0010": 7,
+            "0000011": 8,
+            "0011": 9,
+            "00000001": 10,
+            "00001": 11,
+        }
+    ),
+]
 
 FirstIndexDelta = [
     [1, 1, 1, 1, 1, 0, 0, -1, 2, 1, 0, 0],
     [2, 2, -1, -1, -1, 0, -2, -1, 0, 0, -2, -1],
     [-1, 1, 0, 2, 0, 0, 0, 0, -2, 0, 1, 1],
-    [0, 1, 0, 1, -2, 0, -1, -1, -2, -1, -2, -2]]
+    [0, 1, 0, 1, -2, 0, -1, -1, -2, -1, -2, -2],
+]
 
-Index1Delta = [
-    [-1, 1, 1, 1, 0, 1],
-    [-2, 0, 0, 2, 0, 0],
-    [-1, -1, 0, 1, -2, 0]]
+Index1Delta = [[-1, 1, 1, 1, 0, 1], [-2, 0, 0, 2, 0, 0], [-1, -1, 0, 1, -2, 0]]
 
 INDEX_A = [
     HBIN({"1": 0, "00000": 1, "001": 2, "00001": 3, "01": 4, "0001": 5}),
     HBIN({"01": 0, "0000": 1, "10": 2, "0001": 3, "11": 4, "001": 5}),
     HBIN({"0000": 0, "0001": 1, "01": 2, "10": 3, "11": 4, "001": 5}),
-    HBIN({"00000": 0, "00001": 1, "01": 2, "1": 3, "0001": 4, "001": 5})]
+    HBIN({"00000": 0, "00001": 1, "01": 2, "1": 3, "0001": 4, "001": 5}),
+]
 
 INDEX_B = HBIN({"0": 0, "10": 2, "110": 1, "111": 3})
 
@@ -184,11 +362,13 @@ RUN_VALUE = [
     None,
     HBIN({"1": 1, "0": 2}),
     HBIN({"1": 1, "01": 2, "00": 3}),
-    HBIN({"1": 1, "01": 2, "001": 3, "000": 4})]
+    HBIN({"1": 1, "01": 2, "001": 3, "000": 4}),
+]
 
 ABS_LEVEL_INDEX = [
     HBIN({"01": 0, "10": 1, "11": 2, "001": 3, "0001": 4, "00000": 5, "00001": 6}),
-    HBIN({"1": 0, "01": 1, "001": 2, "0001": 3, "00001": 4, "000000": 5, "000001": 6})]
+    HBIN({"1": 0, "01": 1, "001": 2, "0001": 3, "00001": 4, "000000": 5, "000001": 6}),
+]
 
 AbslevelIndexDelta = [[1, 0, -1, -1, -1, -1, -1]]
 
@@ -198,12 +378,13 @@ NUM_CH_BLK = HBIN({"1": 0, "01": 1, "000": 2, "001": 3})
 
 CHR_CBPHP = VAL_INC = CBPHP_CH_BLK = HBIN({"1": 0, "01": 1, "00": 2})
 
-CBPLP_YUV1_444 = HBIN({"0": 0, "100": 1, "1010": 2, "1011": 3, "1100": 4, "1101": 5, "1110": 6, "1111": 7})
+CBPLP_YUV1_444 = HBIN(
+    {"0": 0, "100": 1, "1010": 2, "1011": 3, "1100": 4, "1101": 5, "1110": 6, "1111": 7}
+)
 CBPLP_YUV1_42x = HBIN({"0": 0, "10": 1, "110": 2, "111": 3})
 
 
 class JXRImage(object):
-
     def __init__(self, data):
         self.data = data
         self.width = self.height = 0
@@ -215,7 +396,10 @@ class JXRImage(object):
             self.coded_image()
 
             if len(self.ds):
-                log.warning("%d of %d bytes remain after coded image" % (len(self.ds), len(self.data)))
+                log.warning(
+                    "%d of %d bytes remain after coded image"
+                    % (len(self.ds), len(self.data))
+                )
 
             for plane in self.planes:
                 plane.SampleReconstruction()
@@ -258,7 +442,10 @@ class JXRImage(object):
         if SubsequentBytes:
             iBytes = self.profile_level_info()
             if SubsequentBytes != iBytes:
-                log.error("unexpected AdditionalBytes: SubsequentBytes(%d) != ProfileBytes(%d)" % (SubsequentBytes, iBytes))
+                log.error(
+                    "unexpected AdditionalBytes: SubsequentBytes(%d) != ProfileBytes(%d)"
+                    % (SubsequentBytes, iBytes)
+                )
                 self.ds.extract(SubsequentBytes - iBytes)
 
         self.coded_tiles()
@@ -271,7 +458,9 @@ class JXRImage(object):
     def image_header(self):
         gdi_signature = self.ds.extract(8)
         if gdi_signature != b"WMPHOTO\x00":
-            raise Exception("GDI signature is incorrect: %s" % bytes_to_separated_hex(gdi_signature))
+            raise Exception(
+                "GDI signature is incorrect: %s" % bytes_to_separated_hex(gdi_signature)
+            )
 
         self.ds.check_bit_field(4, "codec_version", [1])
         self.hard_tiling_flag = self.ds.unpack_bits(1, "hard_tiling_flag")
@@ -280,8 +469,14 @@ class JXRImage(object):
         self.tiling_flag = self.ds.unpack_bits(1, "tiling_flag")
         self.frequency_mode = self.ds.unpack_bits(1, "frequency_mode")
         self.spatial_xfrm_subordinate = self.ds.check_bit_field(
-                3, "spatial_xfrm_subordinate (orientation)", XFRM_SUBORDINATE_NAME.keys(), XFRM_SUBORDINATE_NAME)
-        self.index_table_present_flag = self.ds.unpack_bits(1, "index_table_present_flag")
+            3,
+            "spatial_xfrm_subordinate (orientation)",
+            XFRM_SUBORDINATE_NAME.keys(),
+            XFRM_SUBORDINATE_NAME,
+        )
+        self.index_table_present_flag = self.ds.unpack_bits(
+            1, "index_table_present_flag"
+        )
         self.overlap_mode = self.ds.unpack_bits(2, "overlap_mode")
 
         self.short_header_flag = self.ds.unpack_bits(1, "short_header_flag")
@@ -292,15 +487,23 @@ class JXRImage(object):
         self.windowing_flag = self.ds.unpack_bits(1, "windowing_flag")
         self.trim_flexbits_flag = self.ds.unpack_bits(1, "trim_flexbits_flag")
         self.ds.check_bit_field(1, "reserved_d", [0])
-        self.red_blue_not_swapped_flag = self.ds.unpack_bits(1, "red_blue_not_swapped_flag")
+        self.red_blue_not_swapped_flag = self.ds.unpack_bits(
+            1, "red_blue_not_swapped_flag"
+        )
         self.ds.check_bit_field(1, "premultiplied_alpha_flag", [0])
         self.alpha_image_plane_flag = self.ds.unpack_bits(1, "alpha_image_plane_flag")
 
-        self.output_clr_fmt = self.ds.check_bit_field(4, "output_clr_fmt", OUTPUT_COLOR_NAME.keys(), OUTPUT_COLOR_NAME)
-        self.output_bitdepth = self.ds.check_bit_field(4, "output_bitdepth", OUTPUT_BITDEPTH_NAME.keys(), OUTPUT_BITDEPTH_NAME)
+        self.output_clr_fmt = self.ds.check_bit_field(
+            4, "output_clr_fmt", OUTPUT_COLOR_NAME.keys(), OUTPUT_COLOR_NAME
+        )
+        self.output_bitdepth = self.ds.check_bit_field(
+            4, "output_bitdepth", OUTPUT_BITDEPTH_NAME.keys(), OUTPUT_BITDEPTH_NAME
+        )
 
         self.width = self.image_width = self.ds.unpack(hl_fmt, "image_width_minus1") + 1
-        self.height = self.image_height = self.ds.unpack(hl_fmt, "image_height_minus1") + 1
+        self.height = self.image_height = (
+            self.ds.unpack(hl_fmt, "image_height_minus1") + 1
+        )
 
         if self.tiling_flag:
             self.num_ver_tiles_minus1 = self.ds.unpack_bits(12, "num_ver_tiles_minus1")
@@ -311,8 +514,14 @@ class JXRImage(object):
         self.NumTileCols = self.num_ver_tiles_minus1 + 1
         self.NumTileRows = self.num_hor_tiles_minus1 + 1
 
-        self.tile_width_in_mb = [self.ds.unpack(bh_fmt, "tile_width_in_mb") for i in range(self.num_ver_tiles_minus1)]
-        self.tile_height_in_mb = [self.ds.unpack(bh_fmt, "tile_height_in_mb") for i in range(self.num_hor_tiles_minus1)]
+        self.tile_width_in_mb = [
+            self.ds.unpack(bh_fmt, "tile_width_in_mb")
+            for i in range(self.num_ver_tiles_minus1)
+        ]
+        self.tile_height_in_mb = [
+            self.ds.unpack(bh_fmt, "tile_height_in_mb")
+            for i in range(self.num_hor_tiles_minus1)
+        ]
 
         self.LeftMBIndexOfTile = [0]
         for mb in self.tile_width_in_mb:
@@ -329,8 +538,10 @@ class JXRImage(object):
             self.ExtraPixelsRight = self.ds.unpack_bits(6, "ExtraPixelsRight")
         else:
             self.ExtraPixelsTop = self.ExtraPixelsLeft = 0
-            self.ExtraPixelsRight = 0x10 - (self.width & 0xF) if self.width & 0xf else 0
-            self.ExtraPixelsBottom = 0x10 - (self.height & 0xF) if self.height & 0xf else 0
+            self.ExtraPixelsRight = 0x10 - (self.width & 0xF) if self.width & 0xF else 0
+            self.ExtraPixelsBottom = (
+                0x10 - (self.height & 0xF) if self.height & 0xF else 0
+            )
 
         self.width += self.ExtraPixelsLeft + self.ExtraPixelsRight
         self.height += self.ExtraPixelsTop + self.ExtraPixelsBottom
@@ -341,23 +552,57 @@ class JXRImage(object):
         self.tile_width_in_mb.append(self.MBWidth - self.LeftMBIndexOfTile[-1])
         self.tile_height_in_mb.append(self.MBHeight - self.TopMBIndexOfTile[-1])
 
-        self.LeftMBIndexOfTile.append(self.LeftMBIndexOfTile[-1] + self.tile_width_in_mb[-1])
-        self.TopMBIndexOfTile.append(self.TopMBIndexOfTile[-1] + self.tile_height_in_mb[-1])
+        self.LeftMBIndexOfTile.append(
+            self.LeftMBIndexOfTile[-1] + self.tile_width_in_mb[-1]
+        )
+        self.TopMBIndexOfTile.append(
+            self.TopMBIndexOfTile[-1] + self.tile_height_in_mb[-1]
+        )
 
         if DEBUG0:
             self.report_image_info()
 
     def report_image_info(self):
-        log.info("ImageHeader: hard_tiling=%d tiling=%d frequency_mode=%d orient=%s index_table=%d overlap=%s short_hdr=%d long_word=%d" % (
-            self.hard_tiling_flag, self.tiling_flag, self.frequency_mode, XFRM_SUBORDINATE_NAME[self.spatial_xfrm_subordinate],
-            self.index_table_present_flag, OVERLAP_MODE_NAME[self.overlap_mode], self.short_header_flag, self.long_word_flag))
-        log.info("    windowing=%d trim_flexbits=%d alpha=%d output_color_fmt=%s output_bitdepth=%s size=%dx%d internal=%dx%d MB=%dx%d" % (
-            self.windowing_flag, self.trim_flexbits_flag, self.alpha_image_plane_flag,
-            OUTPUT_COLOR_NAME[self.output_clr_fmt], OUTPUT_BITDEPTH_NAME[self.output_bitdepth],
-            self.image_width, self.image_height, self.width, self.height, self.MBWidth, self.MBHeight))
-        log.info("    tile_cols=%d tile_rows=%d margins_tlbr=%d %d %d %d" % (
-            self.NumTileCols, self.NumTileRows, self.ExtraPixelsTop, self.ExtraPixelsLeft,
-            self.ExtraPixelsBottom, self.ExtraPixelsRight))
+        log.info(
+            "ImageHeader: hard_tiling=%d tiling=%d frequency_mode=%d orient=%s index_table=%d overlap=%s short_hdr=%d long_word=%d"
+            % (
+                self.hard_tiling_flag,
+                self.tiling_flag,
+                self.frequency_mode,
+                XFRM_SUBORDINATE_NAME[self.spatial_xfrm_subordinate],
+                self.index_table_present_flag,
+                OVERLAP_MODE_NAME[self.overlap_mode],
+                self.short_header_flag,
+                self.long_word_flag,
+            )
+        )
+        log.info(
+            "    windowing=%d trim_flexbits=%d alpha=%d output_color_fmt=%s output_bitdepth=%s size=%dx%d internal=%dx%d MB=%dx%d"
+            % (
+                self.windowing_flag,
+                self.trim_flexbits_flag,
+                self.alpha_image_plane_flag,
+                OUTPUT_COLOR_NAME[self.output_clr_fmt],
+                OUTPUT_BITDEPTH_NAME[self.output_bitdepth],
+                self.image_width,
+                self.image_height,
+                self.width,
+                self.height,
+                self.MBWidth,
+                self.MBHeight,
+            )
+        )
+        log.info(
+            "    tile_cols=%d tile_rows=%d margins_tlbr=%d %d %d %d"
+            % (
+                self.NumTileCols,
+                self.NumTileRows,
+                self.ExtraPixelsTop,
+                self.ExtraPixelsLeft,
+                self.ExtraPixelsBottom,
+                self.ExtraPixelsRight,
+            )
+        )
 
         for plane in self.planes:
             plane.report_plane_info()
@@ -374,11 +619,11 @@ class JXRImage(object):
 
     def vlw_esc(self, name):
         first_byte = self.ds.unpack_bits(8, name + "-vlw_esc_first_byte")
-        if first_byte < 0xfb:
+        if first_byte < 0xFB:
             return (first_byte * 256) + self.ds.unpack_bits(8, "vlw_esc_16")
-        elif first_byte == 0xfb:
+        elif first_byte == 0xFB:
             return self.ds.unpack_bits(32, "vlw_esc_32")
-        elif first_byte == 0xfc:
+        elif first_byte == 0xFC:
             return self.ds.unpack_bits(64, "vlw_esc_64")
         else:
             return 0
@@ -407,19 +652,40 @@ class JXRImage(object):
                     width_mb = self.tile_width_in_mb[Tx]
 
                     if DEBUG1:
-                        log.info("processing tile %d: Tx=%d Ty=%d, MBx=%d-%d MBy=%d-%d" % (
-                                n, Tx, Ty, left_mb_index, left_mb_index+width_mb-1, top_mb_index, top_mb_index+height_mb-1))
+                        log.info(
+                            "processing tile %d: Tx=%d Ty=%d, MBx=%d-%d MBy=%d-%d"
+                            % (
+                                n,
+                                Tx,
+                                Ty,
+                                left_mb_index,
+                                left_mb_index + width_mb - 1,
+                                top_mb_index,
+                                top_mb_index + height_mb - 1,
+                            )
+                        )
 
                     for t, tile_type in enumerate(
-                            [DCTile, LowpassTile, HighpassTile, FlexTile] if self.frequency_mode else [SpatialTile]):
+                        [DCTile, LowpassTile, HighpassTile, FlexTile]
+                        if self.frequency_mode
+                        else [SpatialTile]
+                    ):
                         if self.NumBandsOfPrimary > t:
                             if self.index_table_present_flag:
                                 current_tile_offset = self.ds.offset - first_tile_offset
                                 if self.IndexOffsetTile[n] != current_tile_offset:
-                                    log.warning("Tile %d index table offset (%d) != current offset (%d)" % (
-                                                n, self.IndexOffsetTile[n], current_tile_offset))
+                                    log.warning(
+                                        "Tile %d index table offset (%d) != current offset (%d)"
+                                        % (
+                                            n,
+                                            self.IndexOffsetTile[n],
+                                            current_tile_offset,
+                                        )
+                                    )
 
-                                    self.ds.offset = first_tile_offset + self.IndexOffsetTile[n]
+                                    self.ds.offset = (
+                                        first_tile_offset + self.IndexOffsetTile[n]
+                                    )
 
                             tile = tile_type(self.ds)
                             tile.common_tile_header()
@@ -427,17 +693,24 @@ class JXRImage(object):
                             for plane in self.planes:
                                 tile.tile_plane_header(plane)
 
-                            for MBy in range(top_mb_index, top_mb_index+height_mb):
-                                for MBx in range(left_mb_index, left_mb_index+width_mb):
+                            for MBy in range(top_mb_index, top_mb_index + height_mb):
+                                for MBx in range(
+                                    left_mb_index, left_mb_index + width_mb
+                                ):
                                     for plane in self.planes:
                                         if DEBUG1:
-                                            log.info("****************************\nprocessing %s tile MBx=%d MBy=%d" % (
-                                                    tile.tile_type, MBx, MBy))
+                                            log.info(
+                                                "****************************\nprocessing %s tile MBx=%d MBy=%d"
+                                                % (tile.tile_type, MBx, MBy)
+                                            )
 
                                         try:
                                             tile.tile_MB(plane, plane.Mb[MBx][MBy])
                                         except Exception:
-                                            log.info("Error processing %s tile MBx=%d MBy=%d" % (tile.tile_type, MBx, MBy))
+                                            log.info(
+                                                "Error processing %s tile MBx=%d MBy=%d"
+                                                % (tile.tile_type, MBx, MBy)
+                                            )
                                             raise
 
                             tile.common_tile_finish()
@@ -447,29 +720,48 @@ class JXRImage(object):
                     raise
 
     def construct_image(self):
-        if ((self.output_clr_fmt == RGB and self.alpha_plane is not None) or
-                (self.output_clr_fmt == NCOMPONENT and self.primary_plane.NumComponents == 4)):
+        if (self.output_clr_fmt == RGB and self.alpha_plane is not None) or (
+            self.output_clr_fmt == NCOMPONENT and self.primary_plane.NumComponents == 4
+        ):
             if self.output_bitdepth not in [BD8, BD16]:
-                raise Exception("Bit depth %s is not supported for RGBA" % (OUTPUT_BITDEPTH_NAME[self.output_bitdepth]))
+                raise Exception(
+                    "Bit depth %s is not supported for RGBA"
+                    % (OUTPUT_BITDEPTH_NAME[self.output_bitdepth])
+                )
 
             mode = "RGBA"
 
-        elif self.output_clr_fmt == RGB or (self.output_clr_fmt == NCOMPONENT and self.primary_plane.NumComponents == 3):
+        elif self.output_clr_fmt == RGB or (
+            self.output_clr_fmt == NCOMPONENT and self.primary_plane.NumComponents == 3
+        ):
             if self.output_bitdepth not in [BD8, BD16]:
-                raise Exception("Bit depth %s is not supported for RGB" % (OUTPUT_BITDEPTH_NAME[self.output_bitdepth]))
+                raise Exception(
+                    "Bit depth %s is not supported for RGB"
+                    % (OUTPUT_BITDEPTH_NAME[self.output_bitdepth])
+                )
 
             mode = "RGB"
 
-        elif self.output_clr_fmt == YONLY or (self.output_clr_fmt == NCOMPONENT and self.primary_plane.NumComponents == 1):
+        elif self.output_clr_fmt == YONLY or (
+            self.output_clr_fmt == NCOMPONENT and self.primary_plane.NumComponents == 1
+        ):
             if self.output_bitdepth not in [BD1BLACK1, BD1WHITE1, BD8, BD16]:
-                raise Exception("Bit depth %s is not supported" % (OUTPUT_BITDEPTH_NAME[self.output_bitdepth]))
+                raise Exception(
+                    "Bit depth %s is not supported"
+                    % (OUTPUT_BITDEPTH_NAME[self.output_bitdepth])
+                )
 
             BITDEPTH_MODE = {BD8: "L", BD16: "I;16", BD1BLACK1: "1", BD1WHITE1: "1"}
             mode = BITDEPTH_MODE[self.output_bitdepth]
 
         else:
-            raise Exception("Color format %s with %d components is not supported" % (
-                    OUTPUT_COLOR_NAME[self.output_clr_fmt], self.primary_plane.NumComponents))
+            raise Exception(
+                "Color format %s with %d components is not supported"
+                % (
+                    OUTPUT_COLOR_NAME[self.output_clr_fmt],
+                    self.primary_plane.NumComponents,
+                )
+            )
 
         im = Image.new(mode, (self.image_width, self.image_height))
         pixels = im.load()
@@ -478,12 +770,24 @@ class JXRImage(object):
             r_data = self.primary_plane.ImagePlane[0]
             g_data = self.primary_plane.ImagePlane[1]
             b_data = self.primary_plane.ImagePlane[2]
-            a_data = self.primary_plane.ImagePlane[3] if self.output_clr_fmt == NCOMPONENT else self.alpha_plane.ImagePlane[0]
+            a_data = (
+                self.primary_plane.ImagePlane[3]
+                if self.output_clr_fmt == NCOMPONENT
+                else self.alpha_plane.ImagePlane[0]
+            )
 
             for y in range(self.image_height):
                 for x in range(self.image_width):
-                    pixels[x, y] = (r_data[x][y], g_data[x][y], b_data[x][y], a_data[x][y]) if self.output_bitdepth == BD8 else \
-                        (r_data[x][y] >> 8, g_data[x][y] >> 8, b_data[x][y] >> 8, a_data[x][y] >> 8)
+                    pixels[x, y] = (
+                        (r_data[x][y], g_data[x][y], b_data[x][y], a_data[x][y])
+                        if self.output_bitdepth == BD8
+                        else (
+                            r_data[x][y] >> 8,
+                            g_data[x][y] >> 8,
+                            b_data[x][y] >> 8,
+                            a_data[x][y] >> 8,
+                        )
+                    )
 
         elif mode == "RGB":
             r_data = self.primary_plane.ImagePlane[0]
@@ -492,8 +796,11 @@ class JXRImage(object):
 
             for y in range(self.image_height):
                 for x in range(self.image_width):
-                    pixels[x, y] = (r_data[x][y], g_data[x][y], b_data[x][y]) if self.output_bitdepth == BD8 else \
-                        (r_data[x][y] >> 8, g_data[x][y] >> 8, b_data[x][y] >> 8)
+                    pixels[x, y] = (
+                        (r_data[x][y], g_data[x][y], b_data[x][y])
+                        if self.output_bitdepth == BD8
+                        else (r_data[x][y] >> 8, g_data[x][y] >> 8, b_data[x][y] >> 8)
+                    )
 
         elif mode == "1":
             y_data = self.primary_plane.ImagePlane[0]
@@ -514,17 +821,20 @@ class JXRImage(object):
 
 
 class ImgPlane(object):
-
     def __init__(self, image, IsCurrPlaneAlphaFlag):
         self.image = image
         self.ds = image.ds
         self.IsCurrPlaneAlphaFlag = IsCurrPlaneAlphaFlag
 
     def image_plane_header(self):
-        self.internal_clr_fmt = self.ds.check_bit_field(3, "internal_clr_fmt", INTERNAL_COLOR_NAME.keys(), INTERNAL_COLOR_NAME)
+        self.internal_clr_fmt = self.ds.check_bit_field(
+            3, "internal_clr_fmt", INTERNAL_COLOR_NAME.keys(), INTERNAL_COLOR_NAME
+        )
         self.scaled_flag = self.ds.unpack_bits(1, "scaled_flag")
 
-        self.bands_present = self.ds.check_bit_field(4, "bands_present", PRESENT_BAND_NAMES.keys(), PRESENT_BAND_NAMES)
+        self.bands_present = self.ds.check_bit_field(
+            4, "bands_present", PRESENT_BAND_NAMES.keys(), PRESENT_BAND_NAMES
+        )
 
         self.lp_present = self.hp_present = self.flexbits_present = False
 
@@ -562,11 +872,17 @@ class ImgPlane(object):
         elif self.internal_clr_fmt == NCOMPONENT:
             self.NumComponents = self.ds.unpack_bits(4, "NumComponents_minus1") + 1
             if self.NumComponents == 16:
-                self.NumComponents = self.ds.unpack_bits(12, "NumComponents_extended_minus16") + 16
+                self.NumComponents = (
+                    self.ds.unpack_bits(12, "NumComponents_extended_minus16") + 16
+                )
             else:
                 self.ds.unpack_bits(4, "reserved_h")
 
-        self.ChromaPerBlk = 1 if self.internal_clr_fmt == YUV420 else (2 if self.internal_clr_fmt == YUV422 else 4)
+        self.ChromaPerBlk = (
+            1
+            if self.internal_clr_fmt == YUV420
+            else (2 if self.internal_clr_fmt == YUV422 else 4)
+        )
         self.NumLPCoeff = self.ChromaPerBlk * 4
 
         if self.image.output_bitdepth in [BD16, BD16S, BD32S]:
@@ -575,7 +891,9 @@ class ImgPlane(object):
             self.len_mantissa = self.ds.unpack_bits(8, "len_mantissa")
             self.exp_bias = twos_complement_byte(self.ds.unpack_bits(8, "exp_bias"))
 
-        self.dc_image_plane_uniform_flag = self.ds.unpack_bits(1, "dc_image_plane_uniform_flag")
+        self.dc_image_plane_uniform_flag = self.ds.unpack_bits(
+            1, "dc_image_plane_uniform_flag"
+        )
         if self.dc_image_plane_uniform_flag:
             self.dc.qp = QP(self.ds, self.NumComponents, 1, self.scaled_flag, DC)
 
@@ -583,15 +901,21 @@ class ImgPlane(object):
 
         if self.bands_present != DCONLY:
             self.ds.check_bit_field(1, "reserved_i_bit", [0])
-            self.lp_image_plane_uniform_flag = self.ds.unpack_bits(1, "lp_image_plane_uniform_flag")
+            self.lp_image_plane_uniform_flag = self.ds.unpack_bits(
+                1, "lp_image_plane_uniform_flag"
+            )
             if self.lp_image_plane_uniform_flag:
                 self.lp.qp = QP(self.ds, self.NumComponents, 1, self.scaled_flag, LP)
 
             if self.bands_present != NOHIGHPASS:
                 self.ds.check_bit_field(1, "reserved_j_bit", [0])
-                self.hp_image_plane_uniform_flag = self.ds.unpack_bits(1, "hp_image_plane_uniform_flag")
+                self.hp_image_plane_uniform_flag = self.ds.unpack_bits(
+                    1, "hp_image_plane_uniform_flag"
+                )
                 if self.hp_image_plane_uniform_flag:
-                    self.hp.qp = QP(self.ds, self.NumComponents, 1, self.scaled_flag, HP)
+                    self.hp.qp = QP(
+                        self.ds, self.NumComponents, 1, self.scaled_flag, HP
+                    )
 
         image = self.image
         self.Mb = Array(image.MBWidth, image.MBHeight, None)
@@ -608,8 +932,15 @@ class ImgPlane(object):
                     for MByt in range(tile_mb_hight):
                         MBy = MByt + first_MBy
                         self.Mb[MBx][MBy] = MB(
-                                MBx, MBy, MBxt, MByt, tile_mb_width, self.NumComponents,
-                                self.Mb[MBx-1][MBy] if MBx > 0 else None, self.Mb[MBx][MBy-1] if MBy > 0 else None)
+                            MBx,
+                            MBy,
+                            MBxt,
+                            MByt,
+                            tile_mb_width,
+                            self.NumComponents,
+                            self.Mb[MBx - 1][MBy] if MBx > 0 else None,
+                            self.Mb[MBx][MBy - 1] if MBy > 0 else None,
+                        )
 
         self.image_data = Array(self.NumComponents, self.image.width, self.image.height)
 
@@ -619,16 +950,32 @@ class ImgPlane(object):
             self.report_plane_info()
 
         if self.internal_clr_fmt in [YUV420, YUV422]:
-            raise Exception("Color format %s is not supported" % (INTERNAL_COLOR_NAME[self.internal_clr_fmt]))
+            raise Exception(
+                "Color format %s is not supported"
+                % (INTERNAL_COLOR_NAME[self.internal_clr_fmt])
+            )
 
     def report_plane_info(self):
-        log.info("ImagePlane: internal_color_fmt=%s scaled_flag=%d bands_present=%s components=%d dc_uniform=%d lp_uniform=%s hp_uniform=%s" % (
-            INTERNAL_COLOR_NAME[self.internal_clr_fmt], self.scaled_flag, PRESENT_BAND_NAMES[self.bands_present],
-            self.NumComponents, self.dc_image_plane_uniform_flag, self.lp_image_plane_uniform_flag, self.hp_image_plane_uniform_flag))
+        log.info(
+            "ImagePlane: internal_color_fmt=%s scaled_flag=%d bands_present=%s components=%d dc_uniform=%d lp_uniform=%s hp_uniform=%s"
+            % (
+                INTERNAL_COLOR_NAME[self.internal_clr_fmt],
+                self.scaled_flag,
+                PRESENT_BAND_NAMES[self.bands_present],
+                self.NumComponents,
+                self.dc_image_plane_uniform_flag,
+                self.lp_image_plane_uniform_flag,
+                self.hp_image_plane_uniform_flag,
+            )
+        )
 
     def decode_qp_index(self, iNumQP):
         BitsQPIndex = [0, 0, 1, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4]
-        return self.ds.unpack_bits(BitsQPIndex[iNumQP], "QPIndex") + 1 if self.ds.unpack_bits(1, "qpindex_nonzero_flag") else 0
+        return (
+            self.ds.unpack_bits(BitsQPIndex[iNumQP], "QPIndex") + 1
+            if self.ds.unpack_bits(1, "qpindex_nonzero_flag")
+            else 0
+        )
 
     def Decode_cleanup(self):
         for MBy in range(self.image.MBHeight):
@@ -644,7 +991,10 @@ class ImgPlane(object):
         self.SecondLevelInverseTransform()
         self.SecondLevelCoefficientCombination()
 
-        if self.image.overlap_mode in [FIRST_AND_SECOND_LEVEL_OVERLAP_FILTERING, SECOND_LEVEL_OVERLAP_FILTERING]:
+        if self.image.overlap_mode in [
+            FIRST_AND_SECOND_LEVEL_OVERLAP_FILTERING,
+            SECOND_LEVEL_OVERLAP_FILTERING,
+        ]:
             self.second_level_overlap_filtering()
 
     def FirstLevelInverseTransform(self):
@@ -656,21 +1006,31 @@ class ImgPlane(object):
                     if DEBUG1:
                         log.info("MBBuffer2=")
                         for iy in range(16):
-                            log.info(", ".join(["%d" % mbp[iy*16+ix] for ix in range(16)]))
+                            log.info(
+                                ", ".join(
+                                    ["%d" % mbp[iy * 16 + ix] for ix in range(16)]
+                                )
+                            )
 
-                    DCLP0 = [mbp[j*16] for j in range(16)]
+                    DCLP0 = [mbp[j * 16] for j in range(16)]
                     if DEBUG1:
-                        log.info("MB[%d,%d] DCLP0=%s" % (MBx, MBy, ", ".join(["%d" % z for z in DCLP0])))
+                        log.info(
+                            "MB[%d,%d] DCLP0=%s"
+                            % (MBx, MBy, ", ".join(["%d" % z for z in DCLP0]))
+                        )
 
                     DCLP1 = strIDCT4x4Stage2(DCLP0)
                     if DEBUG1:
-                        log.info("MB[%d,%d] DCLP1=%s" % (MBx, MBy, ", ".join(["%d" % z for z in DCLP1])))
+                        log.info(
+                            "MB[%d,%d] DCLP1=%s"
+                            % (MBx, MBy, ", ".join(["%d" % z for z in DCLP1]))
+                        )
 
                     if i > 0 and self.scaled_flag:
-                        DCLP1 = [v*2 for v in DCLP1]
+                        DCLP1 = [v * 2 for v in DCLP1]
 
                     for j in range(16):
-                        mbp[j*16] = DCLP1[j]
+                        mbp[j * 16] = DCLP1[j]
 
     def FirstLevelOverlapFiltering(self):
         image = self.image
@@ -692,39 +1052,65 @@ class ImgPlane(object):
         BLC = [(0, 0, 8), (0, 0, 9), (0, 0, 12), (0, 0, 13)]
         BRC = [(0, 0, 10), (0, 0, 11), (0, 0, 14), (0, 0, 15)]
 
-        FLC = [(0, 0, 10), (0, 0, 11), (1, 0, 8), (1, 0, 9),
-               (0, 0, 14), (0, 0, 15), (1, 0, 12), (1, 0, 13),
-               (0, 1, 2), (0, 1, 3), (1, 1, 0), (1, 1, 1),
-               (0, 1, 6), (0, 1, 7), (1, 1, 4), (1, 1, 5)]
+        FLC = [
+            (0, 0, 10),
+            (0, 0, 11),
+            (1, 0, 8),
+            (1, 0, 9),
+            (0, 0, 14),
+            (0, 0, 15),
+            (1, 0, 12),
+            (1, 0, 13),
+            (0, 1, 2),
+            (0, 1, 3),
+            (1, 1, 0),
+            (1, 1, 1),
+            (0, 1, 6),
+            (0, 1, 7),
+            (1, 1, 4),
+            (1, 1, 5),
+        ]
 
         XYTRANSPOSE = [0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15]
 
         def zzz(z):
-            return XYTRANSPOSE[z]*16
+            return XYTRANSPOSE[z] * 16
 
         def FirstLevelCallOverlapPostFilter4x4(x, y):
             if DEBUG1:
                 log.info("FirstLevelCallOverlapPostFilter4x4 x=%d y=%d" % (x, y))
-            arrayLocal = strPost4x4Stage2Split_alternate([self.Mb[x+xx][y+yy].MBBuffer[i][zzz(zz)] for xx, yy, zz in FLC])
+            arrayLocal = strPost4x4Stage2Split_alternate(
+                [self.Mb[x + xx][y + yy].MBBuffer[i][zzz(zz)] for xx, yy, zz in FLC]
+            )
             for xx, yy, zz in FLC:
-                self.Mb[x+xx][y+yy].MBBuffer[i][zzz(zz)] = arrayLocal.pop(0)
+                self.Mb[x + xx][y + yy].MBBuffer[i][zzz(zz)] = arrayLocal.pop(0)
 
         def OverlapPostFilter4_(x, y, xyz_list):
             if DEBUG1:
-                log.info("OverlapPostFilter4_ x=%d y=%d xyz=%s" % (x, y, repr(xyz_list)))
-            arrayLocal = OverlapPostFilter4([self.Mb[x+xx][y+yy].MBBuffer[i][zzz(zz)] for xx, yy, zz in xyz_list])
+                log.info(
+                    "OverlapPostFilter4_ x=%d y=%d xyz=%s" % (x, y, repr(xyz_list))
+                )
+            arrayLocal = OverlapPostFilter4(
+                [
+                    self.Mb[x + xx][y + yy].MBBuffer[i][zzz(zz)]
+                    for xx, yy, zz in xyz_list
+                ]
+            )
             for xx, yy, zz in xyz_list:
-                self.Mb[x+xx][y+yy].MBBuffer[i][zzz(zz)] = arrayLocal.pop(0)
+                self.Mb[x + xx][y + yy].MBBuffer[i][zzz(zz)] = arrayLocal.pop(0)
 
         for i in range(self.NumComponents):
             for Tx in range(image.NumTileCols):
                 for Ty in range(image.NumTileRows):
                     first_MBx = image.LeftMBIndexOfTile[Tx]
-                    last_MBx = image.LeftMBIndexOfTile[Tx+1]-1
+                    last_MBx = image.LeftMBIndexOfTile[Tx + 1] - 1
                     first_MBy = image.TopMBIndexOfTile[Ty]
-                    last_MBy = image.TopMBIndexOfTile[Ty+1]-1
+                    last_MBy = image.TopMBIndexOfTile[Ty + 1] - 1
                     if DEBUG1:
-                        log.info("tile i=%d x=%d y=%d MBx=%d-%d MBy=%d-%d" % (i, Tx, Ty, first_MBx, last_MBx, first_MBy, last_MBy))
+                        log.info(
+                            "tile i=%d x=%d y=%d MBx=%d-%d MBy=%d-%d"
+                            % (i, Tx, Ty, first_MBx, last_MBx, first_MBy, last_MBy)
+                        )
 
                     for y in range(first_MBy, last_MBy):
                         for x in range(first_MBx, last_MBx):
@@ -740,12 +1126,12 @@ class ImgPlane(object):
                             OverlapPostFilter4_(x, first_MBy, TE1)
                             OverlapPostFilter4_(x, first_MBy, TE2)
 
-                    if Tx == image.NumTileCols-1 or image.hard_tiling_flag:
+                    if Tx == image.NumTileCols - 1 or image.hard_tiling_flag:
                         for y in range(first_MBy, last_MBy):
                             OverlapPostFilter4_(last_MBx, y, RE1)
                             OverlapPostFilter4_(last_MBx, y, RE2)
 
-                    if Ty == image.NumTileRows-1 or image.hard_tiling_flag:
+                    if Ty == image.NumTileRows - 1 or image.hard_tiling_flag:
                         for x in range(first_MBx, last_MBx):
                             OverlapPostFilter4_(x, last_MBy, BE1)
                             OverlapPostFilter4_(x, last_MBy, BE2)
@@ -753,40 +1139,46 @@ class ImgPlane(object):
                     if (Tx == 0 and Ty == 0) or image.hard_tiling_flag:
                         OverlapPostFilter4_(first_MBx, first_MBy, TLC)
 
-                    if (Tx == image.NumTileCols-1 and Ty == 0) or image.hard_tiling_flag:
+                    if (
+                        Tx == image.NumTileCols - 1 and Ty == 0
+                    ) or image.hard_tiling_flag:
                         OverlapPostFilter4_(last_MBx, first_MBy, TRC)
 
-                    if (Tx == 0 and Ty == image.NumTileRows-1) or image.hard_tiling_flag:
+                    if (
+                        Tx == 0 and Ty == image.NumTileRows - 1
+                    ) or image.hard_tiling_flag:
                         OverlapPostFilter4_(first_MBx, last_MBy, BLC)
 
-                    if (Tx == image.NumTileCols-1 and Ty == image.NumTileRows-1) or image.hard_tiling_flag:
+                    if (
+                        Tx == image.NumTileCols - 1 and Ty == image.NumTileRows - 1
+                    ) or image.hard_tiling_flag:
                         OverlapPostFilter4_(last_MBx, last_MBy, BRC)
 
                     if not image.hard_tiling_flag:
-                        if Tx != image.NumTileCols-1:
+                        if Tx != image.NumTileCols - 1:
                             for y in range(first_MBy, last_MBy):
                                 FirstLevelCallOverlapPostFilter4x4(last_MBx, y)
 
-                        if Ty != image.NumTileRows-1:
+                        if Ty != image.NumTileRows - 1:
                             for x in range(first_MBx, last_MBx):
                                 FirstLevelCallOverlapPostFilter4x4(x, last_MBy)
 
-                        if Tx != image.NumTileCols-1 and Ty != image.NumTileRows-1:
+                        if Tx != image.NumTileCols - 1 and Ty != image.NumTileRows - 1:
                             FirstLevelCallOverlapPostFilter4x4(last_MBx, last_MBy)
 
-                        if Tx == 0 and Ty != image.NumTileRows-1:
+                        if Tx == 0 and Ty != image.NumTileRows - 1:
                             OverlapPostFilter4_(first_MBx, last_MBy, LE1)
                             OverlapPostFilter4_(first_MBx, last_MBy, LE2)
 
-                        if Tx != image.NumTileCols-1 and Ty == 0:
+                        if Tx != image.NumTileCols - 1 and Ty == 0:
                             OverlapPostFilter4_(last_MBx, first_MBy, TE1)
                             OverlapPostFilter4_(last_MBx, first_MBy, TE2)
 
-                        if Tx == image.NumTileCols-1 and Ty != image.NumTileRows-1:
+                        if Tx == image.NumTileCols - 1 and Ty != image.NumTileRows - 1:
                             OverlapPostFilter4_(last_MBx, last_MBy, RE1)
                             OverlapPostFilter4_(last_MBx, last_MBy, RE2)
 
-                        if Tx != image.NumTileCols-1 and Ty == image.NumTileRows-1:
+                        if Tx != image.NumTileCols - 1 and Ty == image.NumTileRows - 1:
                             OverlapPostFilter4_(last_MBx, last_MBy, BE1)
                             OverlapPostFilter4_(last_MBx, last_MBy, BE2)
 
@@ -797,19 +1189,27 @@ class ImgPlane(object):
                     mbp = self.Mb[MBx][MBy].MBBuffer[i]
 
                     for j in range(0, 16):
-                        coeff0 = [mbp[j*16+k] for k in range(16)]
+                        coeff0 = [mbp[j * 16 + k] for k in range(16)]
                         if DEBUG1:
-                            log.info("MB[%d,%d] COEF[%d]0=%s" % (MBx, MBy, j, ", ".join(["%d" % z for z in coeff0])))
+                            log.info(
+                                "MB[%d,%d] COEF[%d]0=%s"
+                                % (MBx, MBy, j, ", ".join(["%d" % z for z in coeff0]))
+                            )
 
                         coeff1 = strIDCT4x4Stage1(coeff0)
                         if DEBUG1:
-                            log.info("MB[%d,%d] COEF[%d]1=%s" % (MBx, MBy, j, ", ".join(["%d" % z for z in coeff1])))
+                            log.info(
+                                "MB[%d,%d] COEF[%d]1=%s"
+                                % (MBx, MBy, j, ", ".join(["%d" % z for z in coeff1]))
+                            )
 
                         for k in range(16):
-                            mbp[j*16+k] = coeff1[k]
+                            mbp[j * 16 + k] = coeff1[k]
 
     def SecondLevelCoefficientCombination(self):
-        self.ImagePlane = Array(self.NumComponents, self.image.width, self.image.height, None)
+        self.ImagePlane = Array(
+            self.NumComponents, self.image.width, self.image.height, None
+        )
 
         for i in range(self.NumComponents):
             ip = self.ImagePlane[i]
@@ -829,20 +1229,24 @@ class ImgPlane(object):
                             for py in range(4):
                                 py_x4 = py << 2
                                 for px in range(4):
-                                    ip[bx_x4+px][by_x4+py] = mbp[by_x16+bx_x64+mb_pixel_map[px+py_x4]]
+                                    ip[bx_x4 + px][by_x4 + py] = mbp[
+                                        by_x16 + bx_x64 + mb_pixel_map[px + py_x4]
+                                    ]
 
         del self.Mb
 
     def second_level_overlap_filtering(self):
         def OverlapPostFilter4x4_(x, y, xy_list):
-            arrayLocal = OverlapPostFilter4x4([ip[x+xx][y+yy] for xx, yy in xy_list])
+            arrayLocal = OverlapPostFilter4x4(
+                [ip[x + xx][y + yy] for xx, yy in xy_list]
+            )
             for xx, yy in xy_list:
-                ip[x+xx][y+yy] = arrayLocal.pop(0)
+                ip[x + xx][y + yy] = arrayLocal.pop(0)
 
         def OverlapPostFilter4_(x, y, xy_list):
-            arrayLocal = OverlapPostFilter4([ip[x+xx][y+yy] for xx, yy in xy_list])
+            arrayLocal = OverlapPostFilter4([ip[x + xx][y + yy] for xx, yy in xy_list])
             for xx, yy in xy_list:
-                ip[x+xx][y+yy] = arrayLocal.pop(0)
+                ip[x + xx][y + yy] = arrayLocal.pop(0)
 
         image = self.image
         for i in range(self.NumComponents):
@@ -850,74 +1254,80 @@ class ImgPlane(object):
 
             for Tx in range(image.NumTileCols):
                 for Ty in range(image.NumTileRows):
-                    first_MBx = image.LeftMBIndexOfTile[Tx]*16
-                    next_MBx = image.LeftMBIndexOfTile[Tx+1]*16
-                    first_MBy = image.TopMBIndexOfTile[Ty]*16
-                    next_MBy = image.TopMBIndexOfTile[Ty+1]*16
+                    first_MBx = image.LeftMBIndexOfTile[Tx] * 16
+                    next_MBx = image.LeftMBIndexOfTile[Tx + 1] * 16
+                    first_MBy = image.TopMBIndexOfTile[Ty] * 16
+                    next_MBy = image.TopMBIndexOfTile[Ty + 1] * 16
 
-                    for x in range(first_MBx+2, next_MBx-2, 4):
-                        for y in range(first_MBy+2, next_MBy-2, 4):
+                    for x in range(first_MBx + 2, next_MBx - 2, 4):
+                        for y in range(first_MBy + 2, next_MBy - 2, 4):
                             OverlapPostFilter4x4_(x, y, XY4)
 
                     if Tx == 0 or image.hard_tiling_flag:
-                        for y in range(first_MBy+2, next_MBy-2, 4):
+                        for y in range(first_MBy + 2, next_MBy - 2, 4):
                             for xx in [0, 1]:
-                                OverlapPostFilter4_(first_MBx+xx, y, Y4)
+                                OverlapPostFilter4_(first_MBx + xx, y, Y4)
 
                     if Ty == 0 or image.hard_tiling_flag:
-                        for x in range(first_MBx+2, next_MBx-2, 4):
+                        for x in range(first_MBx + 2, next_MBx - 2, 4):
                             for yy in [0, 1]:
-                                OverlapPostFilter4_(x, first_MBy+yy, X4)
+                                OverlapPostFilter4_(x, first_MBy + yy, X4)
 
-                    if Tx == image.NumTileCols-1 or image.hard_tiling_flag:
-                        for y in range(first_MBy+2, next_MBy-2, 4):
+                    if Tx == image.NumTileCols - 1 or image.hard_tiling_flag:
+                        for y in range(first_MBy + 2, next_MBy - 2, 4):
                             for xx in [-2, -1]:
-                                OverlapPostFilter4_(next_MBx+xx, y, Y4)
+                                OverlapPostFilter4_(next_MBx + xx, y, Y4)
 
-                    if Ty == image.NumTileRows-1 or image.hard_tiling_flag:
-                        for x in range(first_MBx+2, next_MBx-2, 4):
+                    if Ty == image.NumTileRows - 1 or image.hard_tiling_flag:
+                        for x in range(first_MBx + 2, next_MBx - 2, 4):
                             for yy in [-2, -1]:
-                                OverlapPostFilter4_(x, next_MBy+yy, X4)
+                                OverlapPostFilter4_(x, next_MBy + yy, X4)
 
                     if (Tx == 0 and Ty == 0) or image.hard_tiling_flag:
                         OverlapPostFilter4_(first_MBx, first_MBy, XY2)
 
-                    if (Tx == image.NumTileCols-1 and Ty == 0) or image.hard_tiling_flag:
-                        OverlapPostFilter4_(next_MBx-2, first_MBy, XY2)
+                    if (
+                        Tx == image.NumTileCols - 1 and Ty == 0
+                    ) or image.hard_tiling_flag:
+                        OverlapPostFilter4_(next_MBx - 2, first_MBy, XY2)
 
-                    if (Tx == 0 and Ty == image.NumTileRows-1) or image.hard_tiling_flag:
-                        OverlapPostFilter4_(first_MBx, next_MBy-2, XY2)
+                    if (
+                        Tx == 0 and Ty == image.NumTileRows - 1
+                    ) or image.hard_tiling_flag:
+                        OverlapPostFilter4_(first_MBx, next_MBy - 2, XY2)
 
-                    if (Tx == image.NumTileCols-1 and Ty == image.NumTileRows-1) or image.hard_tiling_flag:
-                        OverlapPostFilter4_(next_MBx-2, next_MBy-2, XY2)
+                    if (
+                        Tx == image.NumTileCols - 1 and Ty == image.NumTileRows - 1
+                    ) or image.hard_tiling_flag:
+                        OverlapPostFilter4_(next_MBx - 2, next_MBy - 2, XY2)
 
                     if not image.hard_tiling_flag:
-                        if Tx != image.NumTileCols-1:
-                            for y in range(first_MBy+2, next_MBy-2, 4):
-                                OverlapPostFilter4x4_(next_MBx-2, y, XY4)
+                        if Tx != image.NumTileCols - 1:
+                            for y in range(first_MBy + 2, next_MBy - 2, 4):
+                                OverlapPostFilter4x4_(next_MBx - 2, y, XY4)
 
-                        if Ty != image.NumTileRows-1:
-                            for x in range(first_MBx+2, next_MBx-2, 4):
-                                OverlapPostFilter4x4_(x, next_MBy-2, XY4)
+                        if Ty != image.NumTileRows - 1:
+                            for x in range(first_MBx + 2, next_MBx - 2, 4):
+                                OverlapPostFilter4x4_(x, next_MBy - 2, XY4)
 
-                        if Tx != image.NumTileCols-1 and Ty != image.NumTileRows-1:
-                            OverlapPostFilter4x4_(next_MBx-2, next_MBy-2, XY4)
+                        if Tx != image.NumTileCols - 1 and Ty != image.NumTileRows - 1:
+                            OverlapPostFilter4x4_(next_MBx - 2, next_MBy - 2, XY4)
 
-                        if Tx == 0 and Ty != image.NumTileRows-1:
+                        if Tx == 0 and Ty != image.NumTileRows - 1:
                             for xx in range(2):
-                                OverlapPostFilter4_(first_MBx+xx, next_MBy-2, Y4)
+                                OverlapPostFilter4_(first_MBx + xx, next_MBy - 2, Y4)
 
-                        if Tx != image.NumTileCols-1 and Ty == 0:
+                        if Tx != image.NumTileCols - 1 and Ty == 0:
                             for yy in range(2):
-                                OverlapPostFilter4_(next_MBx-2, first_MBy+yy, X4)
+                                OverlapPostFilter4_(next_MBx - 2, first_MBy + yy, X4)
 
-                        if Tx == image.NumTileCols-1 and Ty != image.NumTileRows-1:
+                        if Tx == image.NumTileCols - 1 and Ty != image.NumTileRows - 1:
                             for xx in [-2, -1]:
-                                OverlapPostFilter4_(next_MBx+xx, next_MBy-2, Y4)
+                                OverlapPostFilter4_(next_MBx + xx, next_MBy - 2, Y4)
 
-                        if Tx != image.NumTileCols-1 and Ty == image.NumTileRows-1:
+                        if Tx != image.NumTileCols - 1 and Ty == image.NumTileRows - 1:
                             for yy in [-2, -1]:
-                                OverlapPostFilter4_(next_MBx-2, next_MBy+yy, X4)
+                                OverlapPostFilter4_(next_MBx - 2, next_MBy + yy, X4)
 
     def OutputFormatting(self):
         self.ConvertInternalToOutputClrFmt()
@@ -937,13 +1347,18 @@ class ImgPlane(object):
 
             for y in range(self.image.height):
                 for x in range(self.image.width):
-                    self.ImagePlane[1][x][y] = self.ImagePlane[2][x][y] = self.ImagePlane[0][x][y]
+                    self.ImagePlane[1][x][y] = self.ImagePlane[2][x][y] = (
+                        self.ImagePlane[0][x][y]
+                    )
 
             self.internal_clr_fmt == RGB
             self.NumComponents = 3
 
         elif self.internal_clr_fmt == YUV444 and self.image.output_clr_fmt == RGB:
-            do_swap = self.image.output_bitdepth in [BD5, BD565, BD10] and not self.image.red_blue_not_swapped_flag
+            do_swap = (
+                self.image.output_bitdepth in [BD5, BD565, BD10]
+                and not self.image.red_blue_not_swapped_flag
+            )
             for y in range(self.image.height):
                 for x in range(self.image.width):
                     tempT = -self.ImagePlane[1][x][y]
@@ -954,21 +1369,43 @@ class ImgPlane(object):
                     if do_swap:
                         Out0, Out2 = (Out2, Out0)
 
-                    self.ImagePlane[0][x][y], self.ImagePlane[1][x][y], self.ImagePlane[2][x][y] = (Out0, Out1, Out2)
+                    (
+                        self.ImagePlane[0][x][y],
+                        self.ImagePlane[1][x][y],
+                        self.ImagePlane[2][x][y],
+                    ) = (Out0, Out1, Out2)
 
             self.internal_clr_fmt == RGB
 
-        elif INTERNAL_COLOR_NAME[self.internal_clr_fmt] != OUTPUT_COLOR_NAME[self.image.output_clr_fmt]:
+        elif (
+            INTERNAL_COLOR_NAME[self.internal_clr_fmt]
+            != OUTPUT_COLOR_NAME[self.image.output_clr_fmt]
+        ):
             raise Exception(
-                    "Color format conversion from %s to %s is not supported" % (
-                        INTERNAL_COLOR_NAME[self.internal_clr_fmt], OUTPUT_COLOR_NAME[self.image.output_clr_fmt]))
+                "Color format conversion from %s to %s is not supported"
+                % (
+                    INTERNAL_COLOR_NAME[self.internal_clr_fmt],
+                    OUTPUT_COLOR_NAME[self.image.output_clr_fmt],
+                )
+            )
 
     def AddBias(self):
         if self.image.output_clr_fmt in [YUV422, YUV420, CMYK]:
-            raise Exception("AddBias not implemented for %s" % OUTPUT_COLOR_NAME[self.image.output_clr_fmt])
+            raise Exception(
+                "AddBias not implemented for %s"
+                % OUTPUT_COLOR_NAME[self.image.output_clr_fmt]
+            )
 
-        BITDEPTH_BIAS = {BD5: 1 << 4, BD565: 1 << 5, BD8: 1 << 7, BD10: 1 << 9, BD16: 1 << 15}
-        iBias = BITDEPTH_BIAS.get(self.image.output_bitdepth, 0) << (3 if self.scaled_flag else 0)
+        BITDEPTH_BIAS = {
+            BD5: 1 << 4,
+            BD565: 1 << 5,
+            BD8: 1 << 7,
+            BD10: 1 << 9,
+            BD16: 1 << 15,
+        }
+        iBias = BITDEPTH_BIAS.get(self.image.output_bitdepth, 0) << (
+            3 if self.scaled_flag else 0
+        )
 
         if iBias:
             for i in range(self.NumComponents):
@@ -983,19 +1420,34 @@ class ImgPlane(object):
         iRoundingFactor = 0
         if self.scaled_flag:
             iScale = 3
-            if self.image.output_bitdepth in [BD5, BD565, BD8, BD10, BD16S, BD16F, BD32S, BD32F]:
+            if self.image.output_bitdepth in [
+                BD5,
+                BD565,
+                BD8,
+                BD10,
+                BD16S,
+                BD16F,
+                BD32S,
+                BD32F,
+            ]:
                 iRoundingFactor = 3
             elif self.image.output_bitdepth in [BD1WHITE1, BD1BLACK1, BD16]:
                 iRoundingFactor = 4
 
-        outputComponents = 3 if self.internal_clr_fmt in [RGB, RGBE, YUV444] else self.NumComponents
+        outputComponents = (
+            3 if self.internal_clr_fmt in [RGB, RGBE, YUV444] else self.NumComponents
+        )
         for i in range(outputComponents):
-            jScale = iScale + 1 if self.image.output_bitdepth == BD565 and i != 1 else iScale
+            jScale = (
+                iScale + 1 if self.image.output_bitdepth == BD565 and i != 1 else iScale
+            )
             ip = self.ImagePlane[i]
 
             if iRoundingFactor or jScale:
                 if DEBUG1:
-                    log.info("rounding factor = %d, scale = %d" % (iRoundingFactor, jScale))
+                    log.info(
+                        "rounding factor = %d, scale = %d" % (iRoundingFactor, jScale)
+                    )
 
                 for y in range(self.image.height):
                     for x in range(self.image.width):
@@ -1007,18 +1459,33 @@ class ImgPlane(object):
 
         if self.image.output_clr_fmt in [RGB, YUV444]:
             if self.image.output_bitdepth in [BD32F, BD16F]:
-                raise Exception("PostscalingProcess not implemented for %s with %s" % (
-                    OUTPUT_COLOR_NAME[self.image.output_clr_fmt], OUTPUT_BITDEPTH_NAME[self.image.output_bitdepth]))
+                raise Exception(
+                    "PostscalingProcess not implemented for %s with %s"
+                    % (
+                        OUTPUT_COLOR_NAME[self.image.output_clr_fmt],
+                        OUTPUT_BITDEPTH_NAME[self.image.output_bitdepth],
+                    )
+                )
 
-            if self.image.output_bitdepth in [BD16, BD16S, BD32S] and self.shift_bits != 0:
+            if (
+                self.image.output_bitdepth in [BD16, BD16S, BD32S]
+                and self.shift_bits != 0
+            ):
                 for i in range(self.NumComponents):
                     for y in range(self.image.height):
                         for x in range(self.image.width):
-                            self.ImagePlane[i][x][y] = self.ImagePlane[i][x][y] << self.shift_bits
+                            self.ImagePlane[i][x][y] = (
+                                self.ImagePlane[i][x][y] << self.shift_bits
+                            )
 
     def ClippingAndPackingStage(self):
-
-        CLIP_RANGE = {BD1BLACK1: (0, 1), BD1WHITE1: (0, 1), BD8: (0, 255), BD16: {0, 65535}, BD16S: (-32768, 32767)}
+        CLIP_RANGE = {
+            BD1BLACK1: (0, 1),
+            BD1WHITE1: (0, 1),
+            BD8: (0, 255),
+            BD16: {0, 65535},
+            BD16S: (-32768, 32767),
+        }
 
         if self.image.output_bitdepth in CLIP_RANGE.keys():
             clip_low, clip_high = CLIP_RANGE[self.image.output_bitdepth]
@@ -1042,9 +1509,12 @@ class ImgPlane(object):
                 else:
                     for y in range(outputHeight):
                         for x in range(outputWidth):
-                            ip[x][y] = Clip(ip[x+m][y+n], clip_low, clip_high)
+                            ip[x][y] = Clip(ip[x + m][y + n], clip_low, clip_high)
         else:
-            raise Exception("Output bit depth %s is not supported" % (OUTPUT_BITDEPTH_NAME[self.image.output_bitdepth]))
+            raise Exception(
+                "Output bit depth %s is not supported"
+                % (OUTPUT_BITDEPTH_NAME[self.image.output_bitdepth])
+            )
 
 
 class Tile(object):
@@ -1080,8 +1550,12 @@ class LowpassTile(Tile):
                 plane.lp.qp = plane.dc.qp
             else:
                 plane.lp.qp = QP(
-                        self.ds, plane.NumComponents, self.ds.unpack_bits(4, "lp.NumQPs_minus1") + 1,
-                        plane.scaled_flag, LP)
+                    self.ds,
+                    plane.NumComponents,
+                    self.ds.unpack_bits(4, "lp.NumQPs_minus1") + 1,
+                    plane.scaled_flag,
+                    LP,
+                )
 
     def tile_MB(self, plane, mb):
         self.tile_MB_QP(plane, mb)
@@ -1090,7 +1564,9 @@ class LowpassTile(Tile):
     def tile_MB_QP(self, plane, mb):
         if plane.lp_present:
             if plane.lp.qp.NumQPs > 1 and plane.lp.qp is not plane.dc.qp:
-                mb.MBQPIndexLP = plane.lp.qp.IndexQPs = plane.decode_qp_index(plane.lp.qp.NumQPs)
+                mb.MBQPIndexLP = plane.lp.qp.IndexQPs = plane.decode_qp_index(
+                    plane.lp.qp.NumQPs
+                )
 
     def tile_MB_2(self, plane, mb):
         if plane.lp_present:
@@ -1106,8 +1582,12 @@ class HighpassTile(Tile):
                 plane.hp.qp = plane.lp.qp
             else:
                 plane.hp.qp = QP(
-                        self.ds, plane.NumComponents, self.ds.unpack_bits(4, "hp.NumQPs_minus1") + 1,
-                        plane.scaled_flag, HP)
+                    self.ds,
+                    plane.NumComponents,
+                    self.ds.unpack_bits(4, "hp.NumQPs_minus1") + 1,
+                    plane.scaled_flag,
+                    HP,
+                )
 
     def tile_MB(self, plane, mb):
         self.tile_MB_QP(plane, mb)
@@ -1129,7 +1609,11 @@ class FlexTile(Tile):
 
     def tile_plane_header(self, plane):
         if plane.flexbits_present and not plane.IsCurrPlaneAlphaFlag:
-            self.trim_flexbits = self.ds.unpack_bits(4, "trim_flexbits") if plane.image.trim_flexbits_flag else 0
+            self.trim_flexbits = (
+                self.ds.unpack_bits(4, "trim_flexbits")
+                if plane.image.trim_flexbits_flag
+                else 0
+            )
 
     def tile_MB(self, plane, mb):
         if plane.flexbits_present:
@@ -1154,14 +1638,17 @@ class SpatialTile(DCTile, LowpassTile, HighpassTile, FlexTile):
 
         if plane.flexbits_present:
             plane.hp.MB_CBPHP(mb)
-            plane.hp.MB_HP_FLEX(mb, do_hp=True, do_flex=True, iTrimFlexBits=self.trim_flexbits)
+            plane.hp.MB_HP_FLEX(
+                mb, do_hp=True, do_flex=True, iTrimFlexBits=self.trim_flexbits
+            )
         else:
             HighpassTile.tile_MB_2(self, plane, mb)
 
 
 class MB(object):
-
-    def __init__(self, MBx, MBy, MBxt, MByt, tile_width_mb, NumComponents, leftMB, topMB):
+    def __init__(
+        self, MBx, MBy, MBxt, MByt, tile_width_mb, NumComponents, leftMB, topMB
+    ):
         self.MBx = MBx
         self.MBy = MBy
 
@@ -1173,7 +1660,9 @@ class MB(object):
 
         self.IsMBLeftEdgeofTileFlag = MBxt == 0
         self.IsMBTopEdgeofTileFlag = MByt == 0
-        self.InitializeContext = self.IsMBLeftEdgeofTileFlag and self.IsMBTopEdgeofTileFlag
+        self.InitializeContext = (
+            self.IsMBLeftEdgeofTileFlag and self.IsMBTopEdgeofTileFlag
+        )
         self.ResetTotals = (MBxt % 16) == 0
         self.ResetContext = self.ResetTotals or MBxt == tile_width_mb - 1
 
@@ -1189,7 +1678,7 @@ class MB(object):
 
         self.MBQPIndexLP = 0
 
-        self.MBBuffer = Array(NumComponents, 16*16, 0)
+        self.MBBuffer = Array(NumComponents, 16 * 16, 0)
 
     def cleanup(self):
         del self.HPInputVLC
@@ -1201,7 +1690,6 @@ class MB(object):
 
 
 class FreqBand(object):
-
     def __init__(self, plane):
         self.plane = plane
         self.ds = self.plane.ds
@@ -1211,9 +1699,7 @@ class FreqBand(object):
         self.qp_index = collections.defaultdict(lambda: 0)
 
     def decode_block(self, bChroma, iLocation):
-
         def decode_first_index():
-
             if self.iBand == LP:
                 sAdaptVLC = self.DecFirstIndLPChr if bChroma else self.DecFirstIndLPLum
             elif self.iBand == HP:
@@ -1221,16 +1707,27 @@ class FreqBand(object):
 
             first_index = self.ds.huff(FIRST_INDEX[sAdaptVLC.TableIndex], "FIRST_INDEX")
 
-            sAdaptVLC.DiscrimVal1 += FirstIndexDelta[sAdaptVLC.DeltaTableIndex][first_index]
-            sAdaptVLC.DiscrimVal2 += FirstIndexDelta[sAdaptVLC.Delta2TableIndex][first_index]
+            sAdaptVLC.DiscrimVal1 += FirstIndexDelta[sAdaptVLC.DeltaTableIndex][
+                first_index
+            ]
+            sAdaptVLC.DiscrimVal2 += FirstIndexDelta[sAdaptVLC.Delta2TableIndex][
+                first_index
+            ]
 
             if DEBUG2:
-                log.info("first_index=%02x using table %d" % (first_index, sAdaptVLC.TableIndex))
+                log.info(
+                    "first_index=%02x using table %d"
+                    % (first_index, sAdaptVLC.TableIndex)
+                )
 
-            return (first_index & 0x01, (first_index >> 1) & 0x01, (first_index >> 2) & 0x01, first_index >> 3)
+            return (
+                first_index & 0x01,
+                (first_index >> 1) & 0x01,
+                (first_index >> 2) & 0x01,
+                first_index >> 3,
+            )
 
         def decode_index(iLocation, iContext):
-
             if self.iBand == LP:
                 if bChroma:
                     sAdaptVLC = self.DecIndLPChr1 if iContext else self.DecIndLPChr0
@@ -1254,7 +1751,6 @@ class FreqBand(object):
             return (iIndex & 0x01, (iIndex >> 1) & 0x01, iIndex >> 2)
 
         def decode_run(iMaxRun):
-
             iRunBinx = [10, 10, 5, 5, 5, 5, 0, 0, 0, 0]
             iRunFixedLength = [0, 0, 1, 1, 3, 0, 0, 1, 1, 2, 0, 0, 0, 0, 1]
             iRemap = [1, 2, 3, 5, 7, 1, 2, 3, 5, 7, 1, 2, 3, 4, 5]
@@ -1263,9 +1759,11 @@ class FreqBand(object):
                 raise Exception("decode_run passed invalid iMaxRun=%d" % iMaxRun)
 
             if iMaxRun < 5:
-                iRun = self.ds.huff(RUN_VALUE[iMaxRun], "RUN_VALUE") if iMaxRun != 1 else 1
+                iRun = (
+                    self.ds.huff(RUN_VALUE[iMaxRun], "RUN_VALUE") if iMaxRun != 1 else 1
+                )
             else:
-                iIndex = self.ds.huff(RUN_INDEX, "RUN_INDEX") + iRunBinx[iMaxRun-5]
+                iIndex = self.ds.huff(RUN_INDEX, "RUN_INDEX") + iRunBinx[iMaxRun - 5]
                 iFixed = iRunFixedLength[iIndex]
                 iRun = iRemap[iIndex]
                 if iFixed:
@@ -1280,13 +1778,20 @@ class FreqBand(object):
             log.info("decode_block")
 
         if iLocation < 0 or iLocation > 15:
-            raise Exception("decode_block start location %d not in range 0-15" % iLocation)
+            raise Exception(
+                "decode_block start location %d not in range 0-15" % iLocation
+            )
 
-        run_is_zero, level_is_not_1, next_is_immediate, next_after_run = decode_first_index()
+        run_is_zero, level_is_not_1, next_is_immediate, next_after_run = (
+            decode_first_index()
+        )
         iContext = run_is_zero & next_is_immediate
 
         level_sign_flag = self.ds.unpack_bits(1, "level_sign_flag")
-        level = signed_value(self.decode_abs_level(bChroma, iContext) if level_is_not_1 else 1, level_sign_flag)
+        level = signed_value(
+            self.decode_abs_level(bChroma, iContext) if level_is_not_1 else 1,
+            level_sign_flag,
+        )
 
         run = 0 if run_is_zero else decode_run(15 - iLocation)
         block = [(run, level)]
@@ -1296,13 +1801,20 @@ class FreqBand(object):
             run = 0 if next_is_immediate else decode_run(15 - iLoc)
             iLoc += run + 1
             if iLoc > 16:
-                raise Exception("decode_block decoded location %d not in range 0-15" % iLoc)
+                raise Exception(
+                    "decode_block decoded location %d not in range 0-15" % iLoc
+                )
 
-            level_is_not_1, next_is_immediate, next_after_run = decode_index(iLoc, iContext)
+            level_is_not_1, next_is_immediate, next_after_run = decode_index(
+                iLoc, iContext
+            )
             iContext &= next_is_immediate
 
             level_sign_flag = self.ds.unpack_bits(1, "level_sign_flag")
-            level = signed_value(self.decode_abs_level(bChroma, iContext) if level_is_not_1 else 1, level_sign_flag)
+            level = signed_value(
+                self.decode_abs_level(bChroma, iContext) if level_is_not_1 else 1,
+                level_sign_flag,
+            )
 
             block.append((run, level))
 
@@ -1323,7 +1835,9 @@ class FreqBand(object):
         iFixedLen = [0, 0, 1, 2, 2, 2]
 
         table_index = sAdaptVLC.TableIndex
-        abs_level_index = self.ds.huff(ABS_LEVEL_INDEX[sAdaptVLC.TableIndex], "ABS_LEVEL_INDEX")
+        abs_level_index = self.ds.huff(
+            ABS_LEVEL_INDEX[sAdaptVLC.TableIndex], "ABS_LEVEL_INDEX"
+        )
         sAdaptVLC.DiscrimVal1 += AbslevelIndexDelta[0][abs_level_index]
 
         if abs_level_index < 6:
@@ -1343,19 +1857,21 @@ class FreqBand(object):
             iLevel = 2 + (1 << iFixed) + self.ds.unpack_bits(iFixed, "level_ref")
 
         if DEBUG2:
-            log.info("decode_abs_level chroma=%d context=%d tbl_idx=%d level_index=%d fixed=%d value=%d" % (
-                        bChroma, iContext, table_index, abs_level_index, iFixed, iLevel))
+            log.info(
+                "decode_abs_level chroma=%d context=%d tbl_idx=%d level_index=%d fixed=%d value=%d"
+                % (bChroma, iContext, table_index, abs_level_index, iFixed, iLevel)
+            )
 
         return iLevel
 
     def UpdateModelMB(self, iLapMean, Model):
-
         iModelWeight = 70
         iWeight0 = [240, 12, 1]
         iWeight1 = [
             [0, 240, 120, 80, 60, 48, 40, 34, 30, 27, 24, 22, 20, 18, 17, 16],
             [0, 12, 6, 4, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1],
-            [0, 16, 8, 5, 4, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1]]
+            [0, 16, 8, 5, 4, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1],
+        ]
 
         iLapMean[0] *= iWeight0[self.iBand]
 
@@ -1394,7 +1910,11 @@ class FreqBand(object):
             Model.MState[j] = iMS
 
     def sign_optional(self, value):
-        return 0 if value == 0 else (-value if self.ds.unpack_bits(1, "optional_sign_flag") else value)
+        return (
+            0
+            if value == 0
+            else (-value if self.ds.unpack_bits(1, "optional_sign_flag") else value)
+        )
 
 
 class DCBand(FreqBand):
@@ -1423,7 +1943,9 @@ class DCBand(FreqBand):
                 if bAbsLevel:
                     iLapMean[chroma] = iLapMean[chroma] + 1
 
-                DCInput[iComponent] = self.decode_DC(self.ModelDC.MBits[chroma], False, bAbsLevel)
+                DCInput[iComponent] = self.decode_DC(
+                    self.ModelDC.MBits[chroma], False, bAbsLevel
+                )
                 if DEBUG1:
                     log.info("DCInput[%d]=%d" % (iComponent, DCInput[iComponent]))
 
@@ -1437,7 +1959,9 @@ class DCBand(FreqBand):
                 if bAbsLevel:
                     iLapMean[chroma] = iLapMean[chroma] + 1
 
-                DCInput[iComponent] = self.decode_DC(self.ModelDC.MBits[chroma], chroma, bAbsLevel)
+                DCInput[iComponent] = self.decode_DC(
+                    self.ModelDC.MBits[chroma], chroma, bAbsLevel
+                )
                 if DEBUG1:
                     log.info("DCInput[%d]=%d" % (iComponent, DCInput[iComponent]))
 
@@ -1472,8 +1996,16 @@ class DCBand(FreqBand):
                 iTopLeftV = mb.topMB.leftMB.MbDCLP[2][0]
 
                 iScale = 2
-                iStrHor = abs(iTopLeft - iLeft) * iScale + abs(iTopLeftU - iLeftU) + abs(iTopLeftV - iLeftV)
-                iStrVer = abs(iTopLeft - iTop) * iScale + abs(iTopLeftU - iTopU) + abs(iTopLeftV - iTopV)
+                iStrHor = (
+                    abs(iTopLeft - iLeft) * iScale
+                    + abs(iTopLeftU - iLeftU)
+                    + abs(iTopLeftV - iLeftV)
+                )
+                iStrVer = (
+                    abs(iTopLeft - iTop) * iScale
+                    + abs(iTopLeftU - iTopU)
+                    + abs(iTopLeftV - iTopV)
+                )
 
             iOrWt = 4
             if iStrHor * iOrWt < iStrVer:
@@ -1489,14 +2021,24 @@ class DCBand(FreqBand):
             elif mb.MBDCMode == PREDICT_FROM_TOP:
                 mb.MbDCLP[iComponent][0] += mb.topMB.MbDCLP[iComponent][0]
             elif mb.MBDCMode == PREDICT_FROM_TOP_LEFT:
-                mb.MbDCLP[iComponent][0] += (mb.topMB.MbDCLP[iComponent][0] + mb.leftMB.MbDCLP[iComponent][0]) >> 1
+                mb.MbDCLP[iComponent][0] += (
+                    mb.topMB.MbDCLP[iComponent][0] + mb.leftMB.MbDCLP[iComponent][0]
+                ) >> 1
 
             if DEBUG1:
-                log.info("MBDCMode=%s updated DCInput[%d]=%d" % (
-                        value_name(mb.MBDCMode, PREDICT_NAME), iComponent, mb.MbDCLP[iComponent][0]))
+                log.info(
+                    "MBDCMode=%s updated DCInput[%d]=%d"
+                    % (
+                        value_name(mb.MBDCMode, PREDICT_NAME),
+                        iComponent,
+                        mb.MbDCLP[iComponent][0],
+                    )
+                )
 
         for iComponent in range(plane.NumComponents):
-            mb.MBBuffer[iComponent][16*ICT4x4InvPermArr[0]] = mb.MbDCLP[iComponent][0] * self.qp.ScalingFactor(iComponent)
+            mb.MBBuffer[iComponent][16 * ICT4x4InvPermArr[0]] = mb.MbDCLP[iComponent][
+                0
+            ] * self.qp.ScalingFactor(iComponent)
 
     def decode_DC(self, iModelBits, bChroma, bAbsLevel):
         iDC = self.decode_abs_level(bChroma, 0) - 1 if bAbsLevel else 0
@@ -1535,7 +2077,6 @@ class LPBand(FreqBand):
         self.AbsLevelIndLP1 = AdaptiveVLC()
 
     def MB_LP(self, mb):
-
         if mb.InitializeContext:
             self.InitializeCountCBPLP()
             self.InitializeLPVLC()
@@ -1554,7 +2095,11 @@ class LPBand(FreqBand):
             iMax = iFullPlanes * 4 - 5
             if self.CountZeroCBPLP <= 0 or self.CountMaxCBPLP < 0:
                 cbplp_yuv1 = self.ds.huff(CBPLP_YUV1_444, "CBPLP_YUV1")
-                iCBPLP = iMax - cbplp_yuv1 if self.CountMaxCBPLP < self.CountZeroCBPLP else cbplp_yuv1
+                iCBPLP = (
+                    iMax - cbplp_yuv1
+                    if self.CountMaxCBPLP < self.CountZeroCBPLP
+                    else cbplp_yuv1
+                )
             else:
                 iCBPLP = self.ds.unpack_bits(iFullPlanes, "CBPLP_YUV2")
 
@@ -1563,7 +2108,7 @@ class LPBand(FreqBand):
             iCBPLP = 0
             for n in range(plane.NumComponents):
                 cbplp_ch_bit = self.ds.unpack_bits(1, "cbplp_ch_bit")
-                iCBPLP |= (cbplp_ch_bit << n)
+                iCBPLP |= cbplp_ch_bit << n
 
         LPInput = Array(plane.NumComponents, 16, 0)
 
@@ -1586,7 +2131,15 @@ class LPBand(FreqBand):
 
             if DEBUG1:
                 log.info("LPInput0[%d]=%s" % (n, repr(LPInput[n][1:])))
-                log.info("ModelLP MBits[%d]=%d MState[%d]=%d" % (iIndex, self.ModelLP.MBits[iIndex], iIndex, self.ModelLP.MState[iIndex]))
+                log.info(
+                    "ModelLP MBits[%d]=%d MState[%d]=%d"
+                    % (
+                        iIndex,
+                        self.ModelLP.MBits[iIndex],
+                        iIndex,
+                        self.ModelLP.MState[iIndex],
+                    )
+                )
 
             iModelBits = self.ModelLP.MBits[iIndex]
             if iModelBits:
@@ -1628,7 +2181,7 @@ class LPBand(FreqBand):
             scaling_factor = self.qp.ScalingFactor(i)
 
             for j in range(1, 16):
-                pSrc[16*ICT4x4InvPermArr[j]] = mb.MbDCLP[i][j] * scaling_factor
+                pSrc[16 * ICT4x4InvPermArr[j]] = mb.MbDCLP[i][j] * scaling_factor
 
     def AdaptiveLPScan(self, n, i, iValue, LPInput):
         LPInput[n][self.LowpassScan.Translate(i)] = iValue
@@ -1715,7 +2268,11 @@ class HPBand(FreqBand):
         if mb.InitializeContext:
             self.InitializeCBPHPVLC()
 
-        for iComponent in range(self.plane.NumComponents if self.plane.internal_clr_fmt in [YUVK, NCOMPONENT] else 1):
+        for iComponent in range(
+            self.plane.NumComponents
+            if self.plane.internal_clr_fmt in [YUVK, NCOMPONENT]
+            else 1
+        ):
             sAdaptVLC = self.DecNumCBPHP
             num_cbphp = self.ds.huff(NUM_CBPHP[sAdaptVLC.TableIndex], "NUM_CBPHP")
             sAdaptVLC.DiscrimVal1 += NumCBPHPDelta[sAdaptVLC.DeltaTableIndex][num_cbphp]
@@ -1724,8 +2281,12 @@ class HPBand(FreqBand):
             for iBlock in range(4):
                 if iCBPHP & (1 << iBlock):
                     sAdaptVLC = self.DecNumBlkCBPHP
-                    num_blkcbphp = self.ds.huff(NUM_BLKCBPHP[sAdaptVLC.TableIndex], "NUM_BLKCBPHP")
-                    sAdaptVLC.DiscrimVal1 += NumBlkCBPHPDelta[sAdaptVLC.DeltaTableIndex][num_blkcbphp]
+                    num_blkcbphp = self.ds.huff(
+                        NUM_BLKCBPHP[sAdaptVLC.TableIndex], "NUM_BLKCBPHP"
+                    )
+                    sAdaptVLC.DiscrimVal1 += NumBlkCBPHPDelta[
+                        sAdaptVLC.DeltaTableIndex
+                    ][num_blkcbphp]
                     iVal = num_blkcbphp + 1
                     iBlkCBPHP = 0
 
@@ -1746,8 +2307,10 @@ class HPBand(FreqBand):
                         iDiffCBPHP[0] |= (iBlkCBPHP & 0x0F) << (iBlock * 4)
                         for k in range(2):
                             if (iBlkCBPHP >> (k + 4)) & 0x01:
-                                iCBPHPChr = self.refine_CBPHP(self.ds.huff(NUM_CH_BLK, "NUM_CH_BLK") + 1)
-                                iDiffCBPHP[k+1] |= iCBPHPChr << (iBlock * 4)
+                                iCBPHPChr = self.refine_CBPHP(
+                                    self.ds.huff(NUM_CH_BLK, "NUM_CH_BLK") + 1
+                                )
+                                iDiffCBPHP[k + 1] |= iCBPHPChr << (iBlock * 4)
                     else:
                         iDiffCBPHP[iComponent] |= iBlkCBPHP << (iBlock * 4)
 
@@ -1761,9 +2324,9 @@ class HPBand(FreqBand):
         if iNum == 2:
             iRef = self.ds.huff(REF_CBPHP1, "REF_CBPHP1")
         elif iNum == 1:
-            iRef = (1 << self.ds.unpack_bits(2, "iRef_scale"))
+            iRef = 1 << self.ds.unpack_bits(2, "iRef_scale")
         elif iNum == 3:
-            iRef = (0x0F ^ (1 << self.ds.unpack_bits(2, "iRef_scale_2")))
+            iRef = 0x0F ^ (1 << self.ds.unpack_bits(2, "iRef_scale_2"))
         elif iNum == 4:
             iRef = 0x0F
         else:
@@ -1785,7 +2348,7 @@ class HPBand(FreqBand):
                 if self.mb.IsMBTopEdgeofTileFlag:
                     iCBPHP ^= 1
                 else:
-                    iCBPHP ^= ((mb.topMB.MBCBPHP[iComponent] >> 10) & 1)
+                    iCBPHP ^= (mb.topMB.MBCBPHP[iComponent] >> 10) & 1
             else:
                 iCBPHP ^= (mb.leftMB.MBCBPHP[iComponent] >> 5) & 1
 
@@ -1802,8 +2365,10 @@ class HPBand(FreqBand):
         self.UpdateCBPHPModel(chroma_flag, Numones(iCBPHP))
 
         if DEBUG1:
-            log.info("PredCBPHP444[%d]: CBPHPState[%d]=%d iDiffCBPHP=%d CBPHP=%04x " % (
-                    iComponent, chroma_flag, state, iDiffCBPHP[iComponent], iCBPHP))
+            log.info(
+                "PredCBPHP444[%d]: CBPHPState[%d]=%d iDiffCBPHP=%d CBPHP=%04x "
+                % (iComponent, chroma_flag, state, iDiffCBPHP[iComponent], iCBPHP)
+            )
 
         return iCBPHP
 
@@ -1818,7 +2383,9 @@ class HPBand(FreqBand):
         self.CBPHPModelHP.CountOnes[i] = Clip(self.CBPHPModelHP.CountOnes[i], -16, 15)
 
         self.CBPHPModelHP.CountZeroes[i] += (16 - iNOrig) - iNDiff
-        self.CBPHPModelHP.CountZeroes[i] = Clip(self.CBPHPModelHP.CountZeroes[i], -16, 15)
+        self.CBPHPModelHP.CountZeroes[i] = Clip(
+            self.CBPHPModelHP.CountZeroes[i], -16, 15
+        )
 
         if self.CBPHPModelHP.CountOnes[i] < 0:
             if self.CBPHPModelHP.CountOnes[i] < self.CBPHPModelHP.CountZeroes[i]:
@@ -1834,7 +2401,10 @@ class HPBand(FreqBand):
         plane = self.plane
 
         if DEBUG2:
-            log.info("MB_HP_FLEX do_hp=%s do_flex=%s iTrimFlexBits=%d" % (do_hp, do_flex, iTrimFlexBits))
+            log.info(
+                "MB_HP_FLEX do_hp=%s do_flex=%s iTrimFlexBits=%d"
+                % (do_hp, do_flex, iTrimFlexBits)
+            )
 
         if do_hp:
             if mb.InitializeContext:
@@ -1846,7 +2416,11 @@ class HPBand(FreqBand):
                 self.ResetTotalsAdaptiveScanHP()
 
             mb.MBHPMode = self.CalcHPPredMode(mb)
-            adaptive_scan = self.HighpassVerScan if mb.MBHPMode == PREDICT_FROM_TOP else self.HighpassHorScan
+            adaptive_scan = (
+                self.HighpassVerScan
+                if mb.MBHPMode == PREDICT_FROM_TOP
+                else self.HighpassHorScan
+            )
 
             iLapMean = [0, 0]
 
@@ -1854,17 +2428,23 @@ class HPBand(FreqBand):
             iIndex = chroma_component(iComponent)
 
             if do_flex:
-                iModelBits = self.ModelHP.MBits[iIndex] if do_hp else mb.ModelBitsMBHP[iIndex]
+                iModelBits = (
+                    self.ModelHP.MBits[iIndex] if do_hp else mb.ModelBitsMBHP[iIndex]
+                )
 
             if do_hp:
                 iCBPHP = mb.MBCBPHP[iComponent]
 
             for iBlock in iHierScanOrder:
                 if do_hp:
-                    iNumNonZero = self.decode_block_adaptive(iCBPHP & 1, iIndex != 0, iComponent, iBlock, adaptive_scan, mb)
+                    iNumNonZero = self.decode_block_adaptive(
+                        iCBPHP & 1, iIndex != 0, iComponent, iBlock, adaptive_scan, mb
+                    )
 
                 if do_flex and plane.flexbits_present:
-                    self.block_flexbits(iComponent, iBlock, iModelBits, iTrimFlexBits, mb)
+                    self.block_flexbits(
+                        iComponent, iBlock, iModelBits, iTrimFlexBits, mb
+                    )
 
                 if do_hp:
                     iLapMean[iIndex] += iNumNonZero
@@ -1897,15 +2477,25 @@ class HPBand(FreqBand):
 
             for blkIndex in range(16):
                 for j in range(1, 16):
-
                     mb.MBBuffer[iComponent][16 * blkIndex + j] = (
-                            (mb.HPInputVLC[iComponent][blkIndex][j] << mb.ModelBitsMBHP[iIndex]) +
-                            mb.HPInputFlex[iComponent][blkIndex][j]) * scaling_factor
+                        (
+                            mb.HPInputVLC[iComponent][blkIndex][j]
+                            << mb.ModelBitsMBHP[iIndex]
+                        )
+                        + mb.HPInputFlex[iComponent][blkIndex][j]
+                    ) * scaling_factor
 
             if DEBUG1:
                 log.info("MBBuffer0[%d]=" % iComponent)
                 for blkIndex in range(16):
-                    log.info(", ".join(["%d" % mb.MBBuffer[iComponent][blkIndex*16+j] for j in range(16)]))
+                    log.info(
+                        ", ".join(
+                            [
+                                "%d" % mb.MBBuffer[iComponent][blkIndex * 16 + j]
+                                for j in range(16)
+                            ]
+                        )
+                    )
 
         for iComponent in range(plane.NumComponents):
             pSrc = mb.MBBuffer[iComponent]
@@ -1913,22 +2503,32 @@ class HPBand(FreqBand):
             if mb.MBHPMode == PREDICT_FROM_TOP:
                 for blkId in [1, 2, 3, 5, 6, 7, 9, 10, 11, 13, 14, 15]:
                     for k in [2, 10, 9]:
-                        pSrc[16*blkId + k] += pSrc[16*(blkId-1) + k]
+                        pSrc[16 * blkId + k] += pSrc[16 * (blkId - 1) + k]
 
             elif mb.MBHPMode == PREDICT_FROM_LEFT:
                 for blkId in range(4, 16):
                     for k in [1, 5, 6]:
-                        pSrc[16*blkId + k] += pSrc[16*(blkId-4) + k]
+                        pSrc[16 * blkId + k] += pSrc[16 * (blkId - 4) + k]
 
             if DEBUG1:
                 log.info("MBBuffer1[%d]=" % iComponent)
                 for iy in range(16):
-                    log.info(", ".join(["%d" % mb.MBBuffer[iComponent][iy*16+ix] for ix in range(16)]))
+                    log.info(
+                        ", ".join(
+                            [
+                                "%d" % mb.MBBuffer[iComponent][iy * 16 + ix]
+                                for ix in range(16)
+                            ]
+                        )
+                    )
 
     def CalcHPPredMode(self, mb):
-
-        iStrengthHor = abs(mb.MbDCLP[0][1]) + abs(mb.MbDCLP[0][2]) + abs(mb.MbDCLP[0][3])
-        iStrengthVer = abs(mb.MbDCLP[0][4]) + abs(mb.MbDCLP[0][8]) + abs(mb.MbDCLP[0][12])
+        iStrengthHor = (
+            abs(mb.MbDCLP[0][1]) + abs(mb.MbDCLP[0][2]) + abs(mb.MbDCLP[0][3])
+        )
+        iStrengthVer = (
+            abs(mb.MbDCLP[0][4]) + abs(mb.MbDCLP[0][8]) + abs(mb.MbDCLP[0][12])
+        )
 
         if self.plane.internal_clr_fmt not in [YONLY, NCOMPONENT]:
             for i in range(1, 3):
@@ -1944,12 +2544,21 @@ class HPBand(FreqBand):
             MBHPMode = NO_PREDICTION
 
         if DEBUG1:
-            log.info("CalcHPPredMode: iStrengthHor=%d iStrengthVer=%d result=%s     coeff=%s" % (
-                    iStrengthHor, iStrengthVer, PREDICT_NAME[MBHPMode], ", ".join([str(mb.MbDCLP[0][i]) for i in range(16)])))
+            log.info(
+                "CalcHPPredMode: iStrengthHor=%d iStrengthVer=%d result=%s     coeff=%s"
+                % (
+                    iStrengthHor,
+                    iStrengthVer,
+                    PREDICT_NAME[MBHPMode],
+                    ", ".join([str(mb.MbDCLP[0][i]) for i in range(16)]),
+                )
+            )
 
         return MBHPMode
 
-    def decode_block_adaptive(self, bNoSkip, bChroma, iComponent, iBlock, adaptive_scan, mb):
+    def decode_block_adaptive(
+        self, bNoSkip, bChroma, iComponent, iBlock, adaptive_scan, mb
+    ):
         if DEBUG2:
             log.info("decode_block_adaptive")
 
@@ -1963,21 +2572,36 @@ class HPBand(FreqBand):
             iLocation = 1
             block = self.decode_block(bChroma, iLocation)
             if DEBUG1:
-                log.info("decode_block_HP[%d,%d] = %s" % (iComponent, iBlock, repr(block)))
+                log.info(
+                    "decode_block_HP[%d,%d] = %s" % (iComponent, iBlock, repr(block))
+                )
 
             while block:
                 run, level = block.pop(0)
                 iLocation += run
 
                 if iLocation < 1 or iLocation > 15:
-                    raise Exception("decode_block_adaptive iLocation=%d (out of range 1-15" % iLocation)
+                    raise Exception(
+                        "decode_block_adaptive iLocation=%d (out of range 1-15"
+                        % iLocation
+                    )
                     return 0
 
                 if DEBUG2:
-                    log.info("AdaptiveHPScan i=%d block=%d loc=%d k=%d value=%d" % (
-                            iComponent, iBlock, iLocation, adaptive_scan.Translate(iLocation), level))
+                    log.info(
+                        "AdaptiveHPScan i=%d block=%d loc=%d k=%d value=%d"
+                        % (
+                            iComponent,
+                            iBlock,
+                            iLocation,
+                            adaptive_scan.Translate(iLocation),
+                            level,
+                        )
+                    )
 
-                mb.HPInputVLC[iComponent][iBlock][adaptive_scan.Translate(iLocation)] = level
+                mb.HPInputVLC[iComponent][iBlock][
+                    adaptive_scan.Translate(iLocation)
+                ] = level
                 adaptive_scan.Adapt(iLocation)
 
                 iLocation += 1
@@ -1992,8 +2616,10 @@ class HPBand(FreqBand):
         iFlexBitsLeft = iModelBits - iTrimFlexBits
         if iFlexBitsLeft > 0:
             if DEBUG1:
-                log.info("block_flexbits block=%d modelbits=%d trim=%d bitsleft=%d" % (
-                        iBlock, iModelBits, iTrimFlexBits, iFlexBitsLeft))
+                log.info(
+                    "block_flexbits block=%d modelbits=%d trim=%d bitsleft=%d"
+                    % (iBlock, iModelBits, iTrimFlexBits, iFlexBitsLeft)
+                )
 
             for n in iTransposeFlex[1:]:
                 flex_ref = self.ds.unpack_bits(iFlexBitsLeft, "flex_ref")
@@ -2007,8 +2633,10 @@ class HPBand(FreqBand):
                     iFlexCoeff = self.sign_optional(flex_ref)
 
                 if DEBUG2:
-                    log.info("decode_flex %d FlexBits=%d VLCCoeff=%d flex_ref=%d => FlexCoeff=%d" % (
-                            n, iFlexBitsLeft, iVLCCoeff, flex_ref, iFlexCoeff))
+                    log.info(
+                        "decode_flex %d FlexBits=%d VLCCoeff=%d flex_ref=%d => FlexCoeff=%d"
+                        % (n, iFlexBitsLeft, iVLCCoeff, flex_ref, iFlexCoeff)
+                    )
 
                 mb.HPInputFlex[iComponent][iBlock][n] = iFlexCoeff << iTrimFlexBits
 
@@ -2059,13 +2687,12 @@ class AdaptiveScan(object):
     def Adapt(self, i):
         self.totals[i] += 1
 
-        if i > 1 and self.totals[i] > self.totals[i-1]:
-            self.order[i], self.order[i-1] = (self.order[i-1], self.order[i])
-            self.totals[i], self.totals[i-1] = (self.totals[i-1], self.totals[i])
+        if i > 1 and self.totals[i] > self.totals[i - 1]:
+            self.order[i], self.order[i - 1] = (self.order[i - 1], self.order[i])
+            self.totals[i], self.totals[i - 1] = (self.totals[i - 1], self.totals[i])
 
 
 class AdaptiveVLC(object):
-
     def __init__(self):
         pass
 
@@ -2125,7 +2752,6 @@ class CBPHPModel(object):
 
 
 class Model(object):
-
     def __init__(self):
         pass
 
@@ -2138,7 +2764,6 @@ class Model(object):
 
 class QP(object):
     def __init__(self, ds, NumComponents, NumQPs, scaled_flag, band):
-
         def QuantMap(iQP, iComponent):
             if iQP == 0:
                 ScalingFactor = 1
@@ -2170,8 +2795,10 @@ class QP(object):
                 ScalingFactor = iMan << iExp
 
                 if DEBUG2:
-                    log.info("QuantMap: iQ=%d band=%d iComponent=%d iScaledShift=%d ScalingFactor=%d" % (
-                                iQP, band, iComponent, iScaledShift, ScalingFactor))
+                    log.info(
+                        "QuantMap: iQ=%d band=%d iComponent=%d iScaledShift=%d ScalingFactor=%d"
+                        % (iQP, band, iComponent, iScaledShift, ScalingFactor)
+                    )
 
             if ScalingFactor < 1:
                 raise Exception("QuantMap: ScalingFactor %s" % ScalingFactor)
@@ -2186,8 +2813,16 @@ class QP(object):
         self.QuantScalingFactor = Array(NumComponents, NumQPs, None)
 
         for j in range(NumQPs):
-            component_mode = ds.check_bit_field(2, "component_mode", COMPONENT_MODE_NAMES.keys(), COMPONENT_MODE_NAMES) \
-                                if NumComponents != 1 else UNIFORM
+            component_mode = (
+                ds.check_bit_field(
+                    2,
+                    "component_mode",
+                    COMPONENT_MODE_NAMES.keys(),
+                    COMPONENT_MODE_NAMES,
+                )
+                if NumComponents != 1
+                else UNIFORM
+            )
 
             if component_mode == UNIFORM:
                 quant = ds.unpack_bits(8, "QP_uniform")
@@ -2195,14 +2830,20 @@ class QP(object):
                     self.QuantScalingFactor[iComponent][j] = QuantMap(quant, iComponent)
 
             elif component_mode == SEPARATE:
-                self.QuantScalingFactor[0][j] = QuantMap(ds.unpack_bits(8, "QP_separate_luma"), 0)
+                self.QuantScalingFactor[0][j] = QuantMap(
+                    ds.unpack_bits(8, "QP_separate_luma"), 0
+                )
                 quant_chroma = ds.unpack_bits(8, "QP_separate_chroma")
                 for iComponent in range(1, NumComponents):
-                    self.QuantScalingFactor[iComponent][j] = QuantMap(quant_chroma, iComponent)
+                    self.QuantScalingFactor[iComponent][j] = QuantMap(
+                        quant_chroma, iComponent
+                    )
 
             elif component_mode == INDEPENDENT:
                 for iComponent in range(NumComponents):
-                    self.QuantScalingFactor[iComponent][j] = QuantMap(ds.unpack_bits(8, "QP_independent"), iComponent)
+                    self.QuantScalingFactor[iComponent][j] = QuantMap(
+                        ds.unpack_bits(8, "QP_independent"), iComponent
+                    )
 
     def ScalingFactor(self, iComponent):
         return self.QuantScalingFactor[iComponent][self.IndexQPs]
@@ -2228,7 +2869,7 @@ def Numones(x):
     value = 0
 
     while x != 0:
-        value += (x & 1)
+        value += x & 1
         x >>= 1
 
     return value
@@ -2253,31 +2894,68 @@ def Array(*args):
 
 
 def strIDCT4x4Stage1(iCoeff):
-    iCoeff[0], iCoeff[1], iCoeff[2], iCoeff[3] = strDCT2x2up([iCoeff[0], iCoeff[1], iCoeff[2], iCoeff[3]])
+    iCoeff[0], iCoeff[1], iCoeff[2], iCoeff[3] = strDCT2x2up(
+        [iCoeff[0], iCoeff[1], iCoeff[2], iCoeff[3]]
+    )
 
-    iCoeff[5], iCoeff[4], iCoeff[7], iCoeff[6] = invOdd([iCoeff[5], iCoeff[4], iCoeff[7], iCoeff[6]])
+    iCoeff[5], iCoeff[4], iCoeff[7], iCoeff[6] = invOdd(
+        [iCoeff[5], iCoeff[4], iCoeff[7], iCoeff[6]]
+    )
 
-    iCoeff[10], iCoeff[8], iCoeff[11], iCoeff[9] = invOdd([iCoeff[10], iCoeff[8], iCoeff[11], iCoeff[9]])
+    iCoeff[10], iCoeff[8], iCoeff[11], iCoeff[9] = invOdd(
+        [iCoeff[10], iCoeff[8], iCoeff[11], iCoeff[9]]
+    )
 
-    iCoeff[15], iCoeff[14], iCoeff[13], iCoeff[12] = invOddOdd([iCoeff[15], iCoeff[14], iCoeff[13], iCoeff[12]])
+    iCoeff[15], iCoeff[14], iCoeff[13], iCoeff[12] = invOddOdd(
+        [iCoeff[15], iCoeff[14], iCoeff[13], iCoeff[12]]
+    )
 
-    return fourbutterfly(iCoeff, [[0, 4, 8, 12], [1, 5, 9, 13], [2, 6, 10, 14], [3, 7, 11, 15]])
+    return fourbutterfly(
+        iCoeff, [[0, 4, 8, 12], [1, 5, 9, 13], [2, 6, 10, 14], [3, 7, 11, 15]]
+    )
 
 
 def strIDCT4x4Stage2(iCoeff):
-    iCoeff[2], iCoeff[3], iCoeff[6], iCoeff[7] = invOdd([iCoeff[2], iCoeff[3], iCoeff[6], iCoeff[7]])
+    iCoeff[2], iCoeff[3], iCoeff[6], iCoeff[7] = invOdd(
+        [iCoeff[2], iCoeff[3], iCoeff[6], iCoeff[7]]
+    )
 
-    iCoeff[8], iCoeff[12], iCoeff[9], iCoeff[13] = invOdd([iCoeff[8], iCoeff[12], iCoeff[9], iCoeff[13]])
+    iCoeff[8], iCoeff[12], iCoeff[9], iCoeff[13] = invOdd(
+        [iCoeff[8], iCoeff[12], iCoeff[9], iCoeff[13]]
+    )
 
-    iCoeff[10], iCoeff[14], iCoeff[11], iCoeff[15] = invOddOdd([iCoeff[10], iCoeff[14], iCoeff[11], iCoeff[15]])
+    iCoeff[10], iCoeff[14], iCoeff[11], iCoeff[15] = invOddOdd(
+        [iCoeff[10], iCoeff[14], iCoeff[11], iCoeff[15]]
+    )
 
-    iCoeff[0], iCoeff[4], iCoeff[1], iCoeff[5] = strDCT2x2up([iCoeff[0], iCoeff[4], iCoeff[1], iCoeff[5]])
+    iCoeff[0], iCoeff[4], iCoeff[1], iCoeff[5] = strDCT2x2up(
+        [iCoeff[0], iCoeff[4], iCoeff[1], iCoeff[5]]
+    )
 
-    return fourbutterfly(iCoeff, [[0, 12, 3, 15], [4, 8, 7, 11], [1, 13, 2, 14], [5, 9, 6, 10]])
+    return fourbutterfly(
+        iCoeff, [[0, 12, 3, 15], [4, 8, 7, 11], [1, 13, 2, 14], [5, 9, 6, 10]]
+    )
 
 
 def strPost4x4Stage2Split_alternate(iCoeff):
-    p0m96, p0m32, p0p32, p0p96, p0m80, p0m16, p0p48, p0p112, p1m128, p1m64, p1p0, p1p64, p1m112, p1m48, p1p16, p1p80 = iCoeff
+    (
+        p0m96,
+        p0m32,
+        p0p32,
+        p0p96,
+        p0m80,
+        p0m16,
+        p0p48,
+        p0p112,
+        p1m128,
+        p1m64,
+        p1p0,
+        p1p64,
+        p1m112,
+        p1m48,
+        p1p16,
+        p1p80,
+    ) = iCoeff
 
     p0m96, p0p96, p1m112, p1p80 = strDCT2x2dn([p0m96, p0p96, p1m112, p1p80])
     p0m32, p0p32, p1m48, p1p16 = strDCT2x2dn([p0m32, p0p32, p1m48, p1p16])
@@ -2301,11 +2979,27 @@ def strPost4x4Stage2Split_alternate(iCoeff):
     p0m80, p1m128, p0p112, p1p64 = strHSTdec(p0m80, p1m128, p0p112, p1p64)
     p0m16, p1m64, p0p48, p1p0 = strHSTdec(p0m16, p1m64, p0p48, p1p0)
 
-    return [p0m96, p0m32, p0p32, p0p96, p0m80, p0m16, p0p48, p0p112, p1m128, p1m64, p1p0, p1p64, p1m112, p1m48, p1p16, p1p80]
+    return [
+        p0m96,
+        p0m32,
+        p0p32,
+        p0p96,
+        p0m80,
+        p0m16,
+        p0p48,
+        p0p112,
+        p1m128,
+        p1m64,
+        p1p0,
+        p1p64,
+        p1m112,
+        p1m48,
+        p1p16,
+        p1p80,
+    ]
 
 
 def invOdd(iCoeff):
-
     a, b, c, d = iCoeff
 
     b += d
@@ -2325,7 +3019,6 @@ def invOdd(iCoeff):
 
 
 def invOddOdd(iCoeff):
-
     a, b, c, d = iCoeff
 
     d += a
@@ -2354,14 +3047,16 @@ def irotate1(a, b):
 
 
 def irotate2(a, b):
-    a -= (b*3 + 4) >> 3
-    b += (a*3 + 4) >> 3
+    a -= (b * 3 + 4) >> 3
+    b += (a * 3 + 4) >> 3
     return [a, b]
 
 
 def fourbutterfly(iCoeff, order):
     for o in order:
-        iCoeff[o[0]], iCoeff[o[1]], iCoeff[o[2]], iCoeff[o[3]] = strDCT2x2dn([iCoeff[o[0]], iCoeff[o[1]], iCoeff[o[2]], iCoeff[o[3]]])
+        iCoeff[o[0]], iCoeff[o[1]], iCoeff[o[2]], iCoeff[o[3]] = strDCT2x2dn(
+            [iCoeff[o[0]], iCoeff[o[1]], iCoeff[o[2]], iCoeff[o[3]]]
+        )
 
     return iCoeff
 
@@ -2371,7 +3066,7 @@ def strDCT2x2up(iCoeff):
 
     a += d
     b -= C
-    t = ((a - b + 1) >> 1)
+    t = (a - b + 1) >> 1
     c = t - d
     d = t - C
     a -= d
@@ -2385,7 +3080,7 @@ def strDCT2x2dn(iCoeff):
 
     a += d
     b -= C
-    t = ((a - b) >> 1)
+    t = (a - b) >> 1
     c = t - d
     d = t - C
     a -= d
@@ -2417,58 +3112,74 @@ def invOddOddPost(iCoeff):
 
 
 def strHSTdec1_alternate(a, d):
-
     a += d
     d = (a >> 1) - d
     a += (d * 3 + 0) >> 3
     d += (a * 3 + 0) >> 4
 
-    d += (a >> 7)
-    d -= (a >> 10)
+    d += a >> 7
+    d -= a >> 10
 
     return [a, d]
 
 
 def strHSTdec(a, b, c, d):
-
     b -= c
     a += (d * 3 + 4) >> 3
 
-    d -= (b >> 1)
+    d -= b >> 1
     c = ((a - b) >> 1) - c
 
     return [a - c, b + d, d, c]
 
 
 def OverlapPostFilter4x4(iCoeff):
-    iCoeff[0], iCoeff[3], iCoeff[12], iCoeff[15] = T2x2h([iCoeff[0], iCoeff[3], iCoeff[12], iCoeff[15]], 0)
-    iCoeff[1], iCoeff[2], iCoeff[13], iCoeff[14] = T2x2h([iCoeff[1], iCoeff[2], iCoeff[13], iCoeff[14]], 0)
-    iCoeff[4], iCoeff[7], iCoeff[8], iCoeff[11] = T2x2h([iCoeff[4], iCoeff[7], iCoeff[8], iCoeff[11]], 0)
-    iCoeff[5], iCoeff[6], iCoeff[9], iCoeff[10] = T2x2h([iCoeff[5], iCoeff[6], iCoeff[9], iCoeff[10]], 0)
+    iCoeff[0], iCoeff[3], iCoeff[12], iCoeff[15] = T2x2h(
+        [iCoeff[0], iCoeff[3], iCoeff[12], iCoeff[15]], 0
+    )
+    iCoeff[1], iCoeff[2], iCoeff[13], iCoeff[14] = T2x2h(
+        [iCoeff[1], iCoeff[2], iCoeff[13], iCoeff[14]], 0
+    )
+    iCoeff[4], iCoeff[7], iCoeff[8], iCoeff[11] = T2x2h(
+        [iCoeff[4], iCoeff[7], iCoeff[8], iCoeff[11]], 0
+    )
+    iCoeff[5], iCoeff[6], iCoeff[9], iCoeff[10] = T2x2h(
+        [iCoeff[5], iCoeff[6], iCoeff[9], iCoeff[10]], 0
+    )
 
     iCoeff[13], iCoeff[12] = InvRotate(iCoeff[13], iCoeff[12])
     iCoeff[9], iCoeff[8] = InvRotate(iCoeff[9], iCoeff[8])
     iCoeff[7], iCoeff[3] = InvRotate(iCoeff[7], iCoeff[3])
     iCoeff[6], iCoeff[2] = InvRotate(iCoeff[6], iCoeff[2])
 
-    iCoeff[10], iCoeff[11], iCoeff[14], iCoeff[15] = InvToddoddPOST([iCoeff[10], iCoeff[11], iCoeff[14], iCoeff[15]])
+    iCoeff[10], iCoeff[11], iCoeff[14], iCoeff[15] = InvToddoddPOST(
+        [iCoeff[10], iCoeff[11], iCoeff[14], iCoeff[15]]
+    )
 
     iCoeff[0], iCoeff[15] = InvScale(iCoeff[0], iCoeff[15])
     iCoeff[1], iCoeff[14] = InvScale(iCoeff[1], iCoeff[14])
     iCoeff[4], iCoeff[11] = InvScale(iCoeff[4], iCoeff[11])
     iCoeff[5], iCoeff[10] = InvScale(iCoeff[5], iCoeff[10])
 
-    iCoeff[0], iCoeff[3], iCoeff[12], iCoeff[15] = T2x2hPOST([iCoeff[0], iCoeff[3], iCoeff[12], iCoeff[15]])
-    iCoeff[1], iCoeff[2], iCoeff[13], iCoeff[14] = T2x2hPOST([iCoeff[1], iCoeff[2], iCoeff[13], iCoeff[14]])
-    iCoeff[4], iCoeff[7], iCoeff[8], iCoeff[11] = T2x2hPOST([iCoeff[4], iCoeff[7], iCoeff[8], iCoeff[11]])
-    iCoeff[5], iCoeff[6], iCoeff[9], iCoeff[10] = T2x2hPOST([iCoeff[5], iCoeff[6], iCoeff[9], iCoeff[10]])
+    iCoeff[0], iCoeff[3], iCoeff[12], iCoeff[15] = T2x2hPOST(
+        [iCoeff[0], iCoeff[3], iCoeff[12], iCoeff[15]]
+    )
+    iCoeff[1], iCoeff[2], iCoeff[13], iCoeff[14] = T2x2hPOST(
+        [iCoeff[1], iCoeff[2], iCoeff[13], iCoeff[14]]
+    )
+    iCoeff[4], iCoeff[7], iCoeff[8], iCoeff[11] = T2x2hPOST(
+        [iCoeff[4], iCoeff[7], iCoeff[8], iCoeff[11]]
+    )
+    iCoeff[5], iCoeff[6], iCoeff[9], iCoeff[10] = T2x2hPOST(
+        [iCoeff[5], iCoeff[6], iCoeff[9], iCoeff[10]]
+    )
     return iCoeff
 
 
 def T2x2h(iCoeff, valRound):
     iCoeff[0] += iCoeff[3]
     iCoeff[1] -= iCoeff[2]
-    valT1 = ((iCoeff[0] - iCoeff[1] + valRound) >> 1)
+    valT1 = (iCoeff[0] - iCoeff[1] + valRound) >> 1
     valT2 = iCoeff[2]
     iCoeff[2] = valT1 - iCoeff[3]
     iCoeff[3] = valT1 - valT2
@@ -2480,7 +3191,7 @@ def T2x2h(iCoeff, valRound):
 def T2x2hPOST(iCoeff):
     iCoeff[1] -= iCoeff[2]
     iCoeff[0] += (iCoeff[3] * 3 + 4) >> 3
-    iCoeff[3] -= (iCoeff[1] >> 1)
+    iCoeff[3] -= iCoeff[1] >> 1
     iCoeff[2] = ((iCoeff[0] - iCoeff[1]) >> 1) - iCoeff[2]
     iCoeff[2], iCoeff[3] = (iCoeff[3], iCoeff[2])
     iCoeff[0] -= iCoeff[3]
@@ -2491,21 +3202,21 @@ def T2x2hPOST(iCoeff):
 def OverlapPostFilter4(iCoeff):
     iCoeff[0] += iCoeff[3]
     iCoeff[1] += iCoeff[2]
-    iCoeff[3] -= ((iCoeff[0] + 1) >> 1)
-    iCoeff[2] -= ((iCoeff[1] + 1) >> 1)
+    iCoeff[3] -= (iCoeff[0] + 1) >> 1
+    iCoeff[2] -= (iCoeff[1] + 1) >> 1
     iCoeff[0], iCoeff[3] = InvScale(iCoeff[0], iCoeff[3])
     iCoeff[1], iCoeff[2] = InvScale(iCoeff[1], iCoeff[2])
-    iCoeff[0] += ((iCoeff[3] * 3 + 4) >> 3)
-    iCoeff[1] += ((iCoeff[2] * 3 + 4) >> 3)
-    iCoeff[3] -= (iCoeff[0] >> 1)
-    iCoeff[2] -= (iCoeff[1] >> 1)
+    iCoeff[0] += (iCoeff[3] * 3 + 4) >> 3
+    iCoeff[1] += (iCoeff[2] * 3 + 4) >> 3
+    iCoeff[3] -= iCoeff[0] >> 1
+    iCoeff[2] -= iCoeff[1] >> 1
     iCoeff[0] += iCoeff[3]
     iCoeff[1] += iCoeff[2]
     iCoeff[3] = -iCoeff[3]
     iCoeff[2] = -iCoeff[2]
     iCoeff[2], iCoeff[3] = InvRotate(iCoeff[2], iCoeff[3])
-    iCoeff[3] += ((iCoeff[0] + 1) >> 1)
-    iCoeff[2] += ((iCoeff[1] + 1) >> 1)
+    iCoeff[3] += (iCoeff[0] + 1) >> 1
+    iCoeff[2] += (iCoeff[1] + 1) >> 1
     iCoeff[0] -= iCoeff[3]
     iCoeff[1] -= iCoeff[2]
     return iCoeff
@@ -2516,14 +3227,14 @@ def InvScale(iCoeff0, iCoeff1):
     iCoeff1 = (iCoeff0 >> 1) - iCoeff1
     iCoeff0 += (iCoeff1 * 3 + 0) >> 3
     iCoeff1 += (iCoeff0 * 3 + 0) >> 4
-    iCoeff1 += (iCoeff0 >> 7)
-    iCoeff1 -= (iCoeff0 >> 10)
+    iCoeff1 += iCoeff0 >> 7
+    iCoeff1 -= iCoeff0 >> 10
     return (iCoeff0, iCoeff1)
 
 
 def InvRotate(iCoeff0, iCoeff1):
-    iCoeff0 -= ((iCoeff1 + 1) >> 1)
-    iCoeff1 += ((iCoeff0 + 1) >> 1)
+    iCoeff0 -= (iCoeff1 + 1) >> 1
+    iCoeff1 += (iCoeff0 + 1) >> 1
     return (iCoeff0, iCoeff1)
 
 

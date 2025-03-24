@@ -26,7 +26,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from ._utils import (
+from _utils import (
     deprecation_with_replacement,
 )
 

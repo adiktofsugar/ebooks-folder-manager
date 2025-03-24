@@ -1,8 +1,8 @@
 import uuid
 
-from .jxr_image import JXRImage
-from .jxr_misc import (Deserializer, bytes_to_separated_hex)
-from .message_logging import log
+from jxr_image import JXRImage
+from jxr_misc import Deserializer, bytes_to_separated_hex
+from message_logging import log
 
 
 __license__ = "GPL v3"
@@ -22,7 +22,7 @@ FIELD_TYPE_LEN = {
     10: 8,
     11: 4,
     12: 8,
-    }
+}
 
 LEN_FMT = {
     1: "B",
@@ -35,7 +35,7 @@ LEN_FMT = {
     9: "<l",
     11: "<f",
     12: "<d",
-    }
+}
 
 SUPPORTED_PIXEL_FORMATS = {
     "24c3dd6f-034e-fe4b-b185-3d77768dc905": "BlackWhite",
@@ -46,7 +46,7 @@ SUPPORTED_PIXEL_FORMATS = {
     "24c3dd6f-034e-fe4b-b185-3d77768dc90f": "32bppRGBA",
     "24c3dd6f-034e-fe4b-b185-3d77768dc920": "24bpp3Channels",
     "24c3dd6f-034e-fe4b-b185-3d77768dc921": "32bpp4Channels",
-    }
+}
 
 
 class JXRContainer(object):
@@ -55,13 +55,17 @@ class JXRContainer(object):
 
         tif_signature = header.extract(4)
         if tif_signature != b"\x49\x49\xbc\x01":
-            raise Exception("TIF signature is incorrect: %s" % bytes_to_separated_hex(tif_signature))
+            raise Exception(
+                "TIF signature is incorrect: %s" % bytes_to_separated_hex(tif_signature)
+            )
 
         ifd_offset = header.unpack("<L", "ifd_offset")
         header.extract(ifd_offset - header.offset)
 
         pixel_format = ""
-        self.image_width = self.image_height = image_offset = image_byte_count = self.image_data = None
+        self.image_width = self.image_height = image_offset = image_byte_count = (
+            self.image_data
+        ) = None
 
         num_entries = header.unpack("<H", "num_entries")
 
@@ -79,35 +83,56 @@ class JXRContainer(object):
                 header.extract(4 - field_data_len)
             else:
                 field_data_or_offset = header.unpack("<L", "field_data_or_offset")
-                field_data = data[field_data_or_offset: field_data_or_offset + field_data_len]
+                field_data = data[
+                    field_data_or_offset : field_data_or_offset + field_data_len
+                ]
 
-            if field_tag == 0xbc01:
+            if field_tag == 0xBC01:
                 pixel_format = str(uuid.UUID(bytes=field_data))
-            elif field_tag == 0xbc80:
+            elif field_tag == 0xBC80:
                 self.image_width = field_value()
-            elif field_tag == 0xbc81:
+            elif field_tag == 0xBC81:
                 self.image_height = field_value()
-            elif field_tag == 0xbcc0:
+            elif field_tag == 0xBCC0:
                 image_offset = field_value()
-            elif field_tag == 0xbcc1:
+            elif field_tag == 0xBCC1:
                 image_byte_count = field_value()
 
-        if not (pixel_format and self.image_width and self.image_height and image_offset and (image_byte_count is not None)):
-            raise Exception("Missing required TIFF field tag: pixel_format=%s width=%s height=%s offset=%s byte-count=%s" % (
-                pixel_format, self.image_width, self.image_height, image_offset, image_byte_count))
+        if not (
+            pixel_format
+            and self.image_width
+            and self.image_height
+            and image_offset
+            and (image_byte_count is not None)
+        ):
+            raise Exception(
+                "Missing required TIFF field tag: pixel_format=%s width=%s height=%s offset=%s byte-count=%s"
+                % (
+                    pixel_format,
+                    self.image_width,
+                    self.image_height,
+                    image_offset,
+                    image_byte_count,
+                )
+            )
 
         if pixel_format not in SUPPORTED_PIXEL_FORMATS:
             log.warning("Unsupported pixel format: %s" % pixel_format)
 
         ifd_offset = header.unpack("<L", "ifd_offset")
         if ifd_offset != 0:
-            raise Exception("File contains multiple images - only a single image is supported")
+            raise Exception(
+                "File contains multiple images - only a single image is supported"
+            )
 
         if image_byte_count > 0:
-            self.image_data = data[image_offset: image_offset + image_byte_count]
+            self.image_data = data[image_offset : image_offset + image_byte_count]
 
             if len(self.image_data) < image_byte_count:
-                log.warning("File is truncated (missing %d bytes of image data)" % (image_byte_count - len(self.image_data)))
+                log.warning(
+                    "File is truncated (missing %d bytes of image data)"
+                    % (image_byte_count - len(self.image_data))
+                )
         else:
             self.image_data = data[image_offset:]
 
@@ -116,8 +141,18 @@ class JXRContainer(object):
 
         im = jxr_image.decode()
 
-        if jxr_image.image_width != self.image_width or jxr_image.image_height != self.image_height:
-            log.warning("Expected image size %dx%d but found %dx%d" % (
-                        self.image_width, self.image_height, jxr_image.image_width, jxr_image.image_height))
+        if (
+            jxr_image.image_width != self.image_width
+            or jxr_image.image_height != self.image_height
+        ):
+            log.warning(
+                "Expected image size %dx%d but found %dx%d"
+                % (
+                    self.image_width,
+                    self.image_height,
+                    jxr_image.image_width,
+                    jxr_image.image_height,
+                )
+            )
 
         return im

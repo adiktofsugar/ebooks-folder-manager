@@ -49,15 +49,15 @@ from typing import (
     overload,
 )
 
-from ._cmap import (
+from _cmap import (
     build_char_map,
     build_font_width_map,
     compute_font_width,
     get_actual_str_key,
     unknown_char_map,
 )
-from ._protocols import PdfCommonDocProtocol
-from ._text_extraction import (
+from _protocols import PdfCommonDocProtocol
+from _text_extraction import (
     OrientationNotFoundError,
     _layout_mode,
     crlf_space_check,
@@ -65,20 +65,20 @@ from ._text_extraction import (
     get_text_operands,
     mult,
 )
-from ._utils import (
+from _utils import (
     CompressedTransformationMatrix,
     TransformationMatrixType,
     _human_readable_bytes,
     logger_warning,
     matrix_multiply,
 )
-from .constants import AnnotationDictionaryAttributes as ADA
-from .constants import ImageAttributes as IA
-from .constants import PageAttributes as PG
-from .constants import Resources as RES
-from .errors import PageSizeNotDefinedError, PdfReadError
-from .filters import _xobj_to_image
-from .generic import (
+from constants import AnnotationDictionaryAttributes as ADA
+from constants import ImageAttributes as IA
+from constants import PageAttributes as PG
+from constants import Resources as RES
+from errors import PageSizeNotDefinedError, PdfReadError
+from filters import _xobj_to_image
+from generic import (
     ArrayObject,
     ContentStream,
     DictionaryObject,
@@ -294,14 +294,12 @@ class Transformation:
         return f"Transformation(ctm={self.ctm})"
 
     @overload
-    def apply_on(self, pt: List[float], as_object: bool = False) -> List[float]:
-        ...
+    def apply_on(self, pt: List[float], as_object: bool = False) -> List[float]: ...
 
     @overload
     def apply_on(
         self, pt: Tuple[float, float], as_object: bool = False
-    ) -> Tuple[float, float]:
-        ...
+    ) -> Tuple[float, float]: ...
 
     def apply_on(
         self,
@@ -380,11 +378,11 @@ class ImageFile:
                 "It can be installed via 'pip install pypdf[image]'"
             )
 
-        from ._reader import PdfReader
+        from _reader import PdfReader
 
         # to prevent circular import
-        from .filters import _xobj_to_image
-        from .generic import DictionaryObject, PdfObject
+        from filters import _xobj_to_image
+        from generic import DictionaryObject, PdfObject
 
         if self.indirect_reference is None:
             raise TypeError("Cannot update an inline image.")
@@ -444,12 +442,10 @@ class VirtualListImages(Sequence[ImageFile]):
         return [(x, self[x]) for x in self.ids_function()]
 
     @overload
-    def __getitem__(self, index: Union[int, str, List[str]]) -> ImageFile:
-        ...
+    def __getitem__(self, index: Union[int, str, List[str]]) -> ImageFile: ...
 
     @overload
-    def __getitem__(self, index: slice) -> Sequence[ImageFile]:
-        ...
+    def __getitem__(self, index: slice) -> Sequence[ImageFile]: ...
 
     def __getitem__(
         self, index: Union[int, slice, str, List[str], Tuple[str]]
@@ -587,7 +583,8 @@ class PageObject(DictionaryObject):
             else:
                 raise PageSizeNotDefinedError
         page.__setitem__(
-            NameObject(PG.MEDIABOX), RectangleObject((0, 0, width, height))  # type: ignore
+            NameObject(PG.MEDIABOX),
+            RectangleObject((0, 0, width, height)),  # type: ignore
         )
 
         return page
@@ -1757,7 +1754,7 @@ class PageObject(DictionaryObject):
         ],
         text_operands: str,
         font_size: float,
-        space_width: float
+        space_width: float,
     ) -> Tuple[float, float, float]:
         font_widths: float = 0
         font_name: str = cmap[2]
@@ -1773,7 +1770,11 @@ class PageObject(DictionaryObject):
                 actual_space_width = compute_font_width(font_width_map, space_char)
             if actual_space_width == 0:
                 actual_space_width = space_width
-            self._font_width_maps[font_name] = (font_width_map, space_char, actual_space_width)
+            self._font_width_maps[font_name] = (
+                font_width_map,
+                space_char,
+                actual_space_width,
+            )
         font_width_map = self._font_width_maps[font_name][0]
         space_char = self._font_width_maps[font_name][1]
         actual_space_width = self._font_width_maps[font_name][2]
@@ -1800,10 +1801,11 @@ class PageObject(DictionaryObject):
         rtl_dir: bool,
         visitor_text: Optional[Callable[[Any, Any, Any, Any, Any], None]],
         space_width: float,
-        actual_str_size: Dict[str, float]
+        actual_str_size: Dict[str, float],
     ) -> Tuple[str, bool, Dict[str, float]]:
         text_operands, is_str_operands = get_text_operands(
-            operands, cm_matrix, tm_matrix, cmap, orientations)
+            operands, cm_matrix, tm_matrix, cmap, orientations
+        )
         if is_str_operands:
             text += text_operands
         else:
@@ -1815,9 +1817,11 @@ class PageObject(DictionaryObject):
                 text_operands,
                 font_size,
                 rtl_dir,
-                visitor_text)
+                visitor_text,
+            )
         font_widths, actual_str_size["space_width"], actual_str_size["str_height"] = (
-            self._get_acutual_font_widths(cmap, text_operands, font_size, space_width))
+            self._get_acutual_font_widths(cmap, text_operands, font_size, space_width)
+        )
         actual_str_size["str_widths"] += font_widths
 
         return text, rtl_dir, actual_str_size
@@ -1901,7 +1905,10 @@ class PageObject(DictionaryObject):
         space_scale = 1.0
         _space_width: float = 500.0  # will be set correctly at first Tf
         _actual_str_size: Dict[str, float] = {
-            "str_widths": 0.0, "space_width": 0.0, "str_height": 0.0}  # will be set to string length calculation result
+            "str_widths": 0.0,
+            "space_width": 0.0,
+            "str_height": 0.0,
+        }  # will be set to string length calculation result
         TL = 0.0
         font_size = 12.0  # init just in case of
 
@@ -1984,7 +1991,7 @@ class PageObject(DictionaryObject):
             elif operator == b"Tw":
                 space_scale = 1.0 + float(operands[0])
             elif operator == b"TL":
-                scale_x = math.sqrt(tm_matrix[0]**2 + tm_matrix[2]**2)
+                scale_x = math.sqrt(tm_matrix[0] ** 2 + tm_matrix[2] ** 2)
                 TL = float(operands[0]) * font_size * scale_x
             elif operator == b"Tf":
                 if text != "":
@@ -2078,7 +2085,7 @@ class PageObject(DictionaryObject):
                         visitor_text,
                         str_widths,
                         compute_strwidths(_actual_str_size["space_width"]),
-                        _actual_str_size["str_height"]
+                        _actual_str_size["str_height"],
                     )
                     if text == "":
                         memo_cm = cm_matrix.copy()
@@ -2263,7 +2270,9 @@ class PageObject(DictionaryObject):
 
         char_width = _layout_mode.fixed_char_width(bt_groups, scale_weight)
 
-        return _layout_mode.fixed_width_page(ty_groups, char_width, space_vertically, font_height_weight)
+        return _layout_mode.fixed_width_page(
+            ty_groups, char_width, space_vertically, font_height_weight
+        )
 
     def extract_text(
         self,
@@ -2363,7 +2372,7 @@ class PageObject(DictionaryObject):
                 scale_weight=kwargs.get("layout_mode_scale_weight", 1.25),
                 strip_rotated=kwargs.get("layout_mode_strip_rotated", True),
                 debug_path=kwargs.get("layout_mode_debug_path"),
-                font_height_weight=kwargs.get("layout_mode_font_height_weight", 1)
+                font_height_weight=kwargs.get("layout_mode_font_height_weight", 1),
             )
         if len(args) >= 1:
             if isinstance(args[0], str):
@@ -2520,12 +2529,10 @@ class _VirtualList(Sequence[PageObject]):
         return self.length_function()
 
     @overload
-    def __getitem__(self, index: int) -> PageObject:
-        ...
+    def __getitem__(self, index: int) -> PageObject: ...
 
     @overload
-    def __getitem__(self, index: slice) -> Sequence[PageObject]:
-        ...
+    def __getitem__(self, index: slice) -> Sequence[PageObject]: ...
 
     def __getitem__(
         self, index: Union[int, slice]

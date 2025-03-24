@@ -9,9 +9,9 @@ if sys.version_info[:2] >= (3, 10):
 else:
     from typing_extensions import TypeAlias
 
-from .generic._base import NameObject, NullObject, NumberObject
-from .generic._data_structures import ArrayObject, Destination
-from .generic._outline import OutlineItem
+from generic._base import NameObject, NullObject, NumberObject
+from generic._data_structures import ArrayObject, Destination
+from generic._outline import OutlineItem
 
 BorderArrayType: TypeAlias = List[Union[NameObject, NumberObject, ArrayObject]]
 OutlineItemType: TypeAlias = Union[OutlineItem, Destination]

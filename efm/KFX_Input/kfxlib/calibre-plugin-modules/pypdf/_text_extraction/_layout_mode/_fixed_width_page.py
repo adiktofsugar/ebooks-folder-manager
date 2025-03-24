@@ -7,9 +7,9 @@ from typing import Any, Dict, Iterator, List, Literal, Optional, Tuple, TypedDic
 
 from ..._utils import logger_warning
 from .. import LAYOUT_NEW_BT_GROUP_SPACE_WIDTHS
-from ._font import Font
-from ._text_state_manager import TextStateManager
-from ._text_state_params import TextStateParams
+from _font import Font
+from _text_state_manager import TextStateManager
+from _text_state_params import TextStateParams
 
 
 class BTGroup(TypedDict):
@@ -141,7 +141,7 @@ def recurs_to_target_op(
                     excess_tx = round(_tj.tx - last_displaced_tx, 3) * (_idx != bt_idx)
                     # space_tx could be 0 if either Tz or font_size was 0 for this _tj.
                     spaces = int(excess_tx // _tj.space_tx) if _tj.space_tx else 0
-                    new_text = f'{" " * spaces}{_tj.txt}'
+                    new_text = f"{' ' * spaces}{_tj.txt}"
 
                     last_ty = _tj.ty
                     _text = f"{_text}{new_text}"
@@ -343,7 +343,10 @@ def fixed_char_width(bt_groups: List[BTGroup], scale_weight: float = 1.25) -> fl
 
 
 def fixed_width_page(
-    ty_groups: Dict[int, List[BTGroup]], char_width: float, space_vertically: bool, font_height_weight: float
+    ty_groups: Dict[int, List[BTGroup]],
+    char_width: float,
+    space_vertically: bool,
+    font_height_weight: float,
 ) -> str:
     """
     Generate page text from text operations grouped by rendered y coordinate.
@@ -364,7 +367,11 @@ def fixed_width_page(
     for y_coord, line_data in ty_groups.items():
         if space_vertically and lines:
             blank_lines = (
-                int(abs(y_coord - last_y_coord) / (line_data[0]["font_height"] * font_height_weight)) - 1
+                int(
+                    abs(y_coord - last_y_coord)
+                    / (line_data[0]["font_height"] * font_height_weight)
+                )
+                - 1
             )
             lines.extend([""] * blank_lines)
         line = ""

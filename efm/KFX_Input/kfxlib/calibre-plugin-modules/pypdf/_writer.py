@@ -52,13 +52,13 @@ from typing import (
     cast,
 )
 
-from ._cmap import _default_fonts_space_width, build_char_map_from_dict
-from ._doc_common import DocumentInformation, PdfDocCommon
-from ._encryption import EncryptAlgorithm, Encryption
-from ._page import PageObject
-from ._page_labels import nums_clear_range, nums_insert, nums_next
-from ._reader import PdfReader
-from ._utils import (
+from _cmap import _default_fonts_space_width, build_char_map_from_dict
+from _doc_common import DocumentInformation, PdfDocCommon
+from _encryption import EncryptAlgorithm, Encryption
+from _page import PageObject
+from _page_labels import nums_clear_range, nums_insert, nums_next
+from _reader import PdfReader
+from _utils import (
     StrByteType,
     StreamType,
     _get_max_pdf_version_header,
@@ -66,9 +66,9 @@ from ._utils import (
     deprecation_with_replacement,
     logger_warning,
 )
-from .constants import AnnotationDictionaryAttributes as AA
-from .constants import CatalogAttributes as CA
-from .constants import (
+from constants import AnnotationDictionaryAttributes as AA
+from constants import CatalogAttributes as CA
+from constants import (
     CatalogDictionary,
     FileSpecificationDictionaryEntries,
     GoToActionArguments,
@@ -78,13 +78,13 @@ from .constants import (
     TypFitArguments,
     UserAccessPermissions,
 )
-from .constants import Core as CO
-from .constants import FieldDictionaryAttributes as FA
-from .constants import PageAttributes as PG
-from .constants import PagesAttributes as PA
-from .constants import TrailerKeys as TK
-from .errors import PyPdfError
-from .generic import (
+from constants import Core as CO
+from constants import FieldDictionaryAttributes as FA
+from constants import PageAttributes as PG
+from constants import PagesAttributes as PA
+from constants import TrailerKeys as TK
+from errors import PyPdfError
+from generic import (
     PAGE_FIT,
     ArrayObject,
     BooleanObject,
@@ -109,8 +109,8 @@ from .generic import (
     hex_to_rgb,
     is_null_or_none,
 )
-from .pagerange import PageRange, PageRangeSpec
-from .types import (
+from pagerange import PageRange, PageRangeSpec
+from types import (
     AnnotationSubtype,
     BorderArrayType,
     LayoutType,
@@ -118,7 +118,7 @@ from .types import (
     OutlineType,
     PagemodeType,
 )
-from .xmp import XmpInformation
+from xmp import XmpInformation
 
 ALL_DOCUMENT_PERMISSIONS = UserAccessPermissions.all()
 DEFAULT_FONT_HEIGHT_IN_MULTILINE = 12
@@ -537,9 +537,9 @@ class PdfWriter(PdfDocCommon):
         try:
             # get the AcroForm tree
             if CatalogDictionary.ACRO_FORM not in self._root_object:
-                self._root_object[
-                    NameObject(CatalogDictionary.ACRO_FORM)
-                ] = self._add_object(DictionaryObject())
+                self._root_object[NameObject(CatalogDictionary.ACRO_FORM)] = (
+                    self._add_object(DictionaryObject())
+                )
 
             need_appearances = NameObject(InteractiveFormDictEntries.NeedAppearances)
             cast(DictionaryObject, self._root_object[CatalogDictionary.ACRO_FORM])[
@@ -552,9 +552,9 @@ class PdfWriter(PdfDocCommon):
 
     def create_viewer_preferences(self) -> ViewerPreferences:
         o = ViewerPreferences()
-        self._root_object[
-            NameObject(CatalogDictionary.VIEWER_PREFERENCES)
-        ] = self._add_object(o)
+        self._root_object[NameObject(CatalogDictionary.VIEWER_PREFERENCES)] = (
+            self._add_object(o)
+        )
         return o
 
     def add_page(
@@ -1020,9 +1020,9 @@ class PdfWriter(PdfDocCommon):
                 {NameObject("/N"): self._add_object(dct)}
             )
         elif "/N" not in cast(DictionaryObject, anno[AA.AP]):
-            cast(DictionaryObject, anno[NameObject(AA.AP)])[
-                NameObject("/N")
-            ] = self._add_object(dct)
+            cast(DictionaryObject, anno[NameObject(AA.AP)])[NameObject("/N")] = (
+                self._add_object(dct)
+            )
         else:  # [/AP][/N] exists
             n = anno[AA.AP]["/N"].indirect_reference.idnum  # type: ignore
             self._objects[n - 1] = dct
@@ -1224,9 +1224,9 @@ class PdfWriter(PdfDocCommon):
             if not self.incremental:
                 p[NameObject("/Parent")] = self._pages
         if not self.incremental:
-            cast(DictionaryObject, self._pages.get_object())[
-                NameObject("/Kids")
-            ] = ArrayObject([p.indirect_reference for p in self.flattened_pages])
+            cast(DictionaryObject, self._pages.get_object())[NameObject("/Kids")] = (
+                ArrayObject([p.indirect_reference for p in self.flattened_pages])
+            )
 
     def clone_document_from_reader(
         self,
@@ -1256,9 +1256,9 @@ class PdfWriter(PdfDocCommon):
                     IndirectObject, inf.clone(self).indirect_reference
                 )
                 assert isinstance(self._info, DictionaryObject), "for mypy"
-                self._original_hash[
-                    self._info_obj.indirect_reference.idnum - 1
-                ] = self._info.hash_bin()
+                self._original_hash[self._info_obj.indirect_reference.idnum - 1] = (
+                    self._info.hash_bin()
+                )
         elif inf is not None:
             self._info_obj = self._add_object(
                 DictionaryObject(cast(DictionaryObject, inf.get_object()))
@@ -1515,7 +1515,7 @@ class PdfWriter(PdfDocCommon):
         object_positions = []
         free_objects = []  # will contain list of all free entries
         stream.write(self.pdf_header.encode() + b"\n")
-        stream.write(b"%\xE2\xE3\xCF\xD3\n")
+        stream.write(b"%\xe2\xe3\xcf\xd3\n")
 
         for i, obj in enumerate(self._objects):
             if obj is not None:
@@ -1914,7 +1914,15 @@ class PdfWriter(PdfDocCommon):
             if fit is not None and page_number is None:
                 page_number = fit
             return self.add_outline_item(
-                title, page_number, parent, None, before, color, bold, italic, is_open=is_open
+                title,
+                page_number,
+                parent,
+                None,
+                before,
+                color,
+                bold,
+                italic,
+                is_open=is_open,
             )
         if page_number is None:
             action_ref = None
@@ -1982,7 +1990,8 @@ class PdfWriter(PdfDocCommon):
     ) -> IndirectObject:
         page_destination_ref = self._add_object(page_destination.dest_array)  # type: ignore
         self.add_named_destination_array(
-            cast("TextStringObject", page_destination["/Title"]), page_destination_ref  # type: ignore
+            cast("TextStringObject", page_destination["/Title"]),
+            page_destination_ref,  # type: ignore
         )
 
         return page_destination_ref
@@ -2717,11 +2726,14 @@ class PdfWriter(PdfDocCommon):
                 # numbers in the exclude list identifies that the exclusion is
                 # only applicable to 1st level of cloning
                 srcpages[pg.indirect_reference.idnum] = self.add_page(
-                    pg, list(excluded_fields) + [1, "/B", 1, "/Annots"]  # type: ignore
+                    pg,
+                    list(excluded_fields) + [1, "/B", 1, "/Annots"],  # type: ignore
                 )
             else:
                 srcpages[pg.indirect_reference.idnum] = self.insert_page(
-                    pg, position, list(excluded_fields) + [1, "/B", 1, "/Annots"]  # type: ignore
+                    pg,
+                    position,
+                    list(excluded_fields) + [1, "/B", 1, "/Annots"],  # type: ignore
                 )
                 position += 1
             srcpages[pg.indirect_reference.idnum].original_page = pg
@@ -2861,9 +2873,13 @@ class PdfWriter(PdfDocCommon):
         new_article: Optional[DictionaryObject] = None
         while current_article is not None:
             # ---------- modified to prevent failure when "/P" is missing
-            pag = self._get_cloned_page(
-                cast("PageObject", current_article["/P"]), pages, reader
-                ) if "/P" in current_article else None
+            pag = (
+                self._get_cloned_page(
+                    cast("PageObject", current_article["/P"]), pages, reader
+                )
+                if "/P" in current_article
+                else None
+            )
             # ---------- end of modification
             if pag is not None:
                 if new_article is None:
@@ -3004,9 +3020,9 @@ class PdfWriter(PdfDocCommon):
                         p = self._get_cloned_page(d[0], pages, reader)
                         if p is not None:
                             anc = ano.clone(self, ignore_fields=("/D",))
-                            cast("DictionaryObject", anc["/A"])[
-                                NameObject("/D")
-                            ] = ArrayObject([p] + d[1:])
+                            cast("DictionaryObject", anc["/A"])[NameObject("/D")] = (
+                                ArrayObject([p] + d[1:])
+                            )
                             outlist.append(self._add_object(anc))
                     # ---------- end of modification
         return outlist
@@ -3307,9 +3323,7 @@ def _pdf_objectify(obj: Union[Dict[str, Any], str, int, List[Any]]) -> PdfObject
     elif isinstance(obj, list):
         return ArrayObject(_pdf_objectify(i) for i in obj)
     else:
-        raise NotImplementedError(
-            f"{type(obj)=} could not be cast to a PdfObject"
-        )
+        raise NotImplementedError(f"{type(obj)=} could not be cast to a PdfObject")
 
 
 def _create_outline_item(
@@ -3364,7 +3378,7 @@ def generate_appearance_stream(
             ap_stream += f"2 {y_offset} Td\n".encode()
         else:
             # Td is a relative translation
-            ap_stream += f"0 {- font_height * 1.4} Td\n".encode()
+            ap_stream += f"0 {-font_height * 1.4} Td\n".encode()
         enc_line: List[bytes] = [
             font_full_rev.get(c, c.encode("utf-16-be")) for c in line
         ]

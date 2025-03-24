@@ -1,6 +1,6 @@
 import struct
 
-from .message_logging import log
+from message_logging import log
 
 
 __license__ = "GPL v3"
@@ -18,15 +18,20 @@ class Deserializer(object):
 
     def extract(self, size=None, upto=None, advance=True, check_remaining=True):
         if check_remaining and self.bits_remaining:
-            raise Exception("Deserializer: unexpected %d bit remaining" % self.bits_remaining)
+            raise Exception(
+                "Deserializer: unexpected %d bit remaining" % self.bits_remaining
+            )
 
         if size is None:
             size = len(self) if upto is None else (upto - self.offset)
 
-        data = self.buffer[self.offset:self.offset + size]
+        data = self.buffer[self.offset : self.offset + size]
 
         if len(data) < size or size < 0:
-            raise Exception("Deserializer: Insufficient data (need %d bytes, have %d bytes)" % (size, len(data)))
+            raise Exception(
+                "Deserializer: Insufficient data (need %d bytes, have %d bytes)"
+                % (size, len(data))
+            )
 
         if advance:
             self.offset += size
@@ -35,7 +40,9 @@ class Deserializer(object):
 
     def unpack(self, fmt, name="", advance=True):
         if self.bits_remaining:
-            raise Exception("Deserializer: unexpected %d bit remaining" % self.bits_remaining)
+            raise Exception(
+                "Deserializer: unexpected %d bit remaining" % self.bits_remaining
+            )
 
         result = struct.unpack_from(fmt, self.buffer, self.offset)[0]
 
@@ -48,9 +55,10 @@ class Deserializer(object):
         return result
 
     def unpack_bits(self, size, name=""):
-
         while self.bits_remaining < size:
-            self.remainder = (self.remainder << 8) + ord(self.extract(1, check_remaining=False))
+            self.remainder = (self.remainder << 8) + ord(
+                self.extract(1, check_remaining=False)
+            )
             self.bits_remaining += 8
 
         self.bits_remaining -= size
@@ -59,10 +67,13 @@ class Deserializer(object):
         if value > (1 << size) - 1:
             raise Exception()
 
-        self.remainder = self.remainder & (0xff >> (8 - self.bits_remaining))
+        self.remainder = self.remainder & (0xFF >> (8 - self.bits_remaining))
 
         if DEBUG:
-            log.info("%d: unpack_bits(%d)=%u (%s) %s" % (self.offset, size, value, ("{0:0%sb}" % size).format(value), name))
+            log.info(
+                "%d: unpack_bits(%d)=%u (%s) %s"
+                % (self.offset, size, value, ("{0:0%sb}" % size).format(value), name)
+            )
 
         return value
 
@@ -81,14 +92,17 @@ class Deserializer(object):
 
         if value not in expected_values:
             msg = "%s value %s is unsupported (only %s allowed)" % (
-                    name, value_name(value), ", ".join([value_name(ev) for ev in expected_values]))
+                name,
+                value_name(value),
+                ", ".join([value_name(ev) for ev in expected_values]),
+            )
             raise Exception(msg)
 
         return value
 
     def huff(self, table, name):
         k = 1
-        while k <= 0xff:
+        while k <= 0xFF:
             k = (k << 1) + self.unpack_bits(1, name)
             v = table.get(k)
             if v is not None:
@@ -104,4 +118,4 @@ class Deserializer(object):
 
 
 def bytes_to_separated_hex(data, sep=" "):
-    return sep.join("%02x" % ord(data[i:i+1]) for i in range(len(data)))
+    return sep.join("%02x" % ord(data[i : i + 1]) for i in range(len(data)))

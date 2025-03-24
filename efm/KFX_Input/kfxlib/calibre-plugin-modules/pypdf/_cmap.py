@@ -2,9 +2,9 @@ from binascii import unhexlify
 from math import ceil
 from typing import Any, Dict, List, Tuple, Union, cast
 
-from ._codecs import adobe_glyphs, charset_encoding
-from ._utils import logger_error, logger_warning
-from .generic import (
+from _codecs import adobe_glyphs, charset_encoding
+from _utils import logger_error, logger_warning
+from generic import (
     DecodedStreamObject,
     DictionaryObject,
     StreamObject,
@@ -64,7 +64,7 @@ def build_char_map_from_dict(
         half_space_width,
         encoding,
         # https://github.com/python/mypy/issues/4374
-        map_dict
+        map_dict,
     )
 
 
@@ -123,7 +123,7 @@ _default_fonts_space_width: Dict[str, int] = {
 
 
 def get_encoding(
-    ft: DictionaryObject
+    ft: DictionaryObject,
 ) -> Tuple[Union[str, Dict[int, str]], Dict[Any, Any]]:
     encoding = _parse_encoding(ft)
     map_dict, int_entry = _parse_to_unicode(ft)
@@ -140,9 +140,7 @@ def get_encoding(
     return encoding, map_dict
 
 
-def _parse_encoding(
-    ft: DictionaryObject
-) -> Union[str, Dict[int, str]]:
+def _parse_encoding(ft: DictionaryObject) -> Union[str, Dict[int, str]]:
     encoding: Union[str, List[str], Dict[int, str]] = []
     if "/Encoding" not in ft:
         if "/BaseFont" in ft and cast(str, ft["/BaseFont"]) in charset_encoding:
@@ -197,9 +195,7 @@ def _parse_encoding(
     return encoding
 
 
-def _parse_to_unicode(
-    ft: DictionaryObject
-) -> Tuple[Dict[Any, Any], List[int]]:
+def _parse_to_unicode(ft: DictionaryObject) -> Tuple[Dict[Any, Any], List[int]]:
     # will store all translation code
     # and map_dict[-1] we will have the number of bytes to convert
     map_dict: Dict[Any, Any] = {}
@@ -214,9 +210,9 @@ def _parse_to_unicode(
             return {}, []
     process_rg: bool = False
     process_char: bool = False
-    multiline_rg: Union[
-        None, Tuple[int, int]
-    ] = None  # tuple = (current_char, remaining size) ; cf #1285 for example of file
+    multiline_rg: Union[None, Tuple[int, int]] = (
+        None  # tuple = (current_char, remaining size) ; cf #1285 for example of file
+    )
     cm = prepare_cm(ft)
     for line in cm.split(b"\n"):
         process_rg, process_char, multiline_rg = process_cm_line(
@@ -236,9 +232,13 @@ def get_actual_str_key(
 ) -> str:
     key_dict = {}
     if isinstance(encoding, dict):
-        key_dict = {value: chr(key) for key, value in encoding.items() if value == value_char}
+        key_dict = {
+            value: chr(key) for key, value in encoding.items() if value == value_char
+        }
     else:
-        key_dict = {value: key for key, value in map_dict.items() if value == value_char}
+        key_dict = {
+            value: key for key, value in map_dict.items() if value == value_char
+        }
     key_char = key_dict.get(value_char, value_char)
     return key_char
 
@@ -396,7 +396,9 @@ def build_font_width_map(
     st: int = 0
     en: int = 0
     try:
-        default_font_width = _default_fonts_space_width[cast(str, ft["/BaseFont"].get_object)] * 2.0
+        default_font_width = (
+            _default_fonts_space_width[cast(str, ft["/BaseFont"].get_object)] * 2.0
+        )
     except KeyError:
         pass
     if "/DescendantFonts" in ft:  # ft["/Subtype"].startswith("/CIDFontType"):
@@ -439,7 +441,9 @@ def build_font_width_map(
         if "/FontDescriptor" in ft and "/MissingWidth" in cast(
             DictionaryObject, ft["/FontDescriptor"]
         ):
-            font_width_map["default"] = ft["/FontDescriptor"]["/MissingWidth"].get_object()  # type: ignore
+            font_width_map["default"] = ft["/FontDescriptor"][
+                "/MissingWidth"
+            ].get_object()  # type: ignore
         else:
             # will consider width of char as avg(width)
             m = 0
@@ -465,9 +469,7 @@ def build_font_width_map(
     return font_width_map
 
 
-def compute_space_width(
-    font_width_map: Dict[Any, float], space_char: str
-) -> float:
+def compute_space_width(font_width_map: Dict[Any, float], space_char: str) -> float:
     try:
         sp_width = font_width_map[space_char]
         if sp_width == 0:
@@ -480,17 +482,12 @@ def compute_space_width(
     return sp_width
 
 
-def compute_font_width(
-    font_width_map: Dict[Any, float],
-    char: str
-) -> float:
+def compute_font_width(font_width_map: Dict[Any, float], char: str) -> float:
     char_width: float = 0.0
     try:
         char_width = font_width_map[char]
     except KeyError:
-        char_width = (
-            font_width_map["default"]
-        )
+        char_width = font_width_map["default"]
 
     return char_width
 

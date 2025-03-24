@@ -2,11 +2,18 @@ import posixpath
 import re
 import urllib.parse
 
-from .message_logging import log
-from .resources import (
-    EXTS_OF_MIMETYPE, combine_image_tiles, convert_jxr_to_jpeg_or_png, convert_pdf_to_jpeg, font_file_ext,
-    image_file_ext, RESOURCE_TYPE_OF_EXT, SYMBOL_FORMATS)
-from .utilities import (root_filename, urlrelpath)
+from message_logging import log
+from resources import (
+    EXTS_OF_MIMETYPE,
+    combine_image_tiles,
+    convert_jxr_to_jpeg_or_png,
+    convert_pdf_to_jpeg,
+    font_file_ext,
+    image_file_ext,
+    RESOURCE_TYPE_OF_EXT,
+    SYMBOL_FORMATS,
+)
+from utilities import root_filename, urlrelpath
 
 
 __license__ = "GPL v3"
@@ -41,7 +48,10 @@ class KFX_EPUB_Resources(object):
 
         int_resource_name = resource.pop("$175", "")
         if int_resource_name != resource_name:
-            log.error("Name of resource %s is incorrect: %s" % (resource_name, int_resource_name))
+            log.error(
+                "Name of resource %s is incorrect: %s"
+                % (resource_name, int_resource_name)
+            )
 
         resource_format = resource.pop("$161", None)
 
@@ -64,13 +74,25 @@ class KFX_EPUB_Resources(object):
                     tiles_raw_media.append(self.locate_raw_media(tile_location))
 
             raw_media, resource_format = combine_image_tiles(
-                resource_name, resource_height, resource_width, resource_format, tile_height, tile_width, tile_padding,
-                yj_tiles, tiles_raw_media, ignore_variants)
+                resource_name,
+                resource_height,
+                resource_width,
+                resource_format,
+                tile_height,
+                tile_width,
+                tile_padding,
+                yj_tiles,
+                tiles_raw_media,
+                ignore_variants,
+            )
         else:
             location = resource.pop("$165")
             search_path = resource.pop("$166", location)
             if search_path != location:
-                log.error("Image resource %s has location %s != search_path %s" % (resource_name, location, search_path))
+                log.error(
+                    "Image resource %s has location %s != search_path %s"
+                    % (resource_name, location, search_path)
+                )
 
             raw_media = self.locate_raw_media(location)
 
@@ -81,7 +103,10 @@ class KFX_EPUB_Resources(object):
             extension = "." + SYMBOL_FORMATS[resource_format]
         else:
             if resource_format is not None:
-                log.error("Resource %s has unknown format: %s" % (resource_name, resource_format))
+                log.error(
+                    "Resource %s has unknown format: %s"
+                    % (resource_name, resource_format)
+                )
 
             extension = ".bin"
 
@@ -94,11 +119,15 @@ class KFX_EPUB_Resources(object):
                 else:
                     extension = EXTS_OF_MIMETYPE[mime][0]
         elif mime is not None:
-            log.error("Resource %s has unknown mime type: %s" % (resource_name, repr(mime)))
+            log.error(
+                "Resource %s has unknown mime type: %s" % (resource_name, repr(mime))
+            )
 
         location_fn = location
 
-        location_fn = resource.pop("yj.conversion.source_resource_filename", location_fn)
+        location_fn = resource.pop(
+            "yj.conversion.source_resource_filename", location_fn
+        )
         location_fn = resource.pop("yj.authoring.source_file_name", location_fn)
 
         if (extension == ".pobject" or extension == ".bin") and "." in location_fn:
@@ -121,7 +150,9 @@ class KFX_EPUB_Resources(object):
             self.process_external_resource(resource.pop("$214"), save=False)
 
         if FIX_JPEG_XR and (resource_format == "$548") and (raw_media is not None):
-            raw_media, resource_format = convert_jxr_to_jpeg_or_png(raw_media, location_fn)
+            raw_media, resource_format = convert_jxr_to_jpeg_or_png(
+                raw_media, location_fn
+            )
             extension = "." + SYMBOL_FORMATS[resource_format]
             location_fn = location_fn.rpartition(".")[0] + extension
 
@@ -140,33 +171,65 @@ class KFX_EPUB_Resources(object):
             margin_bottom = resource.pop("$49", margin)
 
             if REPORT_PDF_MARGINS:
-                log.info("resource %s, pdf page %d, width=%d pt, height=%d pt, margins=%s" % (
-                    resource_name, page_num, resource_width, resource_height,
-                    repr((margin_left, margin_top, margin_right, margin_bottom))))
+                log.info(
+                    "resource %s, pdf page %d, width=%d pt, height=%d pt, margins=%s"
+                    % (
+                        resource_name,
+                        page_num,
+                        resource_width,
+                        resource_height,
+                        repr((margin_left, margin_top, margin_right, margin_bottom)),
+                    )
+                )
 
             if FIX_PDF:
                 try:
-                    jpeg_data = convert_pdf_to_jpeg(raw_media, page_num, reported_errors=self.reported_pdf_errors)
+                    jpeg_data = convert_pdf_to_jpeg(
+                        raw_media, page_num, reported_errors=self.reported_pdf_errors
+                    )
                 except Exception as e:
-                    log.error("Exception during conversion of PDF \"%s\" page %d to JPEG: %s" % (location_fn, page_num, repr(e)))
+                    log.error(
+                        'Exception during conversion of PDF "%s" page %d to JPEG: %s'
+                        % (location_fn, page_num, repr(e))
+                    )
                 else:
                     raw_media = jpeg_data
                     extension = ".jpg"
                     location_fn = location_fn.rpartition(".")[0] + extension
 
-        filename = self.resource_location_filename(location_fn, suffix, self.IMAGE_FILEPATH)
+        filename = self.resource_location_filename(
+            location_fn, suffix, self.IMAGE_FILEPATH
+        )
 
         if not ignore_variants:
             for rr in resource.pop("$635", []):
                 variant = self.get_external_resource(rr, ignore_variants=True)
 
-                if (USE_HIGHEST_RESOLUTION_IMAGE_VARIANT and variant is not None and
-                        variant.width > resource_width and variant.height > resource_height):
+                if (
+                    USE_HIGHEST_RESOLUTION_IMAGE_VARIANT
+                    and variant is not None
+                    and variant.width > resource_width
+                    and variant.height > resource_height
+                ):
                     if self.DEBUG:
-                        log.info("Replacing image %s (%dx%d) with variant %s (%dx%d)" % (
-                                filename, resource_width, resource_height, variant.filename, variant.width, variant.height))
+                        log.info(
+                            "Replacing image %s (%dx%d) with variant %s (%dx%d)"
+                            % (
+                                filename,
+                                resource_width,
+                                resource_height,
+                                variant.filename,
+                                variant.width,
+                                variant.height,
+                            )
+                        )
 
-                    raw_media, filename, resource_width, resource_height = variant.raw_media, variant.filename, variant.width, variant.height
+                    raw_media, filename, resource_width, resource_height = (
+                        variant.raw_media,
+                        variant.filename,
+                        variant.width,
+                        variant.height,
+                    )
 
         if "$564" in resource:
             filename += "#page=%d" % (resource.pop("$564") + 1)
@@ -174,19 +237,38 @@ class KFX_EPUB_Resources(object):
         self.check_empty(resource, "resource %s" % resource_name)
 
         resource_obj = self.resource_cache[resource_name] = Obj(
-                    raw_media=raw_media, filename=filename, extension=extension, format=resource_format, mime=mime, location=location,
-                    width=resource_width, height=resource_height, referred_resources=referred_resources, manifest_entry=None)
+            raw_media=raw_media,
+            filename=filename,
+            extension=extension,
+            format=resource_format,
+            mime=mime,
+            location=location,
+            width=resource_width,
+            height=resource_height,
+            referred_resources=referred_resources,
+            manifest_entry=None,
+        )
 
         return resource_obj
 
-    def process_external_resource(self, resource_name, save=True, process_referred=False, save_referred=False,
-                                  is_plugin=False, is_referred=False):
-
+    def process_external_resource(
+        self,
+        resource_name,
+        save=True,
+        process_referred=False,
+        save_referred=False,
+        is_plugin=False,
+        is_referred=False,
+    ):
         resource_obj = self.get_external_resource(resource_name)
 
         if save and self.save_resources and resource_obj.raw_media is not None:
             if resource_obj.manifest_entry is None:
-                filename = root_filename(resource_obj.location) if is_referred else resource_obj.filename
+                filename = (
+                    root_filename(resource_obj.location)
+                    if is_referred
+                    else resource_obj.filename
+                )
                 filename, fragment_sep, fragment = filename.partition("#")
                 base_filename = filename
                 cnt = 0
@@ -194,22 +276,31 @@ class KFX_EPUB_Resources(object):
                     if self.oebps_files[filename].binary_data == resource_obj.raw_media:
                         manifest_entry = self.manifest_files.get(filename, None)
                         if manifest_entry is None:
-                            raise Exception("Referenced file not in manifest: %s" % filename)
+                            raise Exception(
+                                "Referenced file not in manifest: %s" % filename
+                            )
 
                         resource_obj.manifest_entry = manifest_entry
                         self.reference_resource(manifest_entry)
                         break
 
                     if is_referred and cnt == 0:
-                        log.error("Multiple referred resources exist with location %s" % resource_obj.location)
+                        log.error(
+                            "Multiple referred resources exist with location %s"
+                            % resource_obj.location
+                        )
 
                     fn, ext = posixpath.splitext(base_filename)
                     filename = "%s_%d%s" % (fn, cnt, ext)
                     cnt += 1
                 else:
                     resource_obj.manifest_entry = self.manifest_resource(
-                            filename, data=resource_obj.raw_media, height=resource_obj.height, width=resource_obj.width,
-                            mimetype=resource_obj.mime if is_referred else None)
+                        filename,
+                        data=resource_obj.raw_media,
+                        height=resource_obj.height,
+                        width=resource_obj.width,
+                        mimetype=resource_obj.mime if is_referred else None,
+                    )
 
                 resource_obj.filename = filename + fragment_sep + fragment
                 resource_obj.is_saved = True
@@ -223,9 +314,15 @@ class KFX_EPUB_Resources(object):
         if is_referred:
             pass
         elif is_plugin and resource_obj.format not in ["$287", "$284"]:
-            log.error("Unexpected plugin resource format %s for %s" % (resource_obj.format, resource_name))
+            log.error(
+                "Unexpected plugin resource format %s for %s"
+                % (resource_obj.format, resource_name)
+            )
         elif (not is_plugin) and resource_obj.extension == ".pobject":
-            log.error("Unexpected non-plugin resource format %s for %s" % (resource_obj.extension, resource_name))
+            log.error(
+                "Unexpected non-plugin resource format %s for %s"
+                % (resource_obj.extension, resource_name)
+            )
 
         return resource_obj
 
@@ -241,8 +338,9 @@ class KFX_EPUB_Resources(object):
 
         return raw_media
 
-    def resource_location_filename(self, location, suffix, filepath_template, is_symbol=True):
-
+    def resource_location_filename(
+        self, location, suffix, filepath_template, is_symbol=True
+    ):
         if (location, suffix) in self.location_filenames:
             return self.location_filenames[(location, suffix)]
 
@@ -265,7 +363,7 @@ class KFX_EPUB_Resources(object):
 
         for prefix in ["resource/", filepath_template[1:].partition("/")[0] + "/"]:
             if path.startswith(prefix):
-                path = path[len(prefix):]
+                path = path[len(prefix) :]
 
         safe_filename = filepath_template % ("%s%s%s%s" % (path, root, suffix, ext))
 
@@ -273,14 +371,15 @@ class KFX_EPUB_Resources(object):
         oebps_files_lower = set([n.lower() for n in self.oebps_files.keys()])
 
         while safe_filename.lower() in oebps_files_lower:
-            safe_filename = filepath_template % ("%s%s%s-%d%s" % (path, root, suffix, unique_count, ext))
+            safe_filename = filepath_template % (
+                "%s%s%s-%d%s" % (path, root, suffix, unique_count, ext)
+            )
             unique_count += 1
 
         self.location_filenames[(location, suffix)] = safe_filename
         return safe_filename
 
     def process_fonts(self):
-
         fonts = self.book_data.pop("$262", {})
         raw_fonts = self.book_data.pop("$418", {})
         raw_media = self.book_data.get("$417", {})
@@ -290,25 +389,35 @@ class KFX_EPUB_Resources(object):
             location = font.pop("$165")
 
             if location in used_fonts:
-                font["src"] = self.css_url(urlrelpath(used_fonts[location], ref_from=self.STYLES_CSS_FILEPATH))
-            elif location in raw_fonts or (self.book.is_kpf_prepub and location in raw_media):
+                font["src"] = self.css_url(
+                    urlrelpath(used_fonts[location], ref_from=self.STYLES_CSS_FILEPATH)
+                )
+            elif location in raw_fonts or (
+                self.book.is_kpf_prepub and location in raw_media
+            ):
                 raw_font = raw_fonts.pop(location, None) or raw_media.pop(location)
 
                 filename = location
                 if "." not in filename:
                     ext = font_file_ext(raw_font)
                     if not ext:
-                        log.error("Font %s has unknown type (possibly obfuscated)" % filename)
+                        log.error(
+                            "Font %s has unknown type (possibly obfuscated)" % filename
+                        )
                         ext = ".font"
 
                     filename = "%s%s" % (filename, ext)
 
-                filename = self.resource_location_filename(filename, "", self.FONT_FILEPATH)
+                filename = self.resource_location_filename(
+                    filename, "", self.FONT_FILEPATH
+                )
 
                 if filename not in self.oebps_files:
                     self.manifest_resource(filename, data=raw_font)
 
-                font["src"] = self.css_url(urlrelpath(filename, ref_from=self.STYLES_CSS_FILEPATH))
+                font["src"] = self.css_url(
+                    urlrelpath(filename, ref_from=self.STYLES_CSS_FILEPATH)
+                )
                 used_fonts[location] = filename
             else:
                 log.error("Missing bcRawFont %s" % location)
@@ -325,20 +434,35 @@ class KFX_EPUB_Resources(object):
             filename = self.resource_location_filename(location, "", self.FONT_FILEPATH)
             self.manifest_resource(filename, data=raw_fonts[location])
 
-    def uri_reference(self, uri, save=True, save_referred=None, manifest_external_refs=False):
+    def uri_reference(
+        self, uri, save=True, save_referred=None, manifest_external_refs=False
+    ):
         purl = urllib.parse.urlparse(uri)
 
         if purl.scheme == "kfx":
             return self.process_external_resource(
-                urllib.parse.unquote(purl.netloc + purl.path), is_plugin=None, save=save, save_referred=save_referred).filename
+                urllib.parse.unquote(purl.netloc + purl.path),
+                is_plugin=None,
+                save=save,
+                save_referred=save_referred,
+            ).filename
 
         if purl.scheme in ["navto", "navt"]:
-            anchor = self.navto_anchor.get((urllib.parse.unquote(purl.netloc), float(purl.fragment) if purl.fragment else 0.0))
+            anchor = self.navto_anchor.get(
+                (
+                    urllib.parse.unquote(purl.netloc),
+                    float(purl.fragment) if purl.fragment else 0.0,
+                )
+            )
             if anchor is not None:
                 return self.anchor_as_uri(anchor)
             else:
                 log.error("Failed to locate anchor for %s" % uri)
-                return "/MISSING_NAVTO_%s%s%s" % (urllib.parse.unquote(purl.netloc), "_" if purl.fragment else "", purl.fragment)
+                return "/MISSING_NAVTO_%s%s%s" % (
+                    urllib.parse.unquote(purl.netloc),
+                    "_" if purl.fragment else "",
+                    purl.fragment,
+                )
 
         if purl.scheme in ["http", "https"]:
             if manifest_external_refs:

@@ -4,13 +4,24 @@ import re
 import uuid
 
 
-from .ion import (
-    ion_type, IonAnnotation, IonFloat, IonList, IonSExp, IonString, IonStruct, IonSymbol, IS, isstring, unannotated)
-from .message_logging import log
-from .resources import (convert_pdf_to_jpeg, font_file_ext, FORMAT_SYMBOLS, image_size)
-from .yj_container import (YJFragment, YJFragmentKey)
-from .yj_structure import (EID_REFERENCES, KFX_COVER_RESOURCE, MAX_CONTENT_FRAGMENT_SIZE)
-from .yj_versions import (GENERIC_CREATOR_VERSIONS, is_known_aux_metadata)
+from ion import (
+    ion_type,
+    IonAnnotation,
+    IonFloat,
+    IonList,
+    IonSExp,
+    IonString,
+    IonStruct,
+    IonSymbol,
+    IS,
+    isstring,
+    unannotated,
+)
+from message_logging import log
+from resources import convert_pdf_to_jpeg, font_file_ext, FORMAT_SYMBOLS, image_size
+from yj_container import YJFragment, YJFragmentKey
+from yj_structure import EID_REFERENCES, KFX_COVER_RESOURCE, MAX_CONTENT_FRAGMENT_SIZE
+from yj_versions import GENERIC_CREATOR_VERSIONS, is_known_aux_metadata
 
 
 __license__ = "GPL v3"
@@ -25,7 +36,7 @@ VERIFY_ORIGINAL_POSITION_MAP = False
 SHORT_TOOL_NAME = {
     "Kindle Previewer 3": "KPR",
     "Kindle Create": "KC",
-    }
+}
 
 
 class KpfBook(object):
@@ -45,7 +56,13 @@ class KpfBook(object):
             fixed_fid = fix_resource_location(orig_fid)
             if fixed_fid != orig_fid:
                 self.fragments.remove(fragment)
-                self.fragments.append(YJFragment(ftype="$417", fid=self.create_local_symbol(fixed_fid), value=fragment.value))
+                self.fragments.append(
+                    YJFragment(
+                        ftype="$417",
+                        fid=self.create_local_symbol(fixed_fid),
+                        value=fragment.value,
+                    )
+                )
 
         for fragment in list(self.fragments):
             if fragment.ftype != "$270":
@@ -63,43 +80,77 @@ class KpfBook(object):
         added_cover_eid = None
         fragment = self.fragments.get("$490")
         if fragment is not None:
-            for category in ["kindle_audit_metadata", "kindle_capability_metadata", "kindle_title_metadata"]:
+            for category in [
+                "kindle_audit_metadata",
+                "kindle_capability_metadata",
+                "kindle_title_metadata",
+            ]:
                 for cm in fragment.value["$491"]:
                     if cm["$495"] == category:
                         break
                 else:
-                    fragment.value["$491"].append(IonStruct(IS("$495"), category, IS("$258"), []))
+                    fragment.value["$491"].append(
+                        IonStruct(IS("$495"), category, IS("$258"), [])
+                    )
 
             for cm in fragment.value["$491"]:
                 if cm["$495"] == "kindle_audit_metadata":
-                    if (((self.get_metadata_value("file_creator", category="kindle_audit_metadata"),
-                            self.get_metadata_value("creator_version", category="kindle_audit_metadata")) in GENERIC_CREATOR_VERSIONS) and
-                            self.kpf_container.kcb_data):
+                    if (
+                        (
+                            self.get_metadata_value(
+                                "file_creator", category="kindle_audit_metadata"
+                            ),
+                            self.get_metadata_value(
+                                "creator_version", category="kindle_audit_metadata"
+                            ),
+                        )
+                        in GENERIC_CREATOR_VERSIONS
+                    ) and self.kpf_container.kcb_data:
                         kcb_metadata = self.kpf_container.kcb_data.get("metadata", {})
                         tool_name = kcb_metadata.get("tool_name")
                         tool_version = kcb_metadata.get("tool_version")
 
-                        if tool_name and tool_version and not tool_version.startswith("unknown"):
+                        if (
+                            tool_name
+                            and tool_version
+                            and not tool_version.startswith("unknown")
+                        ):
                             for metadata in cm["$258"]:
                                 if metadata["$492"] == "file_creator":
-                                    metadata["$307"] = SHORT_TOOL_NAME.get(tool_name, tool_name)
+                                    metadata["$307"] = SHORT_TOOL_NAME.get(
+                                        tool_name, tool_name
+                                    )
 
                                 if metadata["$492"] == "creator_version":
                                     metadata["$307"] = tool_version
 
                 elif cm["$495"] == "kindle_title_metadata":
                     if self.get_metadata_value("asset_id") is None:
-                        cm["$258"].append(IonStruct(IS("$492"), "asset_id", IS("$307"), self.create_container_id()))
+                        cm["$258"].append(
+                            IonStruct(
+                                IS("$492"),
+                                "asset_id",
+                                IS("$307"),
+                                self.create_container_id(),
+                            )
+                        )
 
                     if self.get_metadata_value("is_sample") is None:
-                        cm["$258"].append(IonStruct(IS("$492"), "is_sample", IS("$307"), False))
+                        cm["$258"].append(
+                            IonStruct(IS("$492"), "is_sample", IS("$307"), False)
+                        )
 
                     if self.kpf_container.source_epub is not None:
                         if self.kpf_container.source_epub.original_language:
                             for metadata in cm["$258"]:
                                 if metadata["$492"] == "language":
-                                    log.info("Restored original language '%s'" % self.kpf_container.source_epub.original_language)
-                                    metadata["$307"] = self.kpf_container.source_epub.original_language
+                                    log.info(
+                                        "Restored original language '%s'"
+                                        % self.kpf_container.source_epub.original_language
+                                    )
+                                    metadata["$307"] = (
+                                        self.kpf_container.source_epub.original_language
+                                    )
                                     break
 
                         if len(self.kpf_container.source_epub.authors) > 1:
@@ -108,38 +159,90 @@ class KpfBook(object):
                                     cm["$258"].pop(i)
 
                             for author in self.kpf_container.source_epub.authors:
-                                cm["$258"].append(IonStruct(IS("$492"), "author", IS("$307"), author))
+                                cm["$258"].append(
+                                    IonStruct(IS("$492"), "author", IS("$307"), author)
+                                )
 
-                        if self.kpf_container.source_epub.issue_date and self.get_metadata_value("issue_date") is None:
-                            cm["$258"].append(IonStruct(IS("$492"), "issue_date", IS("$307"), self.kpf_container.source_epub.issue_date))
-
-                    if self.get_metadata_value("language", default="").lower().startswith("ja-zh"):
-                        for metadata in cm["$258"]:
-                            if metadata["$492"] == "language":
-                                metadata["$307"] = metadata["$307"][3:].replace("=", "-")
-
-                    if self.get_metadata_value("override_kindle_font") is None:
-                        cm["$258"].append(IonStruct(IS("$492"), "override_kindle_font", IS("$307"), False))
+                        if (
+                            self.kpf_container.source_epub.issue_date
+                            and self.get_metadata_value("issue_date") is None
+                        ):
+                            cm["$258"].append(
+                                IonStruct(
+                                    IS("$492"),
+                                    "issue_date",
+                                    IS("$307"),
+                                    self.kpf_container.source_epub.issue_date,
+                                )
+                            )
 
                     if (
-                            self.get_metadata_value("cover_image") is None and
-                            self.get_metadata_value("yj_fixed_layout", category="kindle_capability_metadata") is not None):
+                        self.get_metadata_value("language", default="")
+                        .lower()
+                        .startswith("ja-zh")
+                    ):
+                        for metadata in cm["$258"]:
+                            if metadata["$492"] == "language":
+                                metadata["$307"] = metadata["$307"][3:].replace(
+                                    "=", "-"
+                                )
+
+                    if self.get_metadata_value("override_kindle_font") is None:
+                        cm["$258"].append(
+                            IonStruct(
+                                IS("$492"), "override_kindle_font", IS("$307"), False
+                            )
+                        )
+
+                    if (
+                        self.get_metadata_value("cover_image") is None
+                        and self.get_metadata_value(
+                            "yj_fixed_layout", category="kindle_capability_metadata"
+                        )
+                        is not None
+                    ):
                         try:
-                            cover_resource_name, added_cover_eid = self.check_cover_section_and_storyline(allow_pdf=True)
+                            cover_resource_name, added_cover_eid = (
+                                self.check_cover_section_and_storyline(allow_pdf=True)
+                            )
                             if cover_resource_name is not None:
-                                cover_resource = self.fragments.get(ftype="$164", fid=cover_resource_name).value
+                                cover_resource = self.fragments.get(
+                                    ftype="$164", fid=cover_resource_name
+                                ).value
                                 if cover_resource[IS("$161")] == "$565":
                                     cover_data = convert_pdf_to_jpeg(
-                                        self.fragments.get(ftype="$417", fid=cover_resource["$165"]).value, 1)
+                                        self.fragments.get(
+                                            ftype="$417", fid=cover_resource["$165"]
+                                        ).value,
+                                        1,
+                                    )
                                     width, height = image_size(cover_data)
 
-                                    cover_resource_name = self.create_local_symbol(KFX_COVER_RESOURCE)
-                                    self.update_image_resource_and_media(cover_resource_name, cover_data, "jpg", width, height)
+                                    cover_resource_name = self.create_local_symbol(
+                                        KFX_COVER_RESOURCE
+                                    )
+                                    self.update_image_resource_and_media(
+                                        cover_resource_name,
+                                        cover_data,
+                                        "jpg",
+                                        width,
+                                        height,
+                                    )
 
-                                cm["$258"].append(IonStruct(IS("$492"), "cover_image", IS("$307"), str(cover_resource_name)))
+                                cm["$258"].append(
+                                    IonStruct(
+                                        IS("$492"),
+                                        "cover_image",
+                                        IS("$307"),
+                                        str(cover_resource_name),
+                                    )
+                                )
                         except Exception as e:
                             added_cover_eid = None
-                            log.warning("The cover could not be set because the page uses an unsupported format: %s" % repr(e))
+                            log.warning(
+                                "The cover could not be set because the page uses an unsupported format: %s"
+                                % repr(e)
+                            )
 
         for fragment in self.fragments.get_all("$262"):
             if fragment.fid != "$262":
@@ -147,27 +250,42 @@ class KpfBook(object):
                 self.fragments.append(YJFragment(ftype="$262", value=fragment.value))
 
             location = fragment.value["$165"]
-            font_data_fragment = self.fragments[YJFragmentKey(ftype="$417", fid=location)]
+            font_data_fragment = self.fragments[
+                YJFragmentKey(ftype="$417", fid=location)
+            ]
             self.fragments.remove(font_data_fragment)
-            self.fragments.append(YJFragment(ftype="$418", fid=self.create_local_symbol(location), value=font_data_fragment.value))
+            self.fragments.append(
+                YJFragment(
+                    ftype="$418",
+                    fid=self.create_local_symbol(location),
+                    value=font_data_fragment.value,
+                )
+            )
 
         for fragment in self.fragments.get_all("$164"):
             fv = fragment.value
-            if (fv.get("$161") == "$287" and "$422" not in fv and
-                    "$423" not in fv and "$167" in fv):
-
+            if (
+                fv.get("$161") == "$287"
+                and "$422" not in fv
+                and "$423" not in fv
+                and "$167" in fv
+            ):
                 referred_resources = fv["$167"]
                 for frag in self.fragments.get_all("$164"):
-                    if (frag.fid in referred_resources and "$422" in frag.value and
-                            "$423" in frag.value):
-
+                    if (
+                        frag.fid in referred_resources
+                        and "$422" in frag.value
+                        and "$423" in frag.value
+                    ):
                         fv[IS("$422")] = frag.value["$422"]
                         fv[IS("$423")] = frag.value["$423"]
                         break
 
             if fv.get("$162") == "":
                 fv.pop("$162")
-                log.warning("Removed empty mime type from external_resource %s" % fv.get("$175"))
+                log.warning(
+                    "Removed empty mime type from external_resource %s" % fv.get("$175")
+                )
 
         cover_image_data = self.get_cover_image_data()
         if cover_image_data is not None:
@@ -177,10 +295,17 @@ class KpfBook(object):
 
         canonical_format = (2, 0) if self.is_illustrated_layout else (1, 0)
 
-        file_creator = self.get_metadata_value("file_creator", category="kindle_audit_metadata", default="")
-        creator_version = self.get_metadata_value("creator_version", category="kindle_audit_metadata", default="")
+        file_creator = self.get_metadata_value(
+            "file_creator", category="kindle_audit_metadata", default=""
+        )
+        creator_version = self.get_metadata_value(
+            "creator_version", category="kindle_audit_metadata", default=""
+        )
 
-        if (file_creator == "KC" or (file_creator == "KTC" and creator_version >= "1.11")) and canonical_format < (2, 0):
+        if (
+            file_creator == "KC"
+            or (file_creator == "KTC" and creator_version >= "1.11")
+        ) and canonical_format < (2, 0):
             canonical_format = (2, 0)
 
         content_features = self.fragments.get("$585")
@@ -195,16 +320,27 @@ class KpfBook(object):
 
         def add_feature(feature, namespace="com.amazon.yjconversion", version=(1, 0)):
             if self.get_feature_value(feature, namespace=namespace) is None:
-                features.append(IonStruct(
-                            IS("$586"), namespace,
-                            IS("$492"), feature,
-                            IS("$589"), IonStruct(IS("version"), IonStruct(
-                                IS("$587"), version[0],
-                                IS("$588"), version[1]))))
+                features.append(
+                    IonStruct(
+                        IS("$586"),
+                        namespace,
+                        IS("$492"),
+                        feature,
+                        IS("$589"),
+                        IonStruct(
+                            IS("version"),
+                            IonStruct(IS("$587"), version[0], IS("$588"), version[1]),
+                        ),
+                    )
+                )
 
         def add_feature_from_metadata(
-                metadata, feature, category="kindle_capability_metadata",
-                namespace="com.amazon.yjconversion", version=(1, 0)):
+            metadata,
+            feature,
+            category="kindle_capability_metadata",
+            namespace="com.amazon.yjconversion",
+            version=(1, 0),
+        ):
             if self.get_metadata_value(metadata, category=category) is not None:
                 add_feature(feature, namespace, version)
 
@@ -215,7 +351,9 @@ class KpfBook(object):
                 add_feature("yj_pdf_support")
                 add_feature_from_metadata("yj_fixed_layout", "yj_fixed_layout")
             else:
-                add_feature_from_metadata("yj_fixed_layout", "yj_non_pdf_fixed_layout", version=(2, 0))
+                add_feature_from_metadata(
+                    "yj_fixed_layout", "yj_non_pdf_fixed_layout", version=(2, 0)
+                )
 
         has_hdv_image = has_tiles = yj_jpg_rst_marker_present = False
         for fragment in self.fragments.get_all("$164"):
@@ -229,7 +367,9 @@ class KpfBook(object):
             if (not yj_jpg_rst_marker_present) and fv.get("$161") == "$285":
                 location = fv.get("$165", None)
                 if location is not None:
-                    raw_media = self.fragments.get(ftype="$417", fid=location, first=True)
+                    raw_media = self.fragments.get(
+                        ftype="$417", fid=location, first=True
+                    )
                     if raw_media is not None:
                         if re.search(b"\xff[\xd0-\xd7]", raw_media.value.tobytes()):
                             yj_jpg_rst_marker_present = True
@@ -278,18 +418,31 @@ class KpfBook(object):
 
                 if add_cover_landmark:
                     if landmark_nav_container is None:
-                        nav_container = IonAnnotation([IS("$391")], IonStruct(
-                                IS("$235"), IS("$236"),
-                                IS("$239"), self.kpf_gen_uuid_symbol(),
-                                IS("$247"), []))
+                        nav_container = IonAnnotation(
+                            [IS("$391")],
+                            IonStruct(
+                                IS("$235"),
+                                IS("$236"),
+                                IS("$239"),
+                                self.kpf_gen_uuid_symbol(),
+                                IS("$247"),
+                                [],
+                            ),
+                        )
                         nav_containers.append(nav_container)
                         landmark_nav_container = unannotated(nav_container)
 
-                    cover_landmark = IonAnnotation([IS("$393")], IonStruct(
-                                IS("$238"), IS("$233"),
-                                IS("$241"), IonStruct(IS("$244"), "cover-nav-unit"),
-                                IS("$246"), IonStruct(
-                                    IS("$155"), added_cover_eid, IS("$143"), 0)))
+                    cover_landmark = IonAnnotation(
+                        [IS("$393")],
+                        IonStruct(
+                            IS("$238"),
+                            IS("$233"),
+                            IS("$241"),
+                            IonStruct(IS("$244"), "cover-nav-unit"),
+                            IS("$246"),
+                            IonStruct(IS("$155"), added_cover_eid, IS("$143"), 0),
+                        ),
+                    )
                     landmark_nav_container["$247"].append(cover_landmark)
 
         for book_navigation in self.fragments["$389"].value:
@@ -309,9 +462,20 @@ class KpfBook(object):
                         if label.startswith("page_list_entry:"):
                             seq, sep, text = label.partition(":")[2].partition(":")
 
-                            pages.append((int(seq), IonAnnotation([IS("$393")], IonStruct(
-                                IS("$241"), IonStruct(IS("$244"), text),
-                                IS("$246"), entry["$246"]))))
+                            pages.append(
+                                (
+                                    int(seq),
+                                    IonAnnotation(
+                                        [IS("$393")],
+                                        IonStruct(
+                                            IS("$241"),
+                                            IonStruct(IS("$244"), text),
+                                            IS("$246"),
+                                            entry["$246"],
+                                        ),
+                                    ),
+                                )
+                            )
 
                             entries.pop(i)
                             i -= 1
@@ -322,12 +486,23 @@ class KpfBook(object):
                     has_page_list = True
 
             if pages and not has_page_list:
-                log.info("Transformed %d KFX landmark entries into a page list" % len(pages))
+                log.info(
+                    "Transformed %d KFX landmark entries into a page list" % len(pages)
+                )
 
-                nav_containers.append(IonAnnotation([IS("$391")], IonStruct(
-                        IS("$235"), IS("$237"),
-                        IS("$239"), self.kpf_gen_uuid_symbol(),
-                        IS("$247"), [p[1] for p in sorted(pages)])))
+                nav_containers.append(
+                    IonAnnotation(
+                        [IS("$391")],
+                        IonStruct(
+                            IS("$235"),
+                            IS("$237"),
+                            IS("$239"),
+                            self.kpf_gen_uuid_symbol(),
+                            IS("$247"),
+                            [p[1] for p in sorted(pages)],
+                        ),
+                    )
+                )
 
         if self.is_dictionary:
             self.is_kpf_prepub = False
@@ -337,13 +512,21 @@ class KpfBook(object):
                 content_fragment_data = {}
                 for section_name in self.ordered_section_names():
                     for story_name in self.extract_section_story_names(section_name):
-                        self.kpf_collect_content_strings(story_name, content_fragment_data)
+                        self.kpf_collect_content_strings(
+                            story_name, content_fragment_data
+                        )
 
                 for content_name, content_list in content_fragment_data.items():
                     has_text_block = True
-                    self.fragments.append(YJFragment(
-                            ftype="$145", fid=content_name,
-                            value=IonStruct(IS("name"), content_name, IS("$146"), content_list)))
+                    self.fragments.append(
+                        YJFragment(
+                            ftype="$145",
+                            fid=content_name,
+                            value=IonStruct(
+                                IS("name"), content_name, IS("$146"), content_list
+                            ),
+                        )
+                    )
             else:
                 log.warning("Content fragment creation is disabled")
 
@@ -361,12 +544,16 @@ class KpfBook(object):
             has_spim, has_position_id_offset = self.create_position_map(map_pos_info)
 
             has_yj_location_pid_map = False
-            if self.fragments.get("$550") is None and not (self.is_print_replica or self.is_magazine):
+            if self.fragments.get("$550") is None and not (
+                self.is_print_replica or self.is_magazine
+            ):
                 loc_info = self.generate_approximate_locations(map_pos_info)
                 has_yj_location_pid_map = self.create_location_map(loc_info)
 
             if self.fragments.get("$395") is None:
-                self.fragments.append(YJFragment(ftype="$395", value=IonStruct(IS("$247"), [])))
+                self.fragments.append(
+                    YJFragment(ftype="$395", value=IonStruct(IS("$247"), []))
+                )
 
             for fragment in self.fragments.get_all("$593"):
                 self.fragments.remove(fragment)
@@ -374,10 +561,14 @@ class KpfBook(object):
             fc = []
 
             if has_spim or has_yj_location_pid_map:
-                fc.append(IonStruct(IS("$492"), "kfxgen.positionMaps", IS("version"), 2))
+                fc.append(
+                    IonStruct(IS("$492"), "kfxgen.positionMaps", IS("version"), 2)
+                )
 
             if has_position_id_offset:
-                fc.append(IonStruct(IS("$492"), "kfxgen.pidMapWithOffset", IS("version"), 1))
+                fc.append(
+                    IonStruct(IS("$492"), "kfxgen.pidMapWithOffset", IS("version"), 1)
+                )
 
             if has_text_block:
                 fc.append(IonStruct(IS("$492"), "kfxgen.textBlock", IS("version"), 1))
@@ -413,13 +604,23 @@ class KpfBook(object):
                 new_list = []
                 for i, fc in enumerate(data):
                     if container == "$146" and isinstance(fc, IonSymbol):
-                        structure = self.fragments.get(YJFragmentKey(ftype="$608", fid=fc))
+                        structure = self.fragments.get(
+                            YJFragmentKey(ftype="$608", fid=fc)
+                        )
                         if structure is not None:
                             fc = copy.deepcopy(structure.value)
 
-                    if ((not self.is_dictionary) and (
-                            (fragment.ftype == "$609" and container == "contains_list_" and i == 1) or
-                            (fragment.ftype == "$538" and container == "yj.semantics.containers_with_semantics"))):
+                    if (not self.is_dictionary) and (
+                        (
+                            fragment.ftype == "$609"
+                            and container == "contains_list_"
+                            and i == 1
+                        )
+                        or (
+                            fragment.ftype == "$538"
+                            and container == "yj.semantics.containers_with_semantics"
+                        )
+                    ):
                         fc = self.symbol_id(fc)
 
                     if container == "$181":
@@ -452,21 +653,34 @@ class KpfBook(object):
                         if fk == "$239":
                             self.create_local_symbol(str(fv))
 
-                        if fk in EID_REFERENCES and fragment.ftype != "$597" and isinstance(fv, IonSymbol):
+                        if (
+                            fk in EID_REFERENCES
+                            and fragment.ftype != "$597"
+                            and isinstance(fv, IonSymbol)
+                        ):
                             if fk == "$598":
                                 fk = IS("$155")
 
-                            if fragment.ftype != "$610" or self.fragments.get(ftype="$260", fid=fv) is None:
+                            if (
+                                fragment.ftype != "$610"
+                                or self.fragments.get(ftype="$260", fid=fv) is None
+                            ):
                                 fv = self.symbol_id(fv)
 
                     if fk == "$161" and isstring(fv):
                         fv = IS(FORMAT_SYMBOLS[fv])
 
-                    if (not self.retain_yj_locals) and re.match(r"^yj\.(authoring|conversion|print|semantics)\.", fk):
+                    if (not self.retain_yj_locals) and re.match(
+                        r"^yj\.(authoring|conversion|print|semantics)\.", fk
+                    ):
                         continue
 
-                    if (self.is_illustrated_layout and fragment.ftype == "$260" and container == "$141" and
-                            fk in ["$67", "$66"]):
+                    if (
+                        self.is_illustrated_layout
+                        and fragment.ftype == "$260"
+                        and container == "$141"
+                        and fk in ["$67", "$66"]
+                    ):
                         continue
 
                     if fk == "$165":
@@ -476,7 +690,9 @@ class KpfBook(object):
                         fv = fix_resource_location(fv)
 
                     if fragment.ftype == "$157" and fk == "$173" and fv != fragment.fid:
-                        log.info("Fixing incorrect name %s of style %s" % (fv, fragment.fid))
+                        log.info(
+                            "Fixing incorrect name %s of style %s" % (fv, fragment.fid)
+                        )
                         fv = fragment.fid
 
                     new_struct[_fix_ion_data(fk, None)] = fv
@@ -495,7 +711,6 @@ class KpfBook(object):
         fragment.value = _fix_ion_data(fragment.value, None)
 
     def kpf_collect_content_strings(self, story_name, content_fragment_data):
-
         def _kpf_collect_content_strings(data):
             data_type = ion_type(data)
 
@@ -509,8 +724,13 @@ class KpfBook(object):
             elif data_type is IonStruct:
                 for fk, fv in data.items():
                     if fk == "$145" and isstring(fv):
-                        if len(content_fragment_data) == 0 or self._content_fragment_size >= MAX_CONTENT_FRAGMENT_SIZE:
-                            self._content_fragment_name = self.create_local_symbol("content_%d" % (len(content_fragment_data) + 1))
+                        if (
+                            len(content_fragment_data) == 0
+                            or self._content_fragment_size >= MAX_CONTENT_FRAGMENT_SIZE
+                        ):
+                            self._content_fragment_name = self.create_local_symbol(
+                                "content_%d" % (len(content_fragment_data) + 1)
+                            )
                             content_fragment_data[self._content_fragment_name] = []
                             self._content_fragment_size = 0
 
@@ -518,12 +738,17 @@ class KpfBook(object):
                         self._content_fragment_size += len(fv.encode("utf8"))
 
                         data[fk] = IonStruct(
-                                IS("name"), self._content_fragment_name,
-                                IS("$403"), len(content_fragment_data[self._content_fragment_name]) - 1)
+                            IS("name"),
+                            self._content_fragment_name,
+                            IS("$403"),
+                            len(content_fragment_data[self._content_fragment_name]) - 1,
+                        )
                     else:
                         _kpf_collect_content_strings(fv)
 
-        _kpf_collect_content_strings(self.fragments[YJFragmentKey(ftype="$259", fid=story_name)].value)
+        _kpf_collect_content_strings(
+            self.fragments[YJFragmentKey(ftype="$259", fid=story_name)].value
+        )
 
     def symbol_id(self, symbol):
         if symbol is None or isinstance(symbol, int):

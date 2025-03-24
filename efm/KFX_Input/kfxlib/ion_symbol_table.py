@@ -1,9 +1,9 @@
 import re
 
-from .ion import (ion_type, isstring, IonAnnotation, IonStruct, IonSymbol, IS, unannotated)
-from .message_logging import log
-from .utilities import (list_symbols, quote_name, type_name)
-from .yj_symbol_catalog import (IonSharedSymbolTable, SYSTEM_SYMBOL_TABLE, YJ_SYMBOLS)
+from ion import ion_type, isstring, IonAnnotation, IonStruct, IonSymbol, IS, unannotated
+from message_logging import log
+from utilities import list_symbols, quote_name, type_name
+from yj_symbol_catalog import IonSharedSymbolTable, SYSTEM_SYMBOL_TABLE, YJ_SYMBOLS
 
 
 __license__ = "GPL v3"
@@ -29,21 +29,32 @@ class SymbolTableCatalog(object):
         self.add_shared_symbol_table(YJ_SYMBOLS)
 
     def add_shared_symbol_table(self, shared_symbol_table):
-        self.shared_symbol_tables[(shared_symbol_table.name, shared_symbol_table.version)] = shared_symbol_table
+        self.shared_symbol_tables[
+            (shared_symbol_table.name, shared_symbol_table.version)
+        ] = shared_symbol_table
 
-        if (shared_symbol_table.name not in self.shared_symbol_tables or
-                shared_symbol_table.version >= self.shared_symbol_tables[(shared_symbol_table.name, None)].version):
-            self.shared_symbol_tables[(shared_symbol_table.name, None)] = shared_symbol_table
+        if (
+            shared_symbol_table.name not in self.shared_symbol_tables
+            or shared_symbol_table.version
+            >= self.shared_symbol_tables[(shared_symbol_table.name, None)].version
+        ):
+            self.shared_symbol_tables[(shared_symbol_table.name, None)] = (
+                shared_symbol_table
+            )
 
     def create_shared_symbol_table(self, symbol_table_data):
-
-        self.add_shared_symbol_table(IonSharedSymbolTable(
+        self.add_shared_symbol_table(
+            IonSharedSymbolTable(
                 symbol_table_data["name"],
                 symbol_table_data["version"] if "version" in symbol_table_data else 1,
-                symbol_table_data["symbols"] if "symbols" in symbol_table_data else []))
+                symbol_table_data["symbols"] if "symbols" in symbol_table_data else [],
+            )
+        )
 
     def get_shared_symbol_table(self, name, version=None):
-        return self.shared_symbol_tables.get((name, version)) or self.shared_symbol_tables.get((name, None))
+        return self.shared_symbol_tables.get(
+            (name, version)
+        ) or self.shared_symbol_tables.get((name, None))
 
 
 global_catalog = SymbolTableCatalog(add_global_shared_symbol_tables=True)
@@ -57,7 +68,13 @@ class SymbolTableImport(object):
 
 
 class LocalSymbolTable(object):
-    def __init__(self, initial_import=None, context="", ignore_undef=False, catalog=global_catalog):
+    def __init__(
+        self,
+        initial_import=None,
+        context="",
+        ignore_undef=False,
+        catalog=global_catalog,
+    ):
         self.context = context
         self.ignore_undef = ignore_undef
         self.catalog = catalog
@@ -95,13 +112,18 @@ class LocalSymbolTable(object):
 
                 for sym_import in imports:
                     self.import_shared_symbol_table(
-                            sym_import["name"],
-                            sym_import.get("version") or 1,
-                            sym_import.get("max_id"))
+                        sym_import["name"],
+                        sym_import.get("version") or 1,
+                        sym_import.get("max_id"),
+                    )
         else:
             self.clear()
 
-        symbol_list = unannotated(symbol_table_data["symbols"]) if "symbols" in symbol_table_data else []
+        symbol_list = (
+            unannotated(symbol_table_data["symbols"])
+            if "symbols" in symbol_table_data
+            else []
+        )
 
         self.creating_local_symbols = True
         self.import_symbols(symbol_list)
@@ -109,14 +131,22 @@ class LocalSymbolTable(object):
         if "max_id" in symbol_table_data:
             expected_max_id = symbol_table_data["max_id"]
             if expected_max_id is not None and expected_max_id != len(self.symbols):
-                log.error("Symbol table max_id after import expected %d, found %d" % (expected_max_id, len(self.symbols)))
+                log.error(
+                    "Symbol table max_id after import expected %d, found %d"
+                    % (expected_max_id, len(self.symbols))
+                )
 
     def import_shared_symbol_table(self, name, version=None, max_id=None):
         if DEBUG:
-            log.debug("Importing ion symbol table %s version %s max_id %s" % (quote_name(name), version, max_id))
+            log.debug(
+                "Importing ion symbol table %s version %s max_id %s"
+                % (quote_name(name), version, max_id)
+            )
 
         if self.creating_local_symbols:
-            raise Exception("Importing shared symbols after local symbols have been created")
+            raise Exception(
+                "Importing shared symbols after local symbols have been created"
+            )
 
         if name == "$ion":
             return
@@ -131,11 +161,15 @@ class LocalSymbolTable(object):
             version = symbol_table.version
         elif symbol_table.version != version:
             if max_id is None:
-                log.error("Import version %d of shared symbol table %s without max_id, but have version %d" % (
-                        version, name, symbol_table.version))
+                log.error(
+                    "Import version %d of shared symbol table %s without max_id, but have version %d"
+                    % (version, name, symbol_table.version)
+                )
             else:
-                log.warning("Import version %d of shared symbol table %s, but have version %d" % (
-                        version, name, symbol_table.version))
+                log.warning(
+                    "Import version %d of shared symbol table %s, but have version %d"
+                    % (version, name, symbol_table.version)
+                )
 
         table_len = len(symbol_table.symbols)
 
@@ -143,7 +177,10 @@ class LocalSymbolTable(object):
             max_id = table_len
 
         if max_id < 0:
-            raise Exception("Import symbol table %s version %d max_id %d is invalid" % (name, version, max_id))
+            raise Exception(
+                "Import symbol table %s version %d max_id %d is invalid"
+                % (name, version, max_id)
+            )
 
         self.table_imports.append(SymbolTableImport(name, version, max_id))
 
@@ -152,8 +189,19 @@ class LocalSymbolTable(object):
         elif max_id > table_len:
             if table_len > 0:
                 prior_len = len(self.symbols)
-                log.warning("Import symbol table %s version %d max_id %d(+%d=%d) exceeds known table size %d(+%d=%d)" % (
-                        name, version, max_id, prior_len, max_id + prior_len, table_len, prior_len, table_len + prior_len))
+                log.warning(
+                    "Import symbol table %s version %d max_id %d(+%d=%d) exceeds known table size %d(+%d=%d)"
+                    % (
+                        name,
+                        version,
+                        max_id,
+                        prior_len,
+                        max_id + prior_len,
+                        table_len,
+                        prior_len,
+                        table_len + prior_len,
+                    )
+                )
 
             symbol_list = symbol_table.symbols + ([None] * (max_id - table_len))
         else:
@@ -168,7 +216,10 @@ class LocalSymbolTable(object):
 
             if symbol is not None:
                 if not isstring(symbol):
-                    log.error("imported symbol %s is type %s, treating as null" % (symbol, type_name(symbol)))
+                    log.error(
+                        "imported symbol %s is type %s, treating as null"
+                        % (symbol, type_name(symbol))
+                    )
                     symbol = None
 
             self.add_symbol(symbol)
@@ -187,7 +238,9 @@ class LocalSymbolTable(object):
             return -1
 
         if not isstring(symbol):
-            raise Exception("symbol %s is type %s, not string" % (symbol, type_name(symbol)))
+            raise Exception(
+                "symbol %s is type %s, not string" % (symbol, type_name(symbol))
+            )
 
         if len(symbol) == 0:
             raise Exception("symbol has zero length")
@@ -219,7 +272,10 @@ class LocalSymbolTable(object):
 
     def get_symbol(self, symbol_id):
         if not isinstance(symbol_id, int):
-            raise Exception("get_symbol: symbol id must be integer not %s: %s" % (type_name(symbol_id), repr(symbol_id)))
+            raise Exception(
+                "get_symbol: symbol id must be integer not %s: %s"
+                % (type_name(symbol_id), repr(symbol_id))
+            )
 
         symbol = self.symbol_of_id.get(symbol_id)
 
@@ -234,7 +290,10 @@ class LocalSymbolTable(object):
 
     def get_id(self, ion_symbol, used=True):
         if not isinstance(ion_symbol, IonSymbol):
-            raise Exception("get_id: symbol must be IonSymbol not %s: %s" % (type_name(ion_symbol), repr(ion_symbol)))
+            raise Exception(
+                "get_id: symbol must be IonSymbol not %s: %s"
+                % (type_name(ion_symbol), repr(ion_symbol))
+            )
 
         symbol = ion_symbol.tostring()
 
@@ -269,16 +328,16 @@ class LocalSymbolTable(object):
         self.import_symbols(new_symbols)
 
     def get_local_symbols(self):
-        return self.symbols[self.local_min_id-1:]
+        return self.symbols[self.local_min_id - 1 :]
 
     def discard_local_symbols(self):
         symbol_id = self.local_min_id
-        for symbol in self.symbols[self.local_min_id-1:]:
+        for symbol in self.symbols[self.local_min_id - 1 :]:
             self.id_of_symbol.pop(symbol)
             self.symbol_of_id.pop(symbol_id)
             symbol_id += 1
 
-        self.symbols = self.symbols[:self.local_min_id-1]
+        self.symbols = self.symbols[: self.local_min_id - 1]
 
     def create_import(self, imports_only=False):
         if not self.symbols:
@@ -289,13 +348,20 @@ class LocalSymbolTable(object):
         if not imports_only:
             symbol_table_data[IS("max_id")] = len(self.symbols)
 
-        symbol_table_data[IS("imports")] = [IonStruct(
-            IS("name"), table_import.name,
-            IS("version"), table_import.version,
-            IS("max_id"), table_import.max_id) for table_import in self.table_imports]
+        symbol_table_data[IS("imports")] = [
+            IonStruct(
+                IS("name"),
+                table_import.name,
+                IS("version"),
+                table_import.version,
+                IS("max_id"),
+                table_import.max_id,
+            )
+            for table_import in self.table_imports
+        ]
 
         if not imports_only:
-            symbol_table_data[IS("symbols")] = self.symbols[self.local_min_id-1:]
+            symbol_table_data[IS("symbols")] = self.symbols[self.local_min_id - 1 :]
 
         return IonAnnotation([IS("$ion_symbol_table")], symbol_table_data)
 
@@ -310,16 +376,28 @@ class LocalSymbolTable(object):
 
         for table_import in self.table_imports:
             if table_import.name == alt_symbol_table.name:
-                orig_symbol_table = self.catalog.get_shared_symbol_table(table_import.name, table_import.version)
-                for idx in range(max(len(orig_symbol_table.symbols), len(alt_symbol_table.symbols))):
+                orig_symbol_table = self.catalog.get_shared_symbol_table(
+                    table_import.name, table_import.version
+                )
+                for idx in range(
+                    max(len(orig_symbol_table.symbols), len(alt_symbol_table.symbols))
+                ):
                     have_orig = idx < len(orig_symbol_table.symbols)
                     have_alt = idx < len(alt_symbol_table.symbols)
 
-                    orig_symbol = orig_symbol_table.symbols[idx] if have_orig else "$%d" % (idx + offset)
+                    orig_symbol = (
+                        orig_symbol_table.symbols[idx]
+                        if have_orig
+                        else "$%d" % (idx + offset)
+                    )
                     if orig_symbol.endswith("?"):
                         orig_symbol = orig_symbol[:-1]
 
-                    alt_symbol = alt_symbol_table.symbols[idx] if have_alt else "$%d" % (idx + offset)
+                    alt_symbol = (
+                        alt_symbol_table.symbols[idx]
+                        if have_alt
+                        else "$%d" % (idx + offset)
+                    )
 
                     if have_alt:
                         self.import_translate[alt_symbol] = orig_symbol
@@ -332,7 +410,11 @@ class LocalSymbolTable(object):
             offset += table_import.max_id
 
     def __repr__(self):
-        return "symbols: %s; id_of_symbol %s; symbol_of_id %s" % (repr(self.symbols), repr(self.id_of_symbol), repr(self.symbol_of_id))
+        return "symbols: %s; id_of_symbol %s; symbol_of_id %s" % (
+            repr(self.symbols),
+            repr(self.id_of_symbol),
+            repr(self.symbol_of_id),
+        )
 
     def report(self):
         if self.reported:
@@ -341,13 +423,24 @@ class LocalSymbolTable(object):
         context = ("%s: " % self.context) if self.context else ""
 
         if self.unexpected_used_symbols:
-            log.error("%sUnexpected Ion symbols used: %s" % (context, list_symbols(self.unexpected_used_symbols)))
+            log.error(
+                "%sUnexpected Ion symbols used: %s"
+                % (context, list_symbols(self.unexpected_used_symbols))
+            )
 
         if self.undefined_symbols and not self.ignore_undef:
-            log.error("%sUndefined Ion symbols found: %s" % (
-                    context, ", ".join([quote_name(s) for s in sorted(self.undefined_symbols)])))
+            log.error(
+                "%sUndefined Ion symbols found: %s"
+                % (
+                    context,
+                    ", ".join([quote_name(s) for s in sorted(self.undefined_symbols)]),
+                )
+            )
 
         if self.undefined_ids:
-            log.error("%sUndefined Ion symbol IDs found: %s" % (context, list_symbols(self.undefined_ids)))
+            log.error(
+                "%sUndefined Ion symbol IDs found: %s"
+                % (context, list_symbols(self.undefined_ids))
+            )
 
         self.reported = True

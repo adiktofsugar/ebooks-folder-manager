@@ -9,7 +9,7 @@ see https://github.com/py-pdf/pypdf/blob/main/LICENSE
 import re
 from typing import Any, List, Tuple, Union
 
-from .errors import ParseError
+from errors import ParseError
 
 _INT_RE = r"(0|-?[1-9]\d*)"  # A decimal int, don't allow "-0".
 PAGE_RANGE_RE = f"^({_INT_RE}|({_INT_RE}?(:{_INT_RE}?(:{_INT_RE}?)?)))$"
@@ -156,7 +156,7 @@ PAGE_RANGE_ALL = PageRange(":")  # The range of all pages.
 
 
 def parse_filename_page_ranges(
-    args: List[Union[str, PageRange, None]]
+    args: List[Union[str, PageRange, None]],
 ) -> List[Tuple[str, PageRange]]:
     """
     Given a list of filenames and page ranges, return a list of (filename, page_range) pairs.

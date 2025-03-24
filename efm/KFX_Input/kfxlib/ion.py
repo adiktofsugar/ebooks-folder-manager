@@ -4,8 +4,8 @@ import decimal
 import math
 import re
 
-from .message_logging import log
-from .utilities import (sha1, type_name)
+from message_logging import log
+from utilities import sha1, type_name
 
 
 __license__ = "GPL v3"
@@ -45,7 +45,11 @@ def isstring(value):
 
 class IonAnnotation(object):
     def __init__(self, annotations, value):
-        self.annotations = annotations if isinstance(annotations, IonAnnots) else IonAnnots(annotations)
+        self.annotations = (
+            annotations
+            if isinstance(annotations, IonAnnots)
+            else IonAnnots(annotations)
+        )
 
         if isinstance(value, IonAnnotation):
             raise Exception("IonAnnotation cannot be annotated")
@@ -69,19 +73,24 @@ class IonAnnotation(object):
 
     def get_annotation(self):
         if not self.is_single():
-            raise Exception("get_annotation expected single annotation, found %s" % repr(self.annotations))
+            raise Exception(
+                "get_annotation expected single annotation, found %s"
+                % repr(self.annotations)
+            )
 
         return self.annotations[0]
 
     def verify_annotation(self, annotation):
         if not self.is_annotation(annotation):
-            raise Exception("Expected annotation %s, found %s" % (repr(annotation), repr(self.annotations)))
+            raise Exception(
+                "Expected annotation %s, found %s"
+                % (repr(annotation), repr(self.annotations))
+            )
 
         return self
 
 
 class IonAnnots(tuple):
-
     def __new__(cls, annotations):
         annots = tuple.__new__(cls, annotations)
 
@@ -99,7 +108,6 @@ class IonAnnots(tuple):
 
 
 class IonBLOB(bytes):
-
     def __eq__(self, other):
         if other is None:
             return False
@@ -151,7 +159,6 @@ class IonBLOB(bytes):
 
 
 class IonCLOB(bytes):
-
     def tobytes(self):
         return bytes(self)
 
@@ -179,17 +186,18 @@ class IonStruct(collections.OrderedDict):
             raise Exception("IonStruct created with %d arguments" % len(args))
 
         for i in range(0, len(args), 2):
-            self[args[i]] = args[i+1]
+            self[args[i]] = args[i + 1]
 
     def __repr__(self):
-        return "{%s}" % (", ".join(["%s: %s" % (repr(k), repr(v)) for k, v in self.items()]))
+        return "{%s}" % (
+            ", ".join(["%s: %s" % (repr(k), repr(v)) for k, v in self.items()])
+        )
 
     def todict(self):
         return collections.OrderedDict(self)
 
 
 class IonSymbol(str):
-
     def __repr__(self):
         if re.match(r"^[\u0021-\u007e]+$", self):
             return str(self)
@@ -209,13 +217,17 @@ class IonTimestamp(datetime.datetime):
 
         if isinstance(value.tzinfo, IonTimestampTZ):
             format = value.tzinfo.format()
-            format = format.replace("%f", ("%06d" % value.microsecond)[:value.tzinfo.fraction_len()])
+            format = format.replace(
+                "%f", ("%06d" % value.microsecond)[: value.tzinfo.fraction_len()]
+            )
 
             if value.year < 1900:
                 format = format.replace("%Y", "%04d" % value.year)
                 value = value.replace(year=1900)
 
-            return value.strftime(format) + (value.tzname() if value.tzinfo.present() else "")
+            return value.strftime(format) + (
+                value.tzname() if value.tzinfo.present() else ""
+            )
 
         return value.isoformat()
 
@@ -229,16 +241,21 @@ ION_TIMESTAMP_YMDHMSF = "%Y-%m-%dT%H:%M:%S.%f"
 
 
 class IonTimestampTZ(datetime.tzinfo):
-
     def __init__(self, offset, format, fraction_len):
         datetime.tzinfo.__init__(self)
         self.__offset = offset
         self.__format = format
         self.__fraction_len = fraction_len
-        self.__present = format in {ION_TIMESTAMP_YMDHM, ION_TIMESTAMP_YMDHMS, ION_TIMESTAMP_YMDHMSF}
+        self.__present = format in {
+            ION_TIMESTAMP_YMDHM,
+            ION_TIMESTAMP_YMDHMS,
+            ION_TIMESTAMP_YMDHMSF,
+        }
 
         if offset and not self.__present:
-            raise Exception("IonTimestampTZ has offset %d with non-present format" % offset)
+            raise Exception(
+                "IonTimestampTZ has offset %d with non-present format" % offset
+            )
 
         if offset and (offset < -1439 or offset > 1439):
             raise Exception("IonTimestampTZ has invalid offset %d" % offset)
@@ -247,7 +264,10 @@ class IonTimestampTZ(datetime.tzinfo):
             raise Exception("IonTimestampTZ has invalid fraction len %d" % fraction_len)
 
         if fraction_len and format != ION_TIMESTAMP_YMDHMSF:
-            raise Exception("IonTimestampTZ has fraction len %d without fraction in format" % fraction_len)
+            raise Exception(
+                "IonTimestampTZ has fraction len %d without fraction in format"
+                % fraction_len
+            )
 
     def utcoffset(self, dt):
         return datetime.timedelta(minutes=(self.__offset or 0))
@@ -258,7 +278,11 @@ class IonTimestampTZ(datetime.tzinfo):
         elif self.__offset == 0:
             name = "Z"
         else:
-            name = "%s%02d:%02d" % ("+" if self.__offset >= 0 else "-", abs(self.__offset) // 60, abs(self.__offset) % 60)
+            name = "%s%02d:%02d" % (
+                "+" if self.__offset >= 0 else "-",
+                abs(self.__offset) // 60,
+                abs(self.__offset) % 60,
+            )
 
         return name
 
@@ -279,9 +303,15 @@ class IonTimestampTZ(datetime.tzinfo):
 
     def __eq__(self, other):
         if not isinstance(other, IonTimestampTZ):
-            raise Exception("IonTimestampTZ __eq__: comparing with %s" % type_name(other))
+            raise Exception(
+                "IonTimestampTZ __eq__: comparing with %s" % type_name(other)
+            )
 
-        return (self.__offset, self.__format, self.__fraction_len) == (other.__offset, other.__format, other.__fraction_len)
+        return (self.__offset, self.__format, self.__fraction_len) == (
+            other.__offset,
+            other.__format,
+            other.__fraction_len,
+        )
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -293,8 +323,22 @@ class IonTimestampTZ(datetime.tzinfo):
         return self
 
 
-ION_TYPES = {IonAnnotation, IonBool, IonBLOB, IonCLOB, IonDecimal, IonFloat, IonInt, IonList, IonNull, IonSExp,
-             IonString, IonStruct, IonSymbol, IonTimestamp}
+ION_TYPES = {
+    IonAnnotation,
+    IonBool,
+    IonBLOB,
+    IonCLOB,
+    IonDecimal,
+    IonFloat,
+    IonInt,
+    IonList,
+    IonNull,
+    IonSExp,
+    IonString,
+    IonStruct,
+    IonSymbol,
+    IonTimestamp,
+}
 
 
 def unannotated(value):
@@ -372,7 +416,11 @@ def filtered_IonList(ion_list, omit_large_blobs=False):
 
     filtered = []
     for val in ion_list[:]:
-        if ion_type(val) is IonAnnotation and ion_type(val.value) is IonBLOB and val.value.is_large():
+        if (
+            ion_type(val) is IonAnnotation
+            and ion_type(val.value) is IonBLOB
+            and val.value.is_large()
+        ):
             val = IonAnnotation(val.annotations, repr(val.value))
 
         filtered.append(val)

@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Union
 
 from .. import mult, orient
-from ._font import Font
+from _font import Font
 
 
 @dataclass

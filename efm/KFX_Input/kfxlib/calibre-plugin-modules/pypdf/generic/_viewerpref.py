@@ -32,8 +32,8 @@ from typing import (
     Optional,
 )
 
-from ._base import BooleanObject, NameObject, NumberObject, is_null_or_none
-from ._data_structures import ArrayObject, DictionaryObject
+from _base import BooleanObject, NameObject, NumberObject, is_null_or_none
+from _data_structures import ArrayObject, DictionaryObject
 
 f_obj = BooleanObject(False)
 

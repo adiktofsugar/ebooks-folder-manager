@@ -4,13 +4,32 @@ import base64
 import math
 import re
 
-from .ion import (
-        ion_type, IonAnnotation, IonNull, IonBool, IonInt, IonFloat, IonList,
-        IonDecimal, IonCLOB, IonBLOB, IonString, IonTimestamp, IonTimestampTZ, IonSExp, IonSymbol, IonStruct,
-        ION_TIMESTAMP_Y, ION_TIMESTAMP_YM, ION_TIMESTAMP_YMD, ION_TIMESTAMP_YMDHM, ION_TIMESTAMP_YMDHMS,
-        ION_TIMESTAMP_YMDHMSF)
-from .message_logging import log
-from .utilities import (quote_name, type_name, UNICODE_PYTHON_NARROW_BUILD)
+from ion import (
+    ion_type,
+    IonAnnotation,
+    IonNull,
+    IonBool,
+    IonInt,
+    IonFloat,
+    IonList,
+    IonDecimal,
+    IonCLOB,
+    IonBLOB,
+    IonString,
+    IonTimestamp,
+    IonTimestampTZ,
+    IonSExp,
+    IonSymbol,
+    IonStruct,
+    ION_TIMESTAMP_Y,
+    ION_TIMESTAMP_YM,
+    ION_TIMESTAMP_YMD,
+    ION_TIMESTAMP_YMDHM,
+    ION_TIMESTAMP_YMDHMS,
+    ION_TIMESTAMP_YMDHMSF,
+)
+from message_logging import log
+from utilities import quote_name, type_name, UNICODE_PYTHON_NARROW_BUILD
 
 
 __license__ = "GPL v3"
@@ -21,10 +40,26 @@ DEBUG = False
 
 
 RESERVED_TOKENS = {
-    "null", "null.null", "true", "false", "nan", "+inf", "-inf",
-    "null.bool", "null.int", "null.float", "null.decimal", "null.timestamp", "null.string",
-    "null.symbol", "null.blob", "null.clob", "null.struct", "null.list", "null.sexp",
-    }
+    "null",
+    "null.null",
+    "true",
+    "false",
+    "nan",
+    "+inf",
+    "-inf",
+    "null.bool",
+    "null.int",
+    "null.float",
+    "null.decimal",
+    "null.timestamp",
+    "null.string",
+    "null.symbol",
+    "null.blob",
+    "null.clob",
+    "null.struct",
+    "null.list",
+    "null.sexp",
+}
 
 INDENT_SPACES = 2
 
@@ -36,7 +71,6 @@ class ParseError(ValueError):
 
 
 class IonSerial(object):
-
     def __init__(self, symtab=None):
         self.symtab = symtab
 
@@ -46,11 +80,15 @@ class IonSerial(object):
     def serialize_multiple_values(self, values):
         return self.serialize_multiple_values_(values)
 
-    def deserialize_annotated_value(self, data, expect_annotation=None, import_symbols=False):
+    def deserialize_annotated_value(
+        self, data, expect_annotation=None, import_symbols=False
+    ):
         value = self.deserialize_single_value(data, import_symbols)
 
         if not isinstance(value, IonAnnotation):
-            raise Exception("deserialize_annotated_value returned %s" % type_name(value))
+            raise Exception(
+                "deserialize_annotated_value returned %s" % type_name(value)
+            )
 
         if expect_annotation is not None:
             value.verify_annotation(expect_annotation)
@@ -60,7 +98,9 @@ class IonSerial(object):
     def deserialize_single_value(self, data, import_symbols=False):
         values = self.deserialize_multiple_values(data, import_symbols)
         if len(values) != 1:
-            raise Exception("Expected single Ion value found %d: %s" % (len(values), repr(values)))
+            raise Exception(
+                "Expected single Ion value found %d: %s" % (len(values), repr(values))
+            )
 
         return values[0]
 
@@ -88,8 +128,9 @@ class IonText(IonSerial):
 
         return data
 
-    def deserialize_multiple_values(self, data, import_symbols=False, disable_equiv_test=False):
-
+    def deserialize_multiple_values(
+        self, data, import_symbols=False, disable_equiv_test=False
+    ):
         values = self.deserialize_multiple_values_(data, import_symbols)
 
         return values
@@ -124,14 +165,23 @@ class IonText(IonSerial):
             while self.file.current_token().ttype != TOKEN_EOF:
                 value = self.deserialize_annotated_next_value()
 
-                if isinstance(value, IonSymbol) and re.match(r"^\$ion_[0-9]+_[0-9]+$", value):
+                if isinstance(value, IonSymbol) and re.match(
+                    r"^\$ion_[0-9]+_[0-9]+$", value
+                ):
                     if value != IonText.SIGNATURE_STR:
-                        raise ValueError("Ion version marker incorrect: %s" % repr(value))
+                        raise ValueError(
+                            "Ion version marker incorrect: %s" % repr(value)
+                        )
 
-                elif (self.import_symbols and isinstance(value, IonAnnotation) and
-                        (value.has_annotation("$ion_symbol_table") or value.has_annotation("$ion_shared_symbol_table")) and
-                        isinstance(value.value, IonStruct)):
-
+                elif (
+                    self.import_symbols
+                    and isinstance(value, IonAnnotation)
+                    and (
+                        value.has_annotation("$ion_symbol_table")
+                        or value.has_annotation("$ion_shared_symbol_table")
+                    )
+                    and isinstance(value.value, IonStruct)
+                ):
                     if value.has_annotation("$ion_symbol_table"):
                         self.symtab.create(value.value)
                     else:
@@ -146,7 +196,10 @@ class IonText(IonSerial):
             return result
 
         except Exception as e:
-            raise ValueError("Ion text parse failure at %s: %s" % (str(self.file.current_token()), repr(e)))
+            raise ValueError(
+                "Ion text parse failure at %s: %s"
+                % (str(self.file.current_token()), repr(e))
+            )
 
     def deserialize_annotated_next_value(self):
         value = self.deserialize_next_value()
@@ -168,8 +221,22 @@ class IonText(IonSerial):
 
     def deserialize_next_value(self):
         token = self.file.current_token()
-        if token.ttype in ["null", "null.null", "null.bool", "null.int", "null.float", "null.decimal", "null.timestamp",
-                           "null.string", "null.symbol", "null.blob", "null.clob", "null.struct", "null.list", "null.sexp"]:
+        if token.ttype in [
+            "null",
+            "null.null",
+            "null.bool",
+            "null.int",
+            "null.float",
+            "null.decimal",
+            "null.timestamp",
+            "null.string",
+            "null.symbol",
+            "null.blob",
+            "null.clob",
+            "null.struct",
+            "null.list",
+            "null.sexp",
+        ]:
             value = self.deserialize_null_value(token)
 
         elif token.ttype == "true" or token.ttype == "false":
@@ -226,7 +293,7 @@ class IonText(IonSerial):
         return value
 
     def indent_(self):
-        return (" " * (INDENT_SPACES * self.indent))
+        return " " * (INDENT_SPACES * self.indent)
 
     def serialize_null_value(self, value):
         return "null"
@@ -236,7 +303,10 @@ class IonText(IonSerial):
             return None
 
         if token.text.startswith("null."):
-            log.error("TextIonNull deserialized %s to null (typed null not supported)" % token.text)
+            log.error(
+                "TextIonNull deserialized %s to null (typed null not supported)"
+                % token.text
+            )
             return None
 
         raise ParseError("Incorrect null value")
@@ -254,13 +324,12 @@ class IonText(IonSerial):
         raise ParseError("Incorrect bool value")
 
     def serialize_int_value(self, value):
-        if value >= 0x000fffff:
+        if value >= 0x000FFFFF:
             return "0x%x" % value
 
         return "%d" % value
 
     def deserialize_int_value(self, token):
-
         text = remove_underscores_between_digits(token.text)
 
         if re.match(r"^-?[0-9]+$", text):
@@ -290,7 +359,9 @@ class IonText(IonSerial):
             return "+inf" if value > 0 else "-inf"
 
         s = "%.16e" % value
-        if re.search(r"0000000[1-9]e", s, flags=re.IGNORECASE) or re.search(r"9999999[0-9]e", s, flags=re.IGNORECASE):
+        if re.search(r"0000000[1-9]e", s, flags=re.IGNORECASE) or re.search(
+            r"9999999[0-9]e", s, flags=re.IGNORECASE
+        ):
             s = "%.15e" % value
 
         s = s.lower().replace("e+", "e")
@@ -300,7 +371,6 @@ class IonText(IonSerial):
         return s
 
     def deserialize_float_value(self, token):
-
         text = remove_underscores_between_digits(token.text)
 
         if text == "nan":
@@ -326,7 +396,6 @@ class IonText(IonSerial):
         return result
 
     def deserialize_decimal_value(self, token):
-
         text = remove_underscores_between_digits(token.text)
 
         if re.match(r"^-?[0-9]+(\.[0-9]*)?$", text, flags=re.IGNORECASE):
@@ -340,13 +409,17 @@ class IonText(IonSerial):
     def serialize_timestamp_value(self, value):
         if isinstance(value.tzinfo, IonTimestampTZ):
             format = value.tzinfo.format()
-            format = format.replace("%f", ("%06d" % value.microsecond)[:value.tzinfo.fraction_len()])
+            format = format.replace(
+                "%f", ("%06d" % value.microsecond)[: value.tzinfo.fraction_len()]
+            )
 
             if value.year < 1900:
                 format = format.replace("%Y", "%04d" % value.year)
                 value = value.replace(year=1900)
 
-            return value.strftime(format) + (value.tzname() if value.tzinfo.present() else "")
+            return value.strftime(format) + (
+                value.tzname() if value.tzinfo.present() else ""
+            )
         else:
             raise Exception("TextIonTimestamp: timestamp does not have IonTimestampTZ")
 
@@ -357,7 +430,7 @@ class IonText(IonSerial):
         if m:
             tz_present = True
             tzstr = m.group(0)
-            text = text[:-len(tzstr)]
+            text = text[: -len(tzstr)]
 
             if tzstr == "Z":
                 offset_minutes = 0
@@ -393,10 +466,15 @@ class IonText(IonSerial):
             if re.match(r"^[0-9]{4}-[0-1][0-9]-[0-3][0-9]T[0-9]{2}:[0-9]{2}$", text):
                 format = ION_TIMESTAMP_YMDHM
 
-            elif re.match(r"^[0-9]{4}-[0-1][0-9]-[0-3][0-9]T[0-9]{2}:[0-9]{2}:[0-9]{2}$", text):
+            elif re.match(
+                r"^[0-9]{4}-[0-1][0-9]-[0-3][0-9]T[0-9]{2}:[0-9]{2}:[0-9]{2}$", text
+            ):
                 format = ION_TIMESTAMP_YMDHMS
 
-            elif re.match(r"^[0-9]{4}-[0-1][0-9]-[0-3][0-9]T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{1,20}$", text):
+            elif re.match(
+                r"^[0-9]{4}-[0-1][0-9]-[0-3][0-9]T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{1,20}$",
+                text,
+            ):
                 format = ION_TIMESTAMP_YMDHMSF
                 text = text[:26]
                 fraction_len = len(text) - 20
@@ -404,8 +482,15 @@ class IonText(IonSerial):
         if format:
             v = datetime.datetime.strptime(text, format)
             return IonTimestamp(
-                    v.year, v.month, v.day, v.hour, v.minute, v.second, v.microsecond,
-                    IonTimestampTZ(offset_minutes, format, fraction_len))
+                v.year,
+                v.month,
+                v.day,
+                v.hour,
+                v.minute,
+                v.second,
+                v.microsecond,
+                IonTimestampTZ(offset_minutes, format, fraction_len),
+            )
 
         raise ParseError("Incorrect timestamp value")
 
@@ -415,14 +500,20 @@ class IonText(IonSerial):
         if self.symtab and self.symtab.export_translate:
             result = self.symtab.export_translate.get(result, result)
 
-        if (result not in RESERVED_TOKENS and
-                (re.match(r"^[a-zA-Z$_][a-zA-Z0-9$_]*$", result) or (self.allow_operators and re.match(OPERATOR_RE, result)))):
+        if result not in RESERVED_TOKENS and (
+            re.match(r"^[a-zA-Z$_][a-zA-Z0-9$_]*$", result)
+            or (self.allow_operators and re.match(OPERATOR_RE, result))
+        ):
             return result
 
         return "'%s'" % escape_string(result, quote="'")
 
     def deserialize_symbol_value(self, token):
-        if token.ttype == TOKEN_QUOTED_SYMBOL and token.text.startswith("'") and token.text.endswith("'"):
+        if (
+            token.ttype == TOKEN_QUOTED_SYMBOL
+            and token.text.startswith("'")
+            and token.text.endswith("'")
+        ):
             return self.create_symbol(unescape_quoted_symbol(token.text))
 
         if token.ttype == TOKEN_IDENTIFIER and re.match(r"^\$[0-9]+$", token.text):
@@ -430,10 +521,16 @@ class IonText(IonSerial):
             if self.symtab and symnum > 0:
                 return self.symtab.get_symbol(symnum)
 
-        if token.ttype == TOKEN_IDENTIFIER and re.match(r"^[a-zA-Z$_][a-zA-Z0-9$_]*$", token.text):
+        if token.ttype == TOKEN_IDENTIFIER and re.match(
+            r"^[a-zA-Z$_][a-zA-Z0-9$_]*$", token.text
+        ):
             return self.create_symbol(token.text)
 
-        if token.ttype == TOKEN_OPERATOR and self.allow_operators and re.match(OPERATOR_RE, token.text):
+        if (
+            token.ttype == TOKEN_OPERATOR
+            and self.allow_operators
+            and re.match(OPERATOR_RE, token.text)
+        ):
             return self.create_symbol(token.text)
 
         raise ParseError("Incorrect symbol")
@@ -450,13 +547,17 @@ class IonText(IonSerial):
         return sym
 
     def serialize_string_value(self, value):
-        return "\"%s\"" % escape_string(value, quote="\"")
+        return '"%s"' % escape_string(value, quote='"')
 
     def deserialize_string_value(self, token):
         if token.ttype == TOKEN_LONG_STRING:
             val = []
             while True:
-                val.append(unescape_string(token.text, allow_unicode=self.allow_unicode_strings))
+                val.append(
+                    unescape_string(
+                        token.text, allow_unicode=self.allow_unicode_strings
+                    )
+                )
                 if self.file.peek_token().ttype != TOKEN_LONG_STRING:
                     break
 
@@ -475,7 +576,11 @@ class IonText(IonSerial):
         ascii_data = value.ascii_data()
         if ascii_data:
             result.append("\n")
-            clean_ascii_data = ascii_data.replace("\r\n", "\n").replace("\r", "\n").replace("\t", "    ")
+            clean_ascii_data = (
+                ascii_data.replace("\r\n", "\n")
+                .replace("\r", "\n")
+                .replace("\t", "    ")
+            )
             for s in clean_ascii_data.split("\n"):
                 result.append("%s// %s\n" % (self.indent_(), s))
 
@@ -513,7 +618,7 @@ class IonText(IonSerial):
         return IonBLOB(base64.b64decode("".join(b64text)))
 
     def serialize_clob_value(self, value):
-        return "{{ \"%s\" }}" % escape_string(value, quote="\"")
+        return '{{ "%s" }}' % escape_string(value, quote='"')
 
     def deserialize_clob_value(self, token):
         if token.ttype != "{{":
@@ -526,7 +631,16 @@ class IonText(IonSerial):
 
         return IonCLOB(s)
 
-    COMPACT_TYPES = {IonNull, IonBool, IonInt, IonFloat, IonDecimal, IonTimestamp, IonString, IonSymbol}
+    COMPACT_TYPES = {
+        IonNull,
+        IonBool,
+        IonInt,
+        IonFloat,
+        IonDecimal,
+        IonTimestamp,
+        IonString,
+        IonSymbol,
+    }
 
     def serialize_list_value(self, value):
         for val in value:
@@ -614,7 +728,10 @@ class IonText(IonSerial):
         self.indent += 1
 
         for key, val in value.items():
-            result.append("%s%s: %s,\n" % (self.indent_(), self.serialize_value(key), self.serialize_value(val)))
+            result.append(
+                "%s%s: %s,\n"
+                % (self.indent_(), self.serialize_value(key), self.serialize_value(val))
+            )
 
         self.indent -= 1
         result.append("%s}" % self.indent_())
@@ -636,7 +753,9 @@ class IonText(IonSerial):
                 key = IonSymbol(key)
 
             if not isinstance(key, IonSymbol):
-                raise ParseError("Struct key must be symbol (found %s)" % type_name(key))
+                raise ParseError(
+                    "Struct key must be symbol (found %s)" % type_name(key)
+                )
 
             if key in value:
                 log.error("TextIonStruct: Duplicate field name %s" % key)
@@ -687,13 +806,14 @@ class IonText(IonSerial):
         IonStruct: serialize_struct_value,
         IonSymbol: serialize_symbol_value,
         IonTimestamp: serialize_timestamp_value,
-        }
+    }
 
 
 def remove_underscores_between_digits(text, hex=False):
-
     while True:
-        text, n = re.subn(r"([0-9a-fA-F])_([0-9a-fA-F])" if hex else r"([0-9])_([0-9])", r"\1\2", text)
+        text, n = re.subn(
+            r"([0-9a-fA-F])_([0-9a-fA-F])" if hex else r"([0-9])_([0-9])", r"\1\2", text
+        )
         if not n:
             return text
 
@@ -710,7 +830,7 @@ def bytes_only(s):
     return bytes(ss)
 
 
-def escape_string(s, quote="\""):
+def escape_string(s, quote='"'):
     ss = []
     i = 0
     while i < len(s):
@@ -721,20 +841,29 @@ def escape_string(s, quote="\""):
         if c == quote or c == "\\":
             ss.append("\\")
             ss.append(c)
-        elif o >= 0x20 and o <= 0x7e:
+        elif o >= 0x20 and o <= 0x7E:
             ss.append(c)
         elif o == 0x09:
             ss.append("\\t")
-        elif o == 0x0a:
+        elif o == 0x0A:
             ss.append("\\n")
-        elif o == 0x0d:
+        elif o == 0x0D:
             ss.append("\\r")
-        elif o <= 0xff:
+        elif o <= 0xFF:
             ss.append("\\x%02x" % o)
-        elif UNICODE_PYTHON_NARROW_BUILD and o >= 0xd800 and o <= 0xdbff and i < len(s) and ord(s[i]) >= 0xdc00 and ord(s[i]) <= 0xdfff:
-            ss.append("\\U%08x" % ((o - 0xd800) * 0x400 + (ord(s[i]) - 0xdc00) + 0x10000))
+        elif (
+            UNICODE_PYTHON_NARROW_BUILD
+            and o >= 0xD800
+            and o <= 0xDBFF
+            and i < len(s)
+            and ord(s[i]) >= 0xDC00
+            and ord(s[i]) <= 0xDFFF
+        ):
+            ss.append(
+                "\\U%08x" % ((o - 0xD800) * 0x400 + (ord(s[i]) - 0xDC00) + 0x10000)
+            )
             i += 1
-        elif o <= 0xffff:
+        elif o <= 0xFFFF:
             ss.append("\\u%04x" % o)
         else:
             ss.append("\\U%08x" % o)
@@ -747,23 +876,23 @@ ESC_SUB = {
     "a": chr(0x0007),
     "b": chr(0x0008),
     "t": chr(0x0009),
-    "n": chr(0x000a),
-    "v": chr(0x000b),
-    "f": chr(0x000c),
-    "r": chr(0x000d),
+    "n": chr(0x000A),
+    "v": chr(0x000B),
+    "f": chr(0x000C),
+    "r": chr(0x000D),
     "'": "'",
-    "\"": "\"",
+    '"': '"',
     "?": "?",
     "/": "/",
     "\\": "\\",
-    }
+}
 
 
 def unescape_string(qs, allow_unicode=True):
     if len(qs) >= 6 and qs.startswith("'''") and qs.endswith("'''"):
         return unescape_string_(qs[3:-3], allow_unicode=allow_unicode, allow_eol=True)
 
-    if len(qs) >= 2 and qs[0] == "\"" and qs[-1] == "\"":
+    if len(qs) >= 2 and qs[0] == '"' and qs[-1] == '"':
         return unescape_string_(qs[1:-1], allow_unicode=allow_unicode)
 
     raise ParseError("Invalid string format")
@@ -787,15 +916,15 @@ def unescape_string_(s, allow_unicode=True, allow_eol=False):
             c = s[idx]
 
             if c == "x":
-                ss.append(chr(int(s[idx+1:idx+3], 16)))
+                ss.append(chr(int(s[idx + 1 : idx + 3], 16)))
                 idx += 3
             elif c == "u" and allow_unicode:
-                ss.append(chr(int(s[idx+1:idx+5], 16)))
+                ss.append(chr(int(s[idx + 1 : idx + 5], 16)))
                 idx += 5
             elif c == "U" and allow_unicode:
-                o = int(s[idx+1:idx+9], 16)
+                o = int(s[idx + 1 : idx + 9], 16)
 
-                if UNICODE_PYTHON_NARROW_BUILD and o > 0xffff:
+                if UNICODE_PYTHON_NARROW_BUILD and o > 0xFFFF:
                     cc = (b"\\U%08x" % o).decode("unicode-escape")
                 else:
                     cc = chr(o)
@@ -812,7 +941,9 @@ def unescape_string_(s, allow_unicode=True, allow_eol=False):
                 if idx < len(s) and s[idx] == "\n":
                     idx += 1
             else:
-                raise ParseError("Invalid string escape character '%s' (%02x)" % (c, ord(c)))
+                raise ParseError(
+                    "Invalid string escape character '%s' (%02x)" % (c, ord(c))
+                )
 
         elif allow_eol and c == "\r":
             ss.append("\n")
@@ -824,10 +955,10 @@ def unescape_string_(s, allow_unicode=True, allow_eol=False):
             ss.append(c)
             idx += 1
 
-        elif ord(c) < 0x20 or ord(c) == 0x7f:
+        elif ord(c) < 0x20 or ord(c) == 0x7F:
             raise ParseError("Invalid control character (%02x)" % ord(c))
 
-        elif ord(c) > 0x7f and not allow_unicode:
+        elif ord(c) > 0x7F and not allow_unicode:
             raise ParseError("Unicode character (%x) not allowed" % ord(c))
 
         else:
@@ -841,7 +972,7 @@ def unescape_string_(s, allow_unicode=True, allow_eol=False):
 
 
 def split_string(s, max_size=80):
-    return [s[i:i+max_size] for i in range(0, len(s), max_size)]
+    return [s[i : i + max_size] for i in range(0, len(s), max_size)]
 
 
 TOKEN_DECIMAL = "decimal"
@@ -866,7 +997,12 @@ class Token(object):
         self.ttype = self.classify()
 
     def __repr__(self):
-        return "line=%d col=%d type=%s text=%s" % (self.line_number, self.start_col + 1, quote_name(self.ttype), quote_name(self.text))
+        return "line=%d col=%d type=%s text=%s" % (
+            self.line_number,
+            self.start_col + 1,
+            quote_name(self.ttype),
+            quote_name(self.text),
+        )
 
     def classify(self):
         if not self.text:
@@ -874,11 +1010,15 @@ class Token(object):
 
         c = self.text[:1]
 
-        if c == "'" or c == "\"":
-            if len(self.text) >= 2 and c == "\"" and self.text[-1] == "\"":
+        if c == "'" or c == '"':
+            if len(self.text) >= 2 and c == '"' and self.text[-1] == '"':
                 return TOKEN_STRING
 
-            if len(self.text) >= 6 and self.text.startswith("'''") and self.text.endswith("'''"):
+            if (
+                len(self.text) >= 6
+                and self.text.startswith("'''")
+                and self.text.endswith("'''")
+            ):
                 return TOKEN_LONG_STRING
 
             if len(self.text) >= 2 and c == "'" and self.text[-1] == "'":
@@ -913,8 +1053,12 @@ class Token(object):
             if ("d" in ltext or "." in ltext) and re.match(r"^[0-9_d.+-]+$", ltext):
                 return TOKEN_DECIMAL
 
-            if ((":" in self.text or "T" in self.text or "Z" in self.text or (self.text[4:5] == "-" and self.text[7:8] == "-")) and
-                    re.match(r"^[0-9][0-9.:TZ+-]+$", self.text)):
+            if (
+                ":" in self.text
+                or "T" in self.text
+                or "Z" in self.text
+                or (self.text[4:5] == "-" and self.text[7:8] == "-")
+            ) and re.match(r"^[0-9][0-9.:TZ+-]+$", self.text):
                 return TOKEN_TIMESTAMP
 
         return TOKEN_UNKNOWN
@@ -1043,9 +1187,11 @@ class IonTextFile(object):
         if self.eof:
             token_text = ""
         else:
-            if c == "'" or c == "\"":
+            if c == "'" or c == '"':
                 endc = c
-                long_string = (c == "'" and self.peek_char() == "'" and self.peek_char(1) == "'")
+                long_string = (
+                    c == "'" and self.peek_char() == "'" and self.peek_char(1) == "'"
+                )
                 if long_string:
                     self.advance_char(2)
 
@@ -1057,7 +1203,11 @@ class IonTextFile(object):
                     if c == "\\":
                         self.next_char()
                     elif long_string:
-                        if c == "'" and self.peek_char() == "'" and self.peek_char(1) == "'":
+                        if (
+                            c == "'"
+                            and self.peek_char() == "'"
+                            and self.peek_char(1) == "'"
+                        ):
                             self.advance_char(2)
                             break
                     elif c == endc:
@@ -1074,18 +1224,30 @@ class IonTextFile(object):
                 if self.allow_double_close_ and self.peek_char() == c:
                     self.next_char()
 
-            elif ((c == "-" or c == "+") and self.peek_char() == "i" and self.peek_char(1) == "n" and
-                    self.peek_char(2) == "f" and not re.match(r"^[a-zA-Z0-9_$]$", self.peek_char(3))):
+            elif (
+                (c == "-" or c == "+")
+                and self.peek_char() == "i"
+                and self.peek_char(1) == "n"
+                and self.peek_char(2) == "f"
+                and not re.match(r"^[a-zA-Z0-9_$]$", self.peek_char(3))
+            ):
                 self.advance_char(3)
 
-            elif (c == "n" and self.peek_char() == "u" and self.peek_char(1) == "l" and
-                    self.peek_char(2) == "l" and self.peek_char(3) == "."):
+            elif (
+                c == "n"
+                and self.peek_char() == "u"
+                and self.peek_char(1) == "l"
+                and self.peek_char(2) == "l"
+                and self.peek_char(3) == "."
+            ):
                 self.advance_char(4)
 
                 while re.match(r"^[a-zA-Z0-9_$]$", self.peek_char()):
                     self.next_char()
 
-            elif (c >= "0" and c <= "9") or (c == "-" and self.peek_char() >= "0" and self.peek_char() <= "9"):
+            elif (c >= "0" and c <= "9") or (
+                c == "-" and self.peek_char() >= "0" and self.peek_char() <= "9"
+            ):
                 while re.match(r"^[0-9a-zA-Z.:_+-]$", self.peek_char()):
                     self.next_char()
 
@@ -1104,6 +1266,6 @@ class IonTextFile(object):
                 while self.data[self.cursor - 1] == ":":
                     self.cursor -= 1
 
-            token_text = self.data[start_cursor:self.cursor]
+            token_text = self.data[start_cursor : self.cursor]
 
         return Token(token_text, start_line, start_column)

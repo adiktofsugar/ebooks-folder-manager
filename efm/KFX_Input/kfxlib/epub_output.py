@@ -2,7 +2,7 @@ import collections
 import datetime
 import io
 from lxml import etree
-from PIL import (Image, ImageDraw, ImageFont)
+from PIL import Image, ImageDraw, ImageFont
 import posixpath
 import re
 import uuid
@@ -15,9 +15,9 @@ except ImportError:
     get_path = None
     tweaks = {}
 
-from .message_logging import log
-from .resources import (EPUB2_ALT_MIMETYPES, MIMETYPE_OF_EXT)
-from .utilities import (make_unique_name, urlrelpath)
+from message_logging import log
+from resources import EPUB2_ALT_MIMETYPES, MIMETYPE_OF_EXT
+from utilities import make_unique_name, urlrelpath
 
 
 __license__ = "GPL v3"
@@ -38,13 +38,13 @@ EPUB3_VOCABULARY_OF_GUIDE_TYPE = {
     "cover": "cover",
     "text": "bodymatter",
     "toc": "toc",
-    }
+}
 
 DEFAULT_LABEL_OF_GUIDE_TYPE = {
     "cover": "Cover",
     "text": "Beginning",
     "toc": "Table of Contents",
-    }
+}
 
 TOC_PRIORITY_OF_GUIDE_TYPE = {
     "toc": 1,
@@ -55,19 +55,41 @@ TOC_PRIORITY_OF_GUIDE_TYPE = {
 PERIODICAL_NCX_CLASSES = {
     0: "section",
     1: "article",
-    }
+}
 
-MANIFEST_ITEM_PROPERTIES = {"cover-image", "mathml", "nav", "remote-resources", "scripted", "svg", "switch"}
+MANIFEST_ITEM_PROPERTIES = {
+    "cover-image",
+    "mathml",
+    "nav",
+    "remote-resources",
+    "scripted",
+    "svg",
+    "switch",
+}
 
 SPINE_ITEMREF_PROPERTIES = {
-    "page-spread-left", "page-spread-right", "rendition:align-x-center",
-    "rendition:flow-auto", "rendition:flow-paginated", "rendition:flow-scrolled-continuous",
-    "rendition:flow-scrolled-doc", "rendition:layout-pre-paginated", "rendition:layout-reflowable",
-    "rendition:orientation-auto", "rendition:orientation-landscape", "rendition:orientation-portrait",
-    "rendition:page-spread-center", "rendition:spread-auto", "rendition:spread-both",
-    "rendition:spread-landscape", "rendition:spread-none", "rendition:spread-portrait",
-
-    "facing-page-left", "facing-page-right", "layout-blank"}
+    "page-spread-left",
+    "page-spread-right",
+    "rendition:align-x-center",
+    "rendition:flow-auto",
+    "rendition:flow-paginated",
+    "rendition:flow-scrolled-continuous",
+    "rendition:flow-scrolled-doc",
+    "rendition:layout-pre-paginated",
+    "rendition:layout-reflowable",
+    "rendition:orientation-auto",
+    "rendition:orientation-landscape",
+    "rendition:orientation-portrait",
+    "rendition:page-spread-center",
+    "rendition:spread-auto",
+    "rendition:spread-both",
+    "rendition:spread-landscape",
+    "rendition:spread-none",
+    "rendition:spread-portrait",
+    "facing-page-left",
+    "facing-page-right",
+    "layout-blank",
+}
 
 OPF_PROPERTIES = MANIFEST_ITEM_PROPERTIES | SPINE_ITEMREF_PROPERTIES
 
@@ -114,12 +136,14 @@ RESERVED_OPF_VALUE_PREFIXES = {
     "rendition": "http://www.idpf.org/vocab/rendition/#",
     "schema": "http://schema.org/",
     "xsd": "http://www.w3.org/2001/XMLSchema#",
-    }
+}
 
 
 class OPFProperties(object):
     def __init__(self, opf_properties):
-        self.opf_properties = set(opf_properties) if opf_properties is not None else set()
+        self.opf_properties = (
+            set(opf_properties) if opf_properties is not None else set()
+        )
 
     @property
     def is_fxl(self):
@@ -156,7 +180,16 @@ class OPFProperties(object):
 
 
 class BookPart(OPFProperties):
-    def __init__(self, filename, part_index, html, opf_properties=None, linear=None, omit=False, idref=None):
+    def __init__(
+        self,
+        filename,
+        part_index,
+        html,
+        opf_properties=None,
+        linear=None,
+        omit=False,
+        idref=None,
+    ):
         self.filename = filename
         self.part_index = part_index
         self.html = html
@@ -195,7 +228,15 @@ class ManifestEntry(OPFProperties):
 
 
 class TocEntry(object):
-    def __init__(self, title, target=None, children=None, description=None, icon=None, anchor=None):
+    def __init__(
+        self,
+        title,
+        target=None,
+        children=None,
+        description=None,
+        icon=None,
+        anchor=None,
+    ):
         self.title = title
         self.target = target
         self.children = children if children else []
@@ -314,7 +355,9 @@ class EPUB_Output(object):
         self.set_primary_writing_mode("horizontal-lr")
 
         if self.will_output:
-            log.info("Converting book to EPUB %s" % ("2" if self.generate_epub2 else "3"))
+            log.info(
+                "Converting book to EPUB %s" % ("2" if self.generate_epub2 else "3")
+            )
 
     def set_book_type(self, book_type):
         if self.book_type is not None and self.book_type != book_type:
@@ -349,9 +392,19 @@ class EPUB_Output(object):
         else:
             log.error("Unexpected PrimaryWritingMode: %s" % primary_writing_mode)
 
-    def manifest_resource(self, filename, opf_properties=None, linear=None, external=False,
-                          data=None, mimetype=None, height=None, width=None, idref=None,
-                          report_dupe=True):
+    def manifest_resource(
+        self,
+        filename,
+        opf_properties=None,
+        linear=None,
+        external=False,
+        data=None,
+        mimetype=None,
+        height=None,
+        width=None,
+        idref=None,
+        report_dupe=True,
+    ):
         if filename in self.manifest_files:
             if report_dupe:
                 log.error("Duplicate file name in manifest: %s" % filename)
@@ -361,14 +414,22 @@ class EPUB_Output(object):
         idref = self.fix_html_id(idref or filename.rpartition("/")[2][:64])
         idref = make_unique_name(idref, self.manifest_ids, sep="_")
 
-        manifest_entry = ManifestEntry(filename, opf_properties or set(), linear, external, id=idref)
+        manifest_entry = ManifestEntry(
+            filename, opf_properties or set(), linear, external, id=idref
+        )
         self.manifest.append(manifest_entry)
         self.manifest_files[filename] = manifest_entry
         self.manifest_ids.add(idref)
         self.reference_resource(manifest_entry)
 
         if data is not None:
-            self.add_oebps_file(filename, data, mimetype or self.mimetype_of_filename(filename), height, width)
+            self.add_oebps_file(
+                filename,
+                data,
+                mimetype or self.mimetype_of_filename(filename),
+                height,
+                width,
+            )
 
         return manifest_entry
 
@@ -396,10 +457,14 @@ class EPUB_Output(object):
     def add_guide_entry(self, guide_type, title=None, target=None, anchor=None):
         std_guide_type = STANDARD_GUIDE_TYPE.get(guide_type, guide_type)
 
-        self.guide.append(GuideEntry(
-            std_guide_type,
-            title or DEFAULT_LABEL_OF_GUIDE_TYPE.get(std_guide_type) or guide_type,
-            target=target, anchor=anchor))
+        self.guide.append(
+            GuideEntry(
+                std_guide_type,
+                title or DEFAULT_LABEL_OF_GUIDE_TYPE.get(std_guide_type) or guide_type,
+                target=target,
+                anchor=anchor,
+            )
+        )
 
     def add_pagemap_entry(self, label, target=None, anchor=None):
         self.pagemap.append(PageMapEntry(label, target=target, anchor=anchor))
@@ -411,7 +476,6 @@ class EPUB_Output(object):
         self.oebps_files.pop(filename, None)
 
     def generate_epub(self):
-
         if self.asin:
             self.uid = "urn:asin:" + self.asin
         elif self.book_id:
@@ -456,11 +520,16 @@ class EPUB_Output(object):
             raise Exception("Book does not contain any content")
 
         if len(self.ncx_toc) == 0:
-            for g in sorted(self.guide, key=lambda g: TOC_PRIORITY_OF_GUIDE_TYPE.get(g.guide_type, 999)):
+            for g in sorted(
+                self.guide,
+                key=lambda g: TOC_PRIORITY_OF_GUIDE_TYPE.get(g.guide_type, 999),
+            ):
                 self.ncx_toc.append(TocEntry(g.title, target=g.target))
                 break
             else:
-                self.ncx_toc.append(TocEntry("Content", target=self.book_parts[0].filename))
+                self.ncx_toc.append(
+                    TocEntry("Content", target=self.book_parts[0].filename)
+                )
 
         if not self.generate_epub2:
             for book_part in self.book_parts:
@@ -469,19 +538,30 @@ class EPUB_Output(object):
             else:
                 self.create_epub3_nav()
 
-        if self.fixed_layout and (self.original_height is None or self.original_width is None) and (self.is_comic or self.is_children):
+        if (
+            self.fixed_layout
+            and (self.original_height is None or self.original_width is None)
+            and (self.is_comic or self.is_children)
+        ):
             self.compare_fixed_layout_viewports()
 
         self.save_book_parts()
 
-        if self.ncx_location is None and (self.generate_epub2 or self.GENERATE_EPUB2_COMPATIBLE):
+        if self.ncx_location is None and (
+            self.generate_epub2 or self.GENERATE_EPUB2_COMPATIBLE
+        ):
             self.create_ncx()
 
         self.create_opf()
 
         if self.generate_epub2 is not self.epub2_desired:
-            log.warning("Book converted to EPUB %s to accommodate content not supported in EPUB %s" % (
-                "2" if self.generate_epub2 else "3", "2" if self.epub2_desired else "3"))
+            log.warning(
+                "Book converted to EPUB %s to accommodate content not supported in EPUB %s"
+                % (
+                    "2" if self.generate_epub2 else "3",
+                    "2" if self.epub2_desired else "3",
+                )
+            )
 
         return self.zip_epub()
 
@@ -489,7 +569,11 @@ class EPUB_Output(object):
         if self.illustrated_layout:
             id = id.replace(".", "_")
 
-        id = re.sub("[\u0660-\u0669\u06f0-\u06f9]", lambda m: chr((ord(m.group()) & 0x0f) + 0x30), id)
+        id = re.sub(
+            "[\u0660-\u0669\u06f0-\u06f9]",
+            lambda m: chr((ord(m.group()) & 0x0F) + 0x30),
+            id,
+        )
 
         id = re.sub(r"[^A-Za-z0-9_.-]", "_", id)
 
@@ -498,7 +582,16 @@ class EPUB_Output(object):
 
         return id
 
-    def new_book_part(self, filename=None, opf_properties=set(), linear=True, omit=False, html=None, idref=None, first=False):
+    def new_book_part(
+        self,
+        filename=None,
+        opf_properties=set(),
+        linear=True,
+        omit=False,
+        html=None,
+        idref=None,
+        first=False,
+    ):
         part_index = len(self.book_parts)
 
         if filename is None:
@@ -510,7 +603,9 @@ class EPUB_Output(object):
         if html is None:
             html = new_xhtml()
 
-        book_part = BookPart(filename, part_index, html, opf_properties, linear, omit, idref)
+        book_part = BookPart(
+            filename, part_index, html, opf_properties, linear, omit, idref
+        )
 
         if first:
             self.book_parts.insert(0, book_part)
@@ -549,7 +644,9 @@ class EPUB_Output(object):
                         book_part.is_cover_page = True
 
                         if book_part.part_index != 0:
-                            log.warning("Cover page is not first in book: %s" % cover_page)
+                            log.warning(
+                                "Cover page is not first in book: %s" % cover_page
+                            )
 
                         break
                 else:
@@ -578,14 +675,22 @@ class EPUB_Output(object):
 
         try:
             if get_path is not None:
-                font = ImageFont.truetype(get_path("fonts/liberation/LiberationSans-Bold.ttf"), 20)
+                font = ImageFont.truetype(
+                    get_path("fonts/liberation/LiberationSans-Bold.ttf"), 20
+                )
             else:
                 font = ImageFont.truetype("arial.ttf", 20)
         except Exception:
             font = ImageFont.load_default()
 
         for i, word in enumerate(message.split()):
-            draw.text((300, (img.size[1] / 4) + (i * 30)), word, fill=(0, 0, 0), font=font, anchor="ms")
+            draw.text(
+                (300, (img.size[1] / 4) + (i * 30)),
+                word,
+                fill=(0, 0, 0),
+                font=font,
+                anchor="ms",
+            )
 
         outfile = io.BytesIO()
         img.save(outfile, "JPEG")
@@ -597,9 +702,14 @@ class EPUB_Output(object):
 
         book_part = self.new_book_part(filename=self.COVER_FILEPATH, first=True)
         div_elem = etree.SubElement(book_part.body(), "div")
-        etree.SubElement(div_elem, "img", attrib={
-            "src": urlrelpath(image_filename, ref_from=book_part.filename),
-            "style": "width: 100%"})
+        etree.SubElement(
+            div_elem,
+            "img",
+            attrib={
+                "src": urlrelpath(image_filename, ref_from=book_part.filename),
+                "style": "width: 100%",
+            },
+        )
 
         self.add_guide_entry("cover", target=book_part.filename)
 
@@ -628,27 +738,48 @@ class EPUB_Output(object):
                             if book_part.is_cover_page:
                                 cover_width, cover_height = width, height
                             if width < 100 or height < 100:
-                                log.warning("Fixed-layout viewport %s is too small: %s" % (book_part.filename, content))
+                                log.warning(
+                                    "Fixed-layout viewport %s is too small: %s"
+                                    % (book_part.filename, content)
+                                )
 
         if len(viewport_count) > 0:
             viewports_by_count = sorted(viewport_count.items(), key=lambda x: -x[1])
-            (self.original_width, self.original_height), best_count = viewports_by_count[0]
+            (self.original_width, self.original_height), best_count = (
+                viewports_by_count[0]
+            )
 
             if len(viewports_by_count) > 1:
                 best_aspect_ratio = self.original_width / (self.original_height or 1)
-                conflicts = [(best_count, best_aspect_ratio, self.original_width, self.original_height)]
+                conflicts = [
+                    (
+                        best_count,
+                        best_aspect_ratio,
+                        self.original_width,
+                        self.original_height,
+                    )
+                ]
 
                 for (width, height), count in viewports_by_count:
                     aspect_ratio = width / (height or 1)
                     if not (
-                            aspect_ratio_match(best_aspect_ratio, aspect_ratio) or
-                            aspect_ratio_match(best_aspect_ratio, aspect_ratio * 2) or
-                            aspect_ratio_match(best_aspect_ratio, aspect_ratio / 2) or
-                            (self.is_comic and width == cover_width and height == cover_height and count == 1)):
+                        aspect_ratio_match(best_aspect_ratio, aspect_ratio)
+                        or aspect_ratio_match(best_aspect_ratio, aspect_ratio * 2)
+                        or aspect_ratio_match(best_aspect_ratio, aspect_ratio / 2)
+                        or (
+                            self.is_comic
+                            and width == cover_width
+                            and height == cover_height
+                            and count == 1
+                        )
+                    ):
                         conflicts.append((count, aspect_ratio, width, height))
 
                 if len(conflicts) > 1:
-                    log.info("Conflicting viewport aspect ratios: %s" % ", ".join(["%d @ %f (%dw x %dh)" % x for x in conflicts]))
+                    log.info(
+                        "Conflicting viewport aspect ratios: %s"
+                        % ", ".join(["%d @ %f (%dw x %dh)" % x for x in conflicts])
+                    )
 
     def check_epub_version(self):
         if not self.generate_epub2:
@@ -659,7 +790,12 @@ class EPUB_Output(object):
             return
 
         for oebps_file in self.oebps_files.values():
-            if oebps_file.mimetype in ["application/octet-stream", "application/xml", "text/javascript", "text/html"]:
+            if oebps_file.mimetype in [
+                "application/octet-stream",
+                "application/xml",
+                "text/javascript",
+                "text/html",
+            ]:
                 self.generate_epub2 = False
                 return
 
@@ -670,9 +806,35 @@ class EPUB_Output(object):
 
             for elem in book_part.html.iter("*"):
                 if elem.tag in {
-                        "article", "aside", "audio", "bdi", "canvas", "details", "dialog", "embed", "figcaption", "figure", "footer",
-                        "header", "main", "mark", "meter", "nav", "picture", "progress", "rt", "ruby", "section", "source",
-                        "summary", "template", "time", "track", "video", "wbr"}:
+                    "article",
+                    "aside",
+                    "audio",
+                    "bdi",
+                    "canvas",
+                    "details",
+                    "dialog",
+                    "embed",
+                    "figcaption",
+                    "figure",
+                    "footer",
+                    "header",
+                    "main",
+                    "mark",
+                    "meter",
+                    "nav",
+                    "picture",
+                    "progress",
+                    "rt",
+                    "ruby",
+                    "section",
+                    "source",
+                    "summary",
+                    "template",
+                    "time",
+                    "track",
+                    "video",
+                    "wbr",
+                }:
                     self.generate_epub2 = False
                     return
 
@@ -684,7 +846,9 @@ class EPUB_Output(object):
     def save_book_parts(self):
         for book_part in self.book_parts:
             if self.DEBUG:
-                log.debug("%s: %s" % (book_part.filename, etree.tostring(book_part.html)))
+                log.debug(
+                    "%s: %s" % (book_part.filename, etree.tostring(book_part.html))
+                )
 
             book_part.html.tag = HTML
 
@@ -709,7 +873,7 @@ class EPUB_Output(object):
 
             for e in body.iterfind(".//*[@src]"):
                 src = e.get("src", "")
-                if (src.startswith("http://") or src.startswith("https://")):
+                if src.startswith("http://") or src.startswith("https://"):
                     book_part.opf_properties.add("remote-resources")
                     break
 
@@ -717,39 +881,62 @@ class EPUB_Output(object):
                 if e.get(EPUB_TYPE, "").startswith("amzn:"):
                     book_part.html.set(
                         qname(EPUB_NS_URI, "prefix"),
-                        "amzn: https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.pdf")
+                        "amzn: https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.pdf",
+                    )
                     break
 
             etree.cleanup_namespaces(book_part.html)
 
             if self.DEBUG:
-                log.debug("%s: %s" % (book_part.filename, etree.tostring(book_part.html)))
+                log.debug(
+                    "%s: %s" % (book_part.filename, etree.tostring(book_part.html))
+                )
 
             if not book_part.omit:
                 document = etree.ElementTree(book_part.html)
                 doctype = b"<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.1//EN' 'http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd'>"
 
-                html_str = etree.tostring(document, encoding="utf-8", doctype=doctype, xml_declaration=True)
+                html_str = etree.tostring(
+                    document, encoding="utf-8", doctype=doctype, xml_declaration=True
+                )
 
                 if not self.generate_epub2:
                     html_str = html_str.replace(doctype + b"\n", b"")
 
                 self.manifest_resource(
-                    book_part.filename, book_part.opf_properties, book_part.linear, idref=book_part.idref,
-                    data=html_str, mimetype="application/xhtml+xml")
+                    book_part.filename,
+                    book_part.opf_properties,
+                    book_part.linear,
+                    idref=book_part.idref,
+                    data=html_str,
+                    mimetype="application/xhtml+xml",
+                )
 
     def consolidate_html(self, body):
-
         for toptag in body.findall("*"):
             changed = True
             while changed:
                 changed = False
                 for e in toptag.iterdescendants():
-                    if e.tag in {"a", "b", "em", "i", "span", "strong", "sub", "sup", "u"}:
+                    if e.tag in {
+                        "a",
+                        "b",
+                        "em",
+                        "i",
+                        "span",
+                        "strong",
+                        "sub",
+                        "sup",
+                        "u",
+                    }:
                         n = e.getnext()
-                        while ((not e.tail) and (n is not None) and n.tag == e.tag and
-                                tuple(sorted(dict(e.attrib).items())) == tuple(sorted(dict(n.attrib).items()))):
-
+                        while (
+                            (not e.tail)
+                            and (n is not None)
+                            and n.tag == e.tag
+                            and tuple(sorted(dict(e.attrib).items()))
+                            == tuple(sorted(dict(n.attrib).items()))
+                        ):
                             if n.text:
                                 if len(e) > 0:
                                     tt = e[-1]
@@ -794,14 +981,46 @@ class EPUB_Output(object):
                     parent = e.getparent()
                     if len(parent) == 1 and not parent.text:
                         if parent.tag in {
-                                "aside", "caption", "div", "figure", "h1", "h2", "h3", "h4", "h5", "h6", "li", "p", "td",
-                                IDX_ENTRY}:
+                            "aside",
+                            "caption",
+                            "div",
+                            "figure",
+                            "h1",
+                            "h2",
+                            "h3",
+                            "h4",
+                            "h5",
+                            "h6",
+                            "li",
+                            "p",
+                            "td",
+                            IDX_ENTRY,
+                        }:
                             e.tag = TEMP_TAG
                         elif parent.tag == "body" and not e.text:
                             for child in e.iterfind("*"):
-                                if (child.tag not in {
-                                        "aside", "div", "figure", "h1", "h2", "h3", "h4", "h5", "h6", "hr", "iframe",
-                                        "ol", "p", "table", "ul", IDX_ENTRY} or child.tail):
+                                if (
+                                    child.tag
+                                    not in {
+                                        "aside",
+                                        "div",
+                                        "figure",
+                                        "h1",
+                                        "h2",
+                                        "h3",
+                                        "h4",
+                                        "h5",
+                                        "h6",
+                                        "hr",
+                                        "iframe",
+                                        "ol",
+                                        "p",
+                                        "table",
+                                        "ul",
+                                        IDX_ENTRY,
+                                    }
+                                    or child.tail
+                                ):
                                     break
                             else:
                                 e.tag = TEMP_TAG
@@ -822,27 +1041,70 @@ class EPUB_Output(object):
                 e.text = (e.text or "") + "\n"
 
             if e.tag in {
-                    "aside", "body", "div", "figure", "h1", "h2", "h3", "h4", "h5", "h6", "head", "hr",
-                    "link", "meta", "nav", "ol", "p", "style", "table", "title", "ul", IDX_ENTRY}:
+                "aside",
+                "body",
+                "div",
+                "figure",
+                "h1",
+                "h2",
+                "h3",
+                "h4",
+                "h5",
+                "h6",
+                "head",
+                "hr",
+                "link",
+                "meta",
+                "nav",
+                "ol",
+                "p",
+                "style",
+                "table",
+                "title",
+                "ul",
+                IDX_ENTRY,
+            }:
                 e.tail = (e.tail or "") + "\n"
 
             if e.tag == "div" and e.get("id", "").startswith("amzn_master_range_"):
                 for ee in e.iterfind("*"):
-                    if ee.tag in {"aside", "div", "figure", "h1", "h2", "h3", "h4", "h5", "h6",
-                                  "hr", "p", "table", "ul", "ol", IDX_ENTRY} and not ee.tail:
+                    if (
+                        ee.tag
+                        in {
+                            "aside",
+                            "div",
+                            "figure",
+                            "h1",
+                            "h2",
+                            "h3",
+                            "h4",
+                            "h5",
+                            "h6",
+                            "hr",
+                            "p",
+                            "table",
+                            "ul",
+                            "ol",
+                            IDX_ENTRY,
+                        }
+                        and not ee.tail
+                    ):
                         ee.tail = "\n"
 
     def create_opf(self):
-
         def add_metadata_meta_name_content(name, content):
             add_meta_name_content(metadata, name, content)
 
         def add_metadata_meta_property(prop, text):
-            meta_property = add_attribs(etree.SubElement(metadata, "meta"), "property", prop)
+            meta_property = add_attribs(
+                etree.SubElement(metadata, "meta"), "property", prop
+            )
             meta_property.text = text
 
         def add_metadata_meta_refines_property(refines, prop, text, scheme=None):
-            meta_refines = add_attribs(etree.SubElement(metadata, "meta"), "refines", refines, "property", prop)
+            meta_refines = add_attribs(
+                etree.SubElement(metadata, "meta"), "refines", refines, "property", prop
+            )
             if scheme:
                 meta_refines.set("scheme", scheme)
             meta_refines.text = text
@@ -860,12 +1122,20 @@ class EPUB_Output(object):
             "dc": DC_NS_URI,
             "opf": ALT_OPF_NS_URI,
         }
-        package = etree.Element(qname(OPF_NS_URI, "package"), nsmap=OPF_NAMESPACES, attrib={
-            "version": ("2.0" if self.generate_epub2 else "3.0"), "unique-identifier": "bookid"})
+        package = etree.Element(
+            qname(OPF_NS_URI, "package"),
+            nsmap=OPF_NAMESPACES,
+            attrib={
+                "version": ("2.0" if self.generate_epub2 else "3.0"),
+                "unique-identifier": "bookid",
+            },
+        )
 
         metadata = etree.SubElement(package, "metadata")
 
-        identifier = etree.SubElement(metadata, qname(DC_NS_URI, "identifier"), attrib={"id": "bookid"})
+        identifier = etree.SubElement(
+            metadata, qname(DC_NS_URI, "identifier"), attrib={"id": "bookid"}
+        )
         identifier.text = self.uid
 
         if self.uid.startswith("urn:uuid:") and self.generate_epub2:
@@ -875,7 +1145,9 @@ class EPUB_Output(object):
         title.text = self.title
         if self.title_pronunciation and not self.generate_epub2:
             title.set("id", "title")
-            add_metadata_meta_refines_property("#title", "alternate-script", self.title_pronunciation)
+            add_metadata_meta_refines_property(
+                "#title", "alternate-script", self.title_pronunciation
+            )
 
         for i, author in enumerate(self.authors):
             creator = etree.SubElement(metadata, qname(DC_NS_URI, "creator"))
@@ -885,10 +1157,16 @@ class EPUB_Output(object):
                 author_id = "creator%d" % i
                 creator.set("id", author_id)
 
-                add_metadata_meta_refines_property("#" + author_id, "role", "aut", prefix("marc:relators"))
+                add_metadata_meta_refines_property(
+                    "#" + author_id, "role", "aut", prefix("marc:relators")
+                )
 
                 if len(self.author_pronunciations) > i:
-                    add_metadata_meta_refines_property("#" + author_id, "alternate-script", self.author_pronunciations[i])
+                    add_metadata_meta_refines_property(
+                        "#" + author_id,
+                        "alternate-script",
+                        self.author_pronunciations[i],
+                    )
             else:
                 creator.set(qname(ALT_OPF_NS_URI, "role"), "aut")
 
@@ -920,7 +1198,10 @@ class EPUB_Output(object):
             rights.text = self.rights
 
         if not self.generate_epub2:
-            add_metadata_meta_property("dcterms:modified", datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z")
+            add_metadata_meta_property(
+                "dcterms:modified",
+                datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
+            )
 
         if self.fixed_layout:
             if not self.generate_epub2:
@@ -930,9 +1211,16 @@ class EPUB_Output(object):
 
             if self.original_width and self.original_height:
                 if self.orientation_lock == "none":
-                    self.orientation_lock = "landscape" if self.original_width > self.original_height else "portrait"
+                    self.orientation_lock = (
+                        "landscape"
+                        if self.original_width > self.original_height
+                        else "portrait"
+                    )
 
-                add_metadata_meta_name_content("original-resolution", "%dx%d" % (self.original_width, self.original_height))
+                add_metadata_meta_name_content(
+                    "original-resolution",
+                    "%dx%d" % (self.original_width, self.original_height),
+                )
 
         if self.scrolled_continuous and not self.generate_epub2:
             add_metadata_meta_property(prefix("rendition:flow"), "scrolled-continuous")
@@ -943,7 +1231,11 @@ class EPUB_Output(object):
         if self.orientation_lock != "none":
             if not self.generate_epub2:
                 add_metadata_meta_property(
-                    prefix("rendition:orientation"), self.orientation_lock if self.orientation_lock != "none" else "auto")
+                    prefix("rendition:orientation"),
+                    self.orientation_lock
+                    if self.orientation_lock != "none"
+                    else "auto",
+                )
 
             add_metadata_meta_name_content("orientation-lock", self.orientation_lock)
 
@@ -951,7 +1243,11 @@ class EPUB_Output(object):
             add_metadata_meta_name_content("Override-Kindle-Fonts", "true")
 
         if self.writing_mode == "horizontal-tb":
-            primary_writing_mode = "horizontal-rl" if self.page_progression_direction == "rtl" else "horizontal-lr"
+            primary_writing_mode = (
+                "horizontal-rl"
+                if self.page_progression_direction == "rtl"
+                else "horizontal-lr"
+            )
         else:
             primary_writing_mode = self.writing_mode
 
@@ -978,10 +1274,14 @@ class EPUB_Output(object):
             add_metadata_meta_name_content("amzn:guided-view-native", "true")
 
         if self.min_aspect_ratio:
-            add_metadata_meta_name_content("amzn:min-aspect-ratio", value_str(self.min_aspect_ratio))
+            add_metadata_meta_name_content(
+                "amzn:min-aspect-ratio", value_str(self.min_aspect_ratio)
+            )
 
         if self.max_aspect_ratio:
-            add_metadata_meta_name_content("amzn:max-aspect-ratio", value_str(self.max_aspect_ratio))
+            add_metadata_meta_name_content(
+                "amzn:max-aspect-ratio", value_str(self.max_aspect_ratio)
+            )
 
         if self.is_dictionary:
             x_metadata = etree.SubElement(metadata, "x-metadata")
@@ -995,18 +1295,35 @@ class EPUB_Output(object):
         if self.is_magazine:
             x_metadata = etree.SubElement(metadata, "x-metadata")
 
-            etree.SubElement(x_metadata, "output", attrib={
-                "content-type": "application/x-mobipocket-subscription-magazine", "encoding": "utf-8"})
+            etree.SubElement(
+                x_metadata,
+                "output",
+                attrib={
+                    "content-type": "application/x-mobipocket-subscription-magazine",
+                    "encoding": "utf-8",
+                },
+            )
 
         if used_prefixes:
-            package.set("prefix", " ".join(["%s: %s" % (p, RESERVED_OPF_VALUE_PREFIXES[p]) for p in sorted(list(used_prefixes))]))
+            package.set(
+                "prefix",
+                " ".join(
+                    [
+                        "%s: %s" % (p, RESERVED_OPF_VALUE_PREFIXES[p])
+                        for p in sorted(list(used_prefixes))
+                    ]
+                ),
+            )
 
         man = etree.SubElement(package, "manifest")
         toc_idref = None
         has_page_spread = False
 
         for manifest_entry in sorted(self.manifest, key=lambda m: m.filename):
-            if manifest_entry.filename == self.ncx_location or manifest_entry.filename.endswith(".ncx"):
+            if (
+                manifest_entry.filename == self.ncx_location
+                or manifest_entry.filename.endswith(".ncx")
+            ):
                 toc_idref = manifest_entry.id
 
             if manifest_entry.external:
@@ -1019,19 +1336,27 @@ class EPUB_Output(object):
             if self.generate_epub2:
                 mimetype = EPUB2_ALT_MIMETYPES.get(mimetype, mimetype)
 
-            item = etree.SubElement(man, "item", attrib={
-                "href": href, "id": manifest_entry.id, "media-type": mimetype})
+            item = etree.SubElement(
+                man,
+                "item",
+                attrib={"href": href, "id": manifest_entry.id, "media-type": mimetype},
+            )
 
             if manifest_entry.is_cover_image and not (self.html_cover or self.is_comic):
                 add_metadata_meta_name_content("cover", manifest_entry.id)
 
             if self.fixed_layout:
                 if manifest_entry.is_fxl:
-                    manifest_entry.opf_properties.discard("rendition:layout-pre-paginated")
+                    manifest_entry.opf_properties.discard(
+                        "rendition:layout-pre-paginated"
+                    )
                 else:
                     manifest_entry.opf_properties.add("rendition:layout-reflowable")
 
-                if manifest_entry.opf_properties & {"page-spread-left", "page-spread-right"}:
+                if manifest_entry.opf_properties & {
+                    "page-spread-left",
+                    "page-spread-right",
+                }:
                     has_page_spread = True
 
             item_properties = manifest_entry.opf_properties & MANIFEST_ITEM_PROPERTIES
@@ -1040,8 +1365,14 @@ class EPUB_Output(object):
 
             unknown_properties = manifest_entry.opf_properties - OPF_PROPERTIES
             if len(unknown_properties):
-                log.error("Manifest file %s has %d unknown OPF properties: \"%s\"" % (
-                            manifest_entry.filename, len(unknown_properties), " ".join(sorted(list(unknown_properties)))))
+                log.error(
+                    'Manifest file %s has %d unknown OPF properties: "%s"'
+                    % (
+                        manifest_entry.filename,
+                        len(unknown_properties),
+                        " ".join(sorted(list(unknown_properties))),
+                    )
+                )
 
         spine = etree.SubElement(package, "spine")
 
@@ -1053,16 +1384,27 @@ class EPUB_Output(object):
 
         for manifest_entry in self.manifest:
             if manifest_entry.linear is not None:
-                itemref = etree.SubElement(spine, "itemref", attrib={"idref": manifest_entry.id})
+                itemref = etree.SubElement(
+                    spine, "itemref", attrib={"idref": manifest_entry.id}
+                )
 
-                itemref_properties = manifest_entry.opf_properties & SPINE_ITEMREF_PROPERTIES
+                itemref_properties = (
+                    manifest_entry.opf_properties & SPINE_ITEMREF_PROPERTIES
+                )
 
-                if (tweaks.get("kfx_input_add_comic_spread_center", False) and self.is_comic
-                        and has_page_spread and not itemref_properties):
+                if (
+                    tweaks.get("kfx_input_add_comic_spread_center", False)
+                    and self.is_comic
+                    and has_page_spread
+                    and not itemref_properties
+                ):
                     itemref_properties.add("rendition:page-spread-center")
 
                 if len(itemref_properties) and not self.generate_epub2:
-                    itemref.set("properties", " ".join([prefix(p) for p in sorted(list(itemref_properties))]))
+                    itemref.set(
+                        "properties",
+                        " ".join([prefix(p) for p in sorted(list(itemref_properties))]),
+                    )
 
                 if manifest_entry.linear is False:
                     itemref.set("linear", "no")
@@ -1071,40 +1413,58 @@ class EPUB_Output(object):
             gd = etree.SubElement(package, "guide")
 
             for g in self.guide:
-                etree.SubElement(gd, "reference", attrib={
-                    "type": g.guide_type, "title": g.title,
-                    "href": urlrelpath(g.target, ref_from=self.OPF_FILEPATH)})
+                etree.SubElement(
+                    gd,
+                    "reference",
+                    attrib={
+                        "type": g.guide_type,
+                        "title": g.title,
+                        "href": urlrelpath(g.target, ref_from=self.OPF_FILEPATH),
+                    },
+                )
 
         etree.cleanup_namespaces(package)
 
-        data = etree.tostring(package, encoding="utf-8", pretty_print=True, xml_declaration=True)
+        data = etree.tostring(
+            package, encoding="utf-8", pretty_print=True, xml_declaration=True
+        )
         data = data.replace(ALT_OPF_NS_URI.encode("utf-8"), OPF_NS_URI.encode("utf-8"))
 
         self.add_oebps_file(self.OPF_FILEPATH, data, "application/oebps-package+xml")
 
     def container_xml(self):
         NS_URI = "urn:oasis:names:tc:opendocument:xmlns:container"
-        container = etree.Element(qname(NS_URI, "container"), nsmap={None: NS_URI}, attrib={"version": "1.0"})
+        container = etree.Element(
+            qname(NS_URI, "container"), nsmap={None: NS_URI}, attrib={"version": "1.0"}
+        )
         rootfiles = etree.SubElement(container, "rootfiles")
-        etree.SubElement(rootfiles, "rootfile", attrib={
-            "full-path": (self.OEBPS_DIR + self.OPF_FILEPATH),
-            "media-type": "application/oebps-package+xml"})
+        etree.SubElement(
+            rootfiles,
+            "rootfile",
+            attrib={
+                "full-path": (self.OEBPS_DIR + self.OPF_FILEPATH),
+                "media-type": "application/oebps-package+xml",
+            },
+        )
 
-        return etree.tostring(container, encoding="utf-8", pretty_print=True, xml_declaration=True)
+        return etree.tostring(
+            container, encoding="utf-8", pretty_print=True, xml_declaration=True
+        )
 
     def create_ncx(self):
         doctype = (
-            None if not (self.generate_epub2 or GENERATE_EPUB2_NCX_DOCTYPE) else
-            "<!DOCTYPE ncx PUBLIC \"-//NISO//DTD ncx 2005-1//EN\" \"http://www.daisy.org/z3986/2005/ncx-2005-1.dtd\">")
+            None
+            if not (self.generate_epub2 or GENERATE_EPUB2_NCX_DOCTYPE)
+            else '<!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN" "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">'
+        )
 
         emit_playorder = doctype is not None
 
-        NCX_NAMESPACES = {
-            None: NCX_NS_URI,
-            "mbp": MBP_NS_URI
-        }
+        NCX_NAMESPACES = {None: NCX_NS_URI, "mbp": MBP_NS_URI}
 
-        ncx = etree.Element(qname(NCX_NS_URI, "ncx"), nsmap=NCX_NAMESPACES, attrib={"version": "2005-1"})
+        ncx = etree.Element(
+            qname(NCX_NS_URI, "ncx"), nsmap=NCX_NAMESPACES, attrib={"version": "2005-1"}
+        )
         head = etree.SubElement(ncx, "head")
         add_meta_name_content(head, "dtb:uid", self.uid)
 
@@ -1134,7 +1494,9 @@ class EPUB_Output(object):
             for p in self.pagemap:
                 pt = etree.SubElement(pl, "pageTarget")
 
-                p_id = make_unique_name(self.fix_html_id("page_%s" % p.label), page_ids, sep="_")
+                p_id = make_unique_name(
+                    self.fix_html_id("page_%s" % p.label), page_ids, sep="_"
+                )
                 pt.set("id", p_id)
                 page_ids.add(p_id)
 
@@ -1159,8 +1521,19 @@ class EPUB_Output(object):
 
         etree.cleanup_namespaces(ncx)
 
-        data = etree.tostring(ncx, encoding="utf-8", pretty_print=True, xml_declaration=True, doctype=doctype)
-        self.manifest_resource(self.NCX_FILEPATH, idref=self.toc_ncx_id, data=data, mimetype="application/x-dtbncx+xml")
+        data = etree.tostring(
+            ncx,
+            encoding="utf-8",
+            pretty_print=True,
+            xml_declaration=True,
+            doctype=doctype,
+        )
+        self.manifest_resource(
+            self.NCX_FILEPATH,
+            idref=self.toc_ncx_id,
+            data=data,
+            mimetype="application/x-dtbncx+xml",
+        )
         self.ncx_location = self.NCX_FILEPATH
 
     def get_next_playorder(self, uri):
@@ -1171,7 +1544,9 @@ class EPUB_Output(object):
 
     def create_navmap(self, root, ncx_toc, emit_playorder, depth):
         for toc_entry in ncx_toc:
-            nav_point = etree.SubElement(root, "navPoint", attrib={"id": "nav%d" % self.nav_id_count})
+            nav_point = etree.SubElement(
+                root, "navPoint", attrib={"id": "nav%d" % self.nav_id_count}
+            )
 
             if self.is_magazine and depth in PERIODICAL_NCX_CLASSES:
                 nav_point.set("class", PERIODICAL_NCX_CLASSES[depth])
@@ -1186,20 +1561,34 @@ class EPUB_Output(object):
             nav_label_text.text = toc_entry.title
 
             if toc_entry.target:
-                etree.SubElement(nav_point, "content", attrib={
-                    "src": urlrelpath(toc_entry.target, ref_from=self.NCX_FILEPATH)})
+                etree.SubElement(
+                    nav_point,
+                    "content",
+                    attrib={
+                        "src": urlrelpath(toc_entry.target, ref_from=self.NCX_FILEPATH)
+                    },
+                )
 
             if toc_entry.description:
-                meta = etree.SubElement(nav_point, qname(MBP_NS_URI, "meta"), attrib={"name": "description"})
+                meta = etree.SubElement(
+                    nav_point, qname(MBP_NS_URI, "meta"), attrib={"name": "description"}
+                )
                 meta.text = toc_entry.description
 
             if toc_entry.icon:
-                meta = etree.SubElement(nav_point, qname(MBP_NS_URI, "meta-img"), attrib={
-                    "name": "mastheadImage",
-                    "src": urlrelpath(toc_entry.icon, ref_from=self.NCX_FILEPATH)})
+                meta = etree.SubElement(
+                    nav_point,
+                    qname(MBP_NS_URI, "meta-img"),
+                    attrib={
+                        "name": "mastheadImage",
+                        "src": urlrelpath(toc_entry.icon, ref_from=self.NCX_FILEPATH),
+                    },
+                )
 
             if toc_entry.children:
-                self.create_navmap(nav_point, toc_entry.children, emit_playorder, depth + 1)
+                self.create_navmap(
+                    nav_point, toc_entry.children, emit_playorder, depth + 1
+                )
 
     def create_epub3_nav(self):
         filename = self.NAV_FILEPATH % ""
@@ -1258,8 +1647,11 @@ class EPUB_Output(object):
 
             for p in self.pagemap:
                 li = etree.SubElement(ol, "li")
-                a = etree.SubElement(li, "a", attrib={
-                    "href": urlrelpath(p.target, ref_from=book_part.filename)})
+                a = etree.SubElement(
+                    li,
+                    "a",
+                    attrib={"href": urlrelpath(p.target, ref_from=book_part.filename)},
+                )
                 a.text = p.label
 
     def hide_element(self, elem):
@@ -1286,7 +1678,11 @@ class EPUB_Output(object):
         file = io.BytesIO()
 
         with zipfile.ZipFile(file, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-            zf.writestr("mimetype", "application/epub+zip".encode("ascii"), compress_type=zipfile.ZIP_STORED)
+            zf.writestr(
+                "mimetype",
+                "application/epub+zip".encode("ascii"),
+                compress_type=zipfile.ZIP_STORED,
+            )
             zf.writestr("META-INF/container.xml", self.container_xml())
 
             for filename, oebps_file in sorted(self.oebps_files.items()):
@@ -1305,7 +1701,6 @@ class EPUB_Output(object):
         return MIMETYPE_OF_EXT.get(ext, default)
 
     def fixup_ns_prefixes(self, tree):
-
         def fixup(name, elem):
             fixed = memo.get(name)
             if fixed is not None:
@@ -1313,7 +1708,7 @@ class EPUB_Output(object):
 
             if name.startswith("{"):
                 if name.startswith(default_ns_prefix):
-                    memo[name] = tag = name[len(default_ns_prefix):]
+                    memo[name] = tag = name[len(default_ns_prefix) :]
                     return tag
 
             elif ":" in name:
@@ -1323,7 +1718,10 @@ class EPUB_Output(object):
                     memo[name] = tag = qname(uri, localname)
                     return tag
 
-                log.error("namespace of element %s is undefined in %s" % (name, repr(elem.nsmap)))
+                log.error(
+                    "namespace of element %s is undefined in %s"
+                    % (name, repr(elem.nsmap))
+                )
 
             return None
 
@@ -1354,9 +1752,8 @@ def add_meta_name_content(elem, name, content):
 
 
 def add_attribs(elem, *args):
-
     for i in range(0, len(args), 2):
-        elem.set(args[i], args[i+1])
+        elem.set(args[i], args[i + 1])
 
     return elem
 
@@ -1398,7 +1795,6 @@ def roman_to_int(input):
     ints = [1000, 500, 100, 50, 10, 5, 1]
     places = []
     for c in input:
-
         if c not in nums:
             return 0
 
@@ -1432,14 +1828,15 @@ def nsprefix(s, namespaces=XHTML_NAMESPACES):
 
 
 def set_nsmap(root, nsmap):
-
     if root.getparent() is not None:
         raise Exception("set_nsmap: root element has parent")
 
     new_nsmap = dict(root.nsmap)
     new_nsmap.update(nsmap)
 
-    new_root = etree.Element(qname(new_nsmap.get(None), localname(root.tag)), nsmap=new_nsmap)
+    new_root = etree.Element(
+        qname(new_nsmap.get(None), localname(root.tag)), nsmap=new_nsmap
+    )
     new_root.text = root.text
     new_root.tail = root.tail
 
