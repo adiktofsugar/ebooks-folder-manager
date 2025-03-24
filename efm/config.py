@@ -1,7 +1,10 @@
 from pathlib import Path
 from schema import Schema, Optional
 
-valid_actions = ["drm", "rename", "print", "pdf", "download", "none"]
+# NOTE: can't use ALL_ACTIONS cause circular dependencies
+# NOTE: order matters. drm has to come first for any metadata to work, download has to happen before
+#       anything to do with files, etc.
+valid_actions = ["download_acsm", "drm", "kfx2epub", "rename", "pdf", "print", "none"]
 
 
 schema = Schema(

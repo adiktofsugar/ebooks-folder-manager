@@ -14,9 +14,15 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "kfxlib"))
 from efm.exceptions import BookError
 from efm.transaction import Transaction
 from efm.action import ALL_ACTIONS
+from efm.config import valid_actions
 
 
 logger = logging.getLogger(__name__)
+action_id_to_description = {a.id(): a.description() for a in ALL_ACTIONS}
+action_id_to_description["none"] = "do nothing"
+action_list = "\n".join(
+    [f"{a:<10} - {action_id_to_description[a]}" for a in valid_actions],
+)
 
 
 def main():
@@ -39,13 +45,7 @@ def main():
       - adobe_key_file: path to Adobe key file
 
     """,
-        epilog="<action>  is one of:"
-        + "\n".join(
-            [
-                *[f"{a.id():<10} - {a.description()}" for a in ALL_ACTIONS],
-                "none       - do nothing",
-            ]
-        ),
+        epilog=f"<action>  is one of:{os.linesep}{action_list}",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     argparser.add_argument(
@@ -80,7 +80,7 @@ def main():
     if args.dry and loglevel > logging.INFO:
         loglevel = logging.INFO
 
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=loglevel)
 
     files = args.spec
     all_files: list[str] = []

@@ -7,7 +7,7 @@ from typing import Literal
 
 from efm.action import ALL_ACTIONS, BaseAction
 from efm.metadata import Metadata
-from efm.config import Config, get_closest_config
+from efm.config import Config, get_closest_config, valid_actions
 
 logger = logging.getLogger(__name__)
 
@@ -40,8 +40,9 @@ class Transaction:
                 f"Processing {self.original_filepath} with actions {self.action_ids}"
             )
             action_ids_run = []
-            # order matters. drm has to come first for any metadata to work
-            for action_id in ["download", "drm", "pdf", "rename", "print"]:
+            for action_id in valid_actions:
+                if action_id == "none":
+                    continue
                 if action_id in self.action_ids:
                     action = get_action_from_str(
                         action_id,
