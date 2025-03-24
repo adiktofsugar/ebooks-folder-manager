@@ -59,4 +59,4 @@ addopts = "-v"
 
 [tool.pyright]
 include = ["efm"]
-exclude=["efm/DeDRM_tools", "efm/KFX_Input", "efm/adl"]
+exclude=["efm/DeDRM_tools", "efm/kfxlib", "efm/adl"]
