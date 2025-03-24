@@ -8,15 +8,12 @@ import traceback
 # the dedrm plugin has absolute imports that assume it's the root, so I'm adding it the path
 sys.path.append(os.path.join(os.path.dirname(__file__), "DeDRM_tools", "DeDRM_plugin"))
 
+# the KFX_Input plugin has absolute imports that assume it's the root, so I'm adding it the path
+sys.path.append(os.path.join(os.path.dirname(__file__), "kfxlib"))
+
 from efm.exceptions import BookError
 from efm.transaction import Transaction
-from efm.action import (
-    DeDrmAction,
-    RenameAction,
-    PrintAction,
-    ReformatPdfAction,
-    DownloadAction,
-)
+from efm.action import ALL_ACTIONS
 
 
 logger = logging.getLogger(__name__)
@@ -45,16 +42,7 @@ def main():
         epilog="<action>  is one of:"
         + "\n".join(
             [
-                *[
-                    f"{a.id():<10} - {a.description()}"
-                    for a in [
-                        DeDrmAction,
-                        RenameAction,
-                        PrintAction,
-                        ReformatPdfAction,
-                        DownloadAction,
-                    ]
-                ],
+                *[f"{a.id():<10} - {a.description()}" for a in ALL_ACTIONS],
                 "none       - do nothing",
             ]
         ),

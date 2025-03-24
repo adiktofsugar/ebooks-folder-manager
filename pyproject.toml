@@ -18,6 +18,9 @@ dependencies = [
     "requests (>=2.32.3,<3.0.0)",
     "cryptography (>=44.0.2,<45.0.0)",
     "legacy-cgi (>=2.6.2,<3.0.0)",
+    "pillow (>=11.1.0,<12.0.0)",
+    "pypdf (>=5.4.0,<6.0.0)",
+    "beautifulsoup4 (>=4.13.3,<5.0.0)",
 ]
 
 [project.scripts]
@@ -56,4 +59,4 @@ addopts = "-v"
 
 [tool.pyright]
 include = ["efm"]
-exclude=["efm/DeDRM_tools", "efm/DeDRM_plugin--released", "efm/adl"]
+exclude=["efm/DeDRM_tools", "efm/KFX_Input", "efm/adl"]

@@ -5,14 +5,7 @@ import tempfile
 import traceback
 from typing import Literal
 
-from efm.action import (
-    BaseAction,
-    DeDrmAction,
-    DownloadAction,
-    PrintAction,
-    ReformatPdfAction,
-    RenameAction,
-)
+from efm.action import ALL_ACTIONS, BaseAction
 from efm.metadata import Metadata
 from efm.config import Config, get_closest_config
 
@@ -133,23 +126,14 @@ class Transaction:
 
 
 def get_action_from_str(
-    action: str,
+    action_id: str,
     config: Config | None,
     metadata: Metadata | None | Literal[False],
     filepath: str,
     temp_dirpath: str,
     dry: bool,
 ) -> BaseAction:
-    match action:
-        case "drm":
-            return DeDrmAction(config, metadata, filepath, temp_dirpath, dry)
-        case "rename":
-            return RenameAction(config, metadata, filepath, temp_dirpath, dry)
-        case "print":
-            return PrintAction(config, metadata, filepath, temp_dirpath, dry)
-        case "pdf":
-            return ReformatPdfAction(config, metadata, filepath, temp_dirpath, dry)
-        case "download":
-            return DownloadAction(config, metadata, filepath, temp_dirpath, dry)
-        case _:
-            raise ValueError(f"Unknown action {action}")
+    for actionKlass in ALL_ACTIONS:
+        if actionKlass.id() == action_id:
+            return actionKlass(config, metadata, filepath, temp_dirpath, dry)
+    raise ValueError(f"Unknown action {action_id}")

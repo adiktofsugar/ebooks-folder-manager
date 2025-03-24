@@ -2,10 +2,10 @@ import logging
 import os
 import shutil
 import subprocess
-from typing import Literal
+from typing import Literal, Sequence
 import pymupdf
 
-from efm import dedrm
+from efm import dedrm, kfxconvert
 from efm.adl.adl.epub_get import get_ebook
 from efm.adl.adl.exceptions import GetEbookException
 from efm.adl.adl.login import login
@@ -362,14 +362,14 @@ class PrintAction(BaseAction):
         return self.filepath
 
 
-class DownloadAction(BaseAction):
+class DownloadAcsmAction(BaseAction):
     @classmethod
     def description(cls) -> str:
         return "download an ACSM file"
 
     @classmethod
     def id(cls) -> str:
-        return "download"
+        return "download_acsm"
 
     def perform(self):
         if self.filepath.lower().endswith(".acsm"):
@@ -412,3 +412,37 @@ class DownloadAction(BaseAction):
                 raise
         logger.debug(f"Skipping {self.filepath} because it's not an ACSM file.")
         return self.filepath
+
+
+class Kfx2EpubAction(BaseAction):
+    @classmethod
+    def description(cls) -> str:
+        return "convert kfx to epub"
+
+    @classmethod
+    def id(cls) -> str:
+        return "kfx2epub"
+
+    def perform(self):
+        valid_extensions = ["kfx", "kfx-zip", "kpf"]
+        ext = os.path.splitext(self.filepath)[1].lower()[1:]
+        if ext in valid_extensions:
+            filepath = os.path.join(self.temp_dirpath, "after_kfx2epub.epub")
+            with open(filepath, "wb") as f:
+                f.write(kfxconvert.convert_to_epub(self.filepath))
+            logger.info(f"Converted {self.filepath} to {filepath}")
+            return filepath
+        logger.debug(
+            f"Skipping {self.filepath} because it's not a KFX-ZIP file (extensions {', '.join(valid_extensions)})."
+        )
+        return self.filepath
+
+
+ALL_ACTIONS: Sequence[type[BaseAction]] = [
+    DeDrmAction,
+    RenameAction,
+    PrintAction,
+    ReformatPdfAction,
+    DownloadAcsmAction,
+    Kfx2EpubAction,
+]
