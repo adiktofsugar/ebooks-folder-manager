@@ -1,3 +1,17 @@
+# Errors
+- Rename will overwrite existing file
+- Some files don't have a title or author, so renaming should probably fail
+- with k2pdfopt, we're not really making a 1-1 copy, so the original version should probably stay around. maybe we call the original "_original"?
+- drm removal for kindle might not work
+
+# Tests
+I need tests for this stuff. 
+- DRM _should_ be testable by checking an a page, maybe? I guess I'll need a drm and drm-free version of the same file
+- reformat?
+- rename should be relatively simple
+- download...I think acsm files always work so I can just ensure it does successfully download
+- kfx2epub can, again, test a known page in the epub version
+It should be fine to just use real books
 
 # DeDRM plugin
 Trying to get this to work without changing the DeDRM plugin files is difficult because of how they're written. We should probably be interacting with them more like external processes, but there's a lot of calibre / config specific stuff in there.
