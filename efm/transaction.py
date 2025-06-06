@@ -27,7 +27,7 @@ class Transaction:
         self.original_filepath = original_filepath
         self.site_dirpath = site_dir
 
-    def perform(self):
+    def perform(self) -> Path:
         with open(self.original_filepath, "rb") as f:
             hash = hashlib.blake2b(f.read(), digest_size=20).hexdigest()
         metadata_output_dirpath = self.site_dirpath / "metadata"
@@ -36,7 +36,7 @@ class Transaction:
             logger.info(
                 f"Skipping {self.original_filepath} because metadata has already been processed."
             )
-            return
+            return metadata_output_filepath
         books_output_dirpath = self.site_dirpath / "books"
         temp_dirpath = Path(tempfile.mkdtemp(prefix=hash))
         filepath = Path(shutil.copy(self.original_filepath, temp_dirpath))
@@ -75,6 +75,7 @@ class Transaction:
             logger.info(
                 f"Finished processing {self.original_filepath}. Output file is {self.site_dirpath / f'{hash}{filepath.suffix}'}"
             )
+            return metadata_output_filepath
 
         except:
             traceback.print_exc()

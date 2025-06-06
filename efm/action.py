@@ -50,6 +50,7 @@ class BaseAction(object):
     def perform(self) -> Path:
         raise NotImplementedError
 
+
 class DeDrmAction(BaseAction):
     @classmethod
     def description(cls) -> str:
@@ -222,6 +223,7 @@ class ReformatPdfAction(BaseAction):
         logger.info(f"Reformatted {self.filepath} with k2pdfopt")
         return temp_filepath_metadata
 
+
 class DownloadAcsmAction(BaseAction):
     @classmethod
     def description(cls) -> str:
@@ -262,7 +264,7 @@ class DownloadAcsmAction(BaseAction):
             try:
                 new_filepath = get_ebook(str(self.filepath))
                 if new_filepath is None:
-                    raise GetEbookException(self.filepath, "No file downloaded")
+                    raise GetEbookException(str(self.filepath), "No file downloaded")
                 logging.info(f"Downloaded {self.filepath}")
                 return Path(new_filepath)
             except Exception as e:

@@ -6,6 +6,8 @@ import sys
 import traceback
 from pathlib import Path
 
+import yaml
+
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "DeDRM_tools"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "kfxlib"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "adl"))
@@ -31,7 +33,9 @@ def main():
         """,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    argparser.add_argument("-o", "--out", help="specify output directory", default="site")
+    argparser.add_argument(
+        "-o", "--out", help="specify output directory", default="site"
+    )
     argparser.add_argument(
         "--loglevel", choices=["debug", "info", "error"], help="log level"
     )
@@ -70,19 +74,21 @@ def main():
             all_files.extend(expanded)
 
     errors = list[tuple[Path, BookError]]()
+    metadata_filepaths: set[Path] = set()
+
     for original_filepath in all_files:
         if str(original_filepath).endswith(".bak"):
             logger.info(f"Skipping {original_filepath} because it's a backup file.")
             continue
-        if (
-            original_filepath.name in ["efm.toml", "efm.yaml", "efm.yml", "efm.json"]
-        ):
+        if original_filepath.name in ["efm.toml", "efm.yaml", "efm.yml", "efm.json"]:
             logger.info(f"Skipping {original_filepath} because it's a config file.")
             continue
 
         logger.debug(f"Processing {original_filepath}")
         try:
-            Transaction(original_filepath, Path(args.out)).perform()
+            metadata_filepaths.add(
+                Transaction(original_filepath, Path(args.out)).perform()
+            )
         except Exception as e:
             if isinstance(e, BookError):
                 errors.append((original_filepath, e))
@@ -96,6 +102,15 @@ def main():
                 f"> {filepath}:{os.linesep}{''.join([f'  | {line}' for line in traceback.format_exception_only(error)])}"
             )
         return 1
+    site_dirpath = Path(args.out)
+    metadata_summary_filepath = site_dirpath / "metadata" / "summary.yaml"
+    metadata_summary_filepath.write_text(
+        yaml.dump(
+            dict(
+                files=[str(f.relative_to(site_dirpath)) for f in metadata_filepaths],
+            )
+        )
+    )
     return 0
 
 
