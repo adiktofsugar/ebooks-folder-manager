@@ -3,7 +3,7 @@ name = "efm"
 version = "0.1.0"
 description = ""
 authors = [
-    {name = "Sean McCollum",email = "anincrediblyshortname@gmail.com"}
+    { name = "Sean McCollum", email = "anincrediblyshortname@gmail.com" },
 ]
 readme = "README.md"
 requires-python = ">=3.13"
@@ -37,18 +37,11 @@ epubtest = "efm.DeDRM_plugin.epubtest:main"
 epubdecrypt = "efm.DeDRM_plugin.ineptepub:cli_main"
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.9.9"
-debugpy = "^1.8.13"
-pytest = "^8.0.0"
-mock = "^5.2.0"
-pyright = "^1.1.397"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.ruff]
-exclude = ["DeDRM_plugin"]
+include = ["efm"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -56,3 +49,13 @@ python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
 addopts = "-v"
+
+[dependency-groups]
+dev = [
+    "debugpy>=1.8.14",
+    "hatchling>=1.27.0",
+    "mock>=5.2.0",
+    "pyright>=1.1.401",
+    "pytest>=8.4.0",
+    "ruff>=0.11.13",
+]

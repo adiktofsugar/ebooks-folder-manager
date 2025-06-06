@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 import traceback
+from pathlib import Path
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "DeDRM_tools"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "kfxlib"))
@@ -11,52 +12,26 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", "adl"))
 
 from efm.exceptions import BookError
 from efm.transaction import Transaction
-from efm.action import ALL_ACTIONS
-from efm.config import valid_actions
 
 
 logger = logging.getLogger(__name__)
-action_id_to_description = {a.id(): a.description() for a in ALL_ACTIONS}
-action_id_to_description["none"] = "do nothing"
-action_list = "\n".join(
-    [f"{a:<10} - {action_id_to_description[a]}" for a in valid_actions],
-)
 
 
 def main():
     argparser = argparse.ArgumentParser(
         add_help=True,
         usage="""
-      Run efm on file / folder / glob. 
-      If a file, it will perform all actions you specify.
-      If a folder, it will walk that folder recursively run on all files that do not end in ".bak".
-      If a glob, it will run on all files that match the glob. Folders that match the glob will be ignored.
+      Generate site from ebook files, specified by file, folder, or glob.
 
-      Actions are (specified below) are resolved in the following order:
-      - set on command line
-      - set in config file
-      - default to "print"
-
-      Config files are resolved relative to each file, and must be in a file named "efm.toml", "efm.yaml", "efm.yml", or "efm.json".
-      Config files can have the following keys:
-      - actions: a list of actions to perform
-      - adobe_key_file: path to Adobe key file
-
-    """,
-        epilog=f"<action>  is one of:{os.linesep}{action_list}",
+      ### Config files
+      are resolved relative to each file, and must be in a file named "efm.toml", "efm.yaml", "efm.yml", or "efm.json".
+      
+      can have the following keys:
+        - adobe_key_file: path to Adobe key file
+        """,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    argparser.add_argument(
-        "-a",
-        "--action",
-        action="append",
-        choices=["drm", "rename", "print", "pdf", "download", "none"],
-        help="action to perform - see below for description",
-    )
-    argparser.add_argument("--dry", action="store_true", help="dry run")
-    argparser.add_argument(
-        "--watch", action="store_true", help="watch folder for changes"
-    )
+    argparser.add_argument("-o", "--out", help="specify output directory", default="site")
     argparser.add_argument(
         "--loglevel", choices=["debug", "info", "error"], help="log level"
     )
@@ -75,44 +50,39 @@ def main():
             case _:
                 raise ValueError(f"Unknown log level {args.loglevel}")
 
-    if args.dry and loglevel > logging.INFO:
-        loglevel = logging.INFO
-
     logging.basicConfig(level=loglevel)
 
     files = args.spec
-    all_files: list[str] = []
+    all_files: list[Path] = []
 
     for original_filepath in files:
         logger.debug(f"Processing {original_filepath}")
-        if os.path.isdir(original_filepath):
+        p = Path(original_filepath)
+        if p.is_dir():
             logger.debug(f"{original_filepath} is directory")
-            all_files.extend(get_files_from_dirpath(original_filepath))
-        elif os.path.isfile(original_filepath):
+            all_files.extend(get_files_from_dirpath(p))
+        elif p.is_file():
             logger.debug(f"{original_filepath} is file")
-            all_files.append(original_filepath)
+            all_files.append(p)
         else:
-            expanded = glob.glob(original_filepath)
+            expanded = [Path(f) for f in glob.glob(original_filepath)]
             logger.debug(f"{original_filepath} is glob, expanded to {expanded}")
             all_files.extend(expanded)
 
-    errors = list[tuple[str, BookError]]()
+    errors = list[tuple[Path, BookError]]()
     for original_filepath in all_files:
-        if original_filepath.endswith(".bak"):
+        if str(original_filepath).endswith(".bak"):
             logger.info(f"Skipping {original_filepath} because it's a backup file.")
             continue
         if (
-            os.path.basename(original_filepath) == "efm.toml"
-            or os.path.basename(original_filepath) == "efm.yaml"
-            or os.path.basename(original_filepath) == "efm.yml"
-            or os.path.basename(original_filepath) == "efm.json"
+            original_filepath.name in ["efm.toml", "efm.yaml", "efm.yml", "efm.json"]
         ):
             logger.info(f"Skipping {original_filepath} because it's a config file.")
             continue
 
         logger.debug(f"Processing {original_filepath}")
         try:
-            Transaction(original_filepath, args.action, args.dry).perform()
+            Transaction(original_filepath, Path(args.out)).perform()
         except Exception as e:
             if isinstance(e, BookError):
                 errors.append((original_filepath, e))
@@ -129,11 +99,11 @@ def main():
     return 0
 
 
-def get_files_from_dirpath(dirpath: str) -> list[str]:
-    all_files: list[str] = []
+def get_files_from_dirpath(dirpath: Path) -> list[Path]:
+    all_files: list[Path] = []
     for root, dirs, files in os.walk(dirpath):
         for file in files:
-            all_files.append(os.path.join(root, file))
+            all_files.append(Path(root) / file)
     return all_files
 
 

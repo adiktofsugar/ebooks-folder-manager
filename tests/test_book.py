@@ -4,7 +4,7 @@ import pytest
 import tempfile
 import shutil
 
-from efm.metadata import Book, Metadata
+from efm import Book, Metadata
 from efm.exceptions import (
     DetectEncryptionError,
     UnsupportedEncryptionError,

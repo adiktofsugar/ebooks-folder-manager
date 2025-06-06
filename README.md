@@ -1,38 +1,52 @@
 I'm tired of calibre. All I want is to add minimal metadata to my books and keep them in a folder.
 
-# This is totally not ready for real use
+Rewriting the books all the time is not a great idea, though, because sometimes things go wrong, and when that happens, your books get destroyed. So, instead, I'll generate a static site from them.
 
-I can't even really use it yet. At least not all the time. So if this is something you really want, check back in a little while later.
+The static site is a folder like this:
 
-# How to use to make a cloud library
+- index.html
+- assets
+  - index.js
+- books
+  - abc123.epub
+- metadata
+  - summary.json
+  - abc123.json
 
-So far, this is what I'm doing on linux:
-- get [rclone](https://rclone.org/)
-- set up your google drive account as "googledrive"
-- make a folder in your drive as "ebooks"
-- dump your ebooks in there
-- run `rclone sync --progress googledrive:ebooks ~/ebooks`
-- run `poetry run efm ~/ebooks` (with your home config set to whatever actions you want to run)
-- run `rclone sync --progress ~/ebooks googledrive:ebooks`
+The **index.html** is your entry point. There are no pages in this site, because navigation requires a backend.
+The **assets** directory is where the js / css / images go.
+The **books** directory is where your books, named as a sha of the contents of the original file, go.
+The **metadata** directory is your "database". It's what the JS in the site will use to search and display your meta info.
 
-This works, but since I'm not sure what's going to break it I'm doing it all very carefully (aka I'm using `-i` for the rclone commands). When I'm more confident, I'll make a systemd unit and timer file to run this script every so often.
-
-# Planned Limitations
+# Known issues / Future features
 
 ## Multiple formats
 
-Multiple formats for a single ebook are not supported. As in, if you have the same book in epub and pdf, they will always be 2 separate entites in this project, since this is designed to manage files.
+Initially, this isn't supported. We'll list each format as a different book, like:
+
+- Where the wild things are (epub)
+- Where the wild things are (pdf)
+
+This can, however, get annoying if you wanted to centralize the data. So I think the metadata will eventually contain an "alias" or "target" property that redirects you to a different doc for the info. For example:
+
+```yaml
+file: sha123.epub
+title: Where the wild things are
+year: 1990
+description: null
+```
+
+```yaml
+file: sha123.pdf
+alias: sha123.epub
+```
+
+I'm not sure how you'd set this up though...hm. Maybe a config file? You'll need a config file for credentials anyway so that makes sense. The site can write to it to save preferences and all that.
 
 ## Sync to device
 
-ebooks generally mount as a drive when connected to your computer, and then you can drag them over. I don't want to put in any effort to solve that in this project.
-
-## Others...
-
-...will be added as they are learned.
-
-# Unplanned Limitations
+ebooks generally mount as a drive when connected to your computer, and then you can drag them over. The "sync to disk" option should be all you need to sync it to your mounted ebook. You could also copy the "books" directory, but then you'd have weird filenames.
 
 ## Books that have more than one output file
 
-Apparently "topaz" books have an svg zip output. That's not supported because the whole thing assumes one file. That may not always be the case but for now it is.
+Apparently "topaz" books have an svg zip output. I guess metadata can have an "auxiliary_files" key or something?

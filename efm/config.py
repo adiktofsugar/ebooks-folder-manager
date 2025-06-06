@@ -1,47 +1,46 @@
 from pathlib import Path
-from schema import Schema, Optional
+from schema import Schema, Optional, Use
 
-# NOTE: can't use ALL_ACTIONS cause circular dependencies
-# NOTE: order matters. drm has to come first for any metadata to work, download has to happen before
-#       anything to do with files, etc.
-valid_actions = ["download_acsm", "drm", "kfx2epub", "rename", "pdf", "print", "none"]
+
+def _path_exists(s: str) -> Path:
+    p = Path(s)
+    if not p.exists():
+        raise ValueError(f"Path {p} does not exist.")
+    return p
 
 
 schema = Schema(
     {
-        Optional("actions"): valid_actions,
-        Optional("adobe_key_files"): list[str],
-        Optional("b_and_n_key_files"): list[str],
-        Optional("ereader_social_drm_file"): str,
+        Optional("adobe_key_files"): [Use(_path_exists)],
+        Optional("b_and_n_key_files"): [Use(_path_exists)],
+        Optional("ereader_social_drm_file"): Use(_path_exists),
         Optional("adobe_user"): str,
         Optional("adobe_password"): str,
         Optional("pdf_passwords"): list[str],
         Optional("kindle_pidnums"): list[str],
         Optional("kindle_serialnums"): list[str],
         # kindle_database_files is a list of files created by kindlekey
-        Optional("kindle_database_files"): list[str],
-        Optional("kindle_android_files"): [str],
+        Optional("kindle_database_files"): [Use(_path_exists)],
+        Optional("kindle_android_files"): [Use(_path_exists)],
     },
     ignore_extra_keys=True,
 )
 
 
 class Config(object):
-    actions: list[str] | None
-    adobe_key_files: list[str] | None
-    b_and_n_key_files: list[str] | None
-    ereader_social_drm_file: str | None
+    adobe_key_files: list[Path] | None
+    b_and_n_key_files: list[Path] | None
+    ereader_social_drm_file: Path | None
     kindle_pidnums: list[str] | None
     kindle_serialnums: list[str] | None
-    kindle_database_files: list[str] | None
-    kindle_android_files: list[str] | None
+    kindle_database_files: list[Path] | None
+    kindle_android_files: list[Path] | None
     adobe_user: str | None
     adobe_password: str | None
     pdf_passwords: list[str] | None
 
     def __init__(self, filepath: Path):
         data = schema.validate(load_config(filepath))
-        self.actions = data.get("actions")
         self.adobe_key_files = data.get("adobe_key_files")
         self.b_and_n_key_files = data.get("b_and_n_key_files")
         self.ereader_social_drm_file = data.get("ereader_social_drm_file")
@@ -52,20 +51,6 @@ class Config(object):
         self.adobe_user = data.get("adobe_user")
         self.adobe_password = data.get("adobe_password")
         self.pdf_passwords = data.get("pdf_passwords")
-
-
-def optional_value(d: dict[str, str], key: str, parent: Config | None) -> str | None:
-    return d.get(key, getattr(parent, key) if parent else None)
-
-
-def optional_list_value(
-    d: dict[str, list[str]], key: str, parent: Config | None
-) -> list[str] | None:
-    value = d.get(key)
-    parent_value = getattr(parent, key) if parent else None
-    if value is None:
-        return parent_value
-    return value + parent_value if parent_value else []
 
 
 def load_config(filepath: Path):
@@ -89,14 +74,14 @@ def load_config(filepath: Path):
     raise ValueError(f"Unknown config file extension: {ext}")
 
 
-def get_closest_config(dirpath: str) -> Config | None:
+def get_closest_config(dirpath: Path) -> Config | None:
     filepath = get_closest_config_filepath(dirpath)
     if filepath is None:
         return None
     return Config(filepath)
 
 
-def get_closest_config_filepath(dirpath: str) -> Path | None:
+def get_closest_config_filepath(dirpath: Path) -> Path | None:
     """
     Get the closest config file to the given directory.
     """

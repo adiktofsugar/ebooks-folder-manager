@@ -1,5 +1,6 @@
 import logging
 import os
+from pathlib import Path
 from textwrap import dedent
 import time
 import traceback
@@ -22,21 +23,21 @@ from efm.exceptions import (
 logger = logging.getLogger(__name__)
 
 
-def decryptepub(infile: str, outdir: str, key_files: list[str]) -> str:
+def decryptepub(infile: Path, outdir: Path, key_files: list[Path]) -> Path:
     # first fix the epub to make sure we do not get errors
-    filename = os.path.splitext(os.path.basename(infile))[0]
-    bpath = os.path.dirname(infile)
-    zippath = os.path.join(bpath, filename + "_temp.zip")
-    rv = zipfix.repairBook(infile, zippath)
+    filename = infile.stem
+    bpath = infile.parent
+    zippath = bpath / f"{filename}_temp.zip"
+    rv = zipfix.repairBook(str(infile), str(zippath))
     if rv != 0:
         raise ZipFixError(infile)
-    outfile = os.path.join(outdir, filename + "_nodrm.epub")
+    outfile = outdir / f"{filename}_nodrm.epub"
     try:
-        if ineptepub.adeptBook(zippath):
+        if ineptepub.adeptBook(str(zippath)):
             for key_file in key_files:
                 userkey = open(key_file, "rb").read()
                 try:
-                    rv = ineptepub.decryptBook(userkey, zippath, outfile)
+                    rv = ineptepub.decryptBook(userkey, str(zippath), str(outfile))
                     if rv == 0:
                         logger.info(f"Decrypted {infile} with key file {key_file}")
                         return outfile
@@ -44,7 +45,7 @@ def decryptepub(infile: str, outdir: str, key_files: list[str]) -> str:
                     raise RemoveDrmError(infile, original_error=e)
             raise RemoveDrmError(infile, message="No valid key file found")
         else:
-            encryption = epubtest.encryption(zippath)
+            encryption = epubtest.encryption(str(zippath))
             if encryption == "Unencrypted":
                 logger.info("{0} is not DRMed.".format(filename))
                 return infile
@@ -54,12 +55,12 @@ def decryptepub(infile: str, outdir: str, key_files: list[str]) -> str:
 
 
 def decryptpdf(
-    infile: str, outdir: str, key_files: list[str], passwords: list[str]
-) -> str:
-    filename = os.path.splitext(os.path.basename(infile))[0]
+    infile: Path, outdir: Path, key_files: list[Path], passwords: list[str]
+) -> Path:
+    filename = infile.stem
 
     try:
-        pdf_encryption = ineptpdf.getPDFencryptionType(infile)
+        pdf_encryption = ineptpdf.getPDFencryptionType(str(infile))
         if pdf_encryption is None:
             logger.debug(f"Skipping {infile}. has no drm")
             return infile
@@ -69,7 +70,7 @@ def decryptpdf(
         keys: list[tuple[str, bytearray | bytes]] | None = None
         if pdf_encryption == "EBX_HANDLER":
             # Adobe eBook / ADEPT (normal or B&N)
-            keys = [(key_file, open(key_file, "rb").read()) for key_file in key_files]
+            keys = [(key_file.name, open(key_file, "rb").read()) for key_file in key_files]
         elif pdf_encryption == "Standard" or pdf_encryption == "Adobe.APS":
             keys = [
                 (password, bytearray(password, "utf-8"))
@@ -77,10 +78,10 @@ def decryptpdf(
             ]
 
         if keys is not None:
-            outfile = os.path.join(outdir, filename + "_nodrm.pdf")
+            outfile = outdir / f"{filename}_nodrm.pdf"
             for key_name, key in keys:
                 try:
-                    rv = ineptpdf.decryptBook(key, infile, outfile)
+                    rv = ineptpdf.decryptBook(key, str(infile), str(outfile))
                     if rv == 0:
                         logger.info(f"Decrypted {infile} with {key_name}")
                         return outfile
@@ -109,9 +110,9 @@ def decryptpdf(
         return infile
 
 
-def decryptpdb(infile: str, outdir: str, social_drm_file: str) -> str:
-    outname = os.path.splitext(os.path.basename(infile))[0] + ".pmlz"
-    outpath = os.path.join(outdir, outname)
+def decryptpdb(infile: Path, outdir: Path, social_drm_file: Path) -> Path:
+    outname = infile.stem + ".pmlz"
+    outpath = outdir / outname
     rv = 1
     keydata = open(social_drm_file, "r").read()
     keydata = keydata.rstrip(os.linesep)
@@ -125,7 +126,7 @@ def decryptpdb(infile: str, outdir: str, social_drm_file: str) -> str:
             )
         try:
             rv = erdr2pml.decryptBook(
-                infile, outpath, True, erdr2pml.getuser_key(name, cc8)
+                str(infile), str(outpath), True, erdr2pml.getuser_key(name, cc8)
             )
             if rv == 0:
                 logger.info(f"Decrypted {infile} with key {name}")
@@ -172,16 +173,16 @@ But I see no reference to that variable name, so :shrug:
 
 
 def decryptk4mobi(
-    infile: str,
-    outdir: str,
+    infile: Path,
+    outdir: Path,
     kindle_pids: list[str],
     kindle_serials: list[str],
-    kindle_db_files: list[str],
-    kindle_android_files: list[str],
-) -> str:
+    kindle_db_files: list[Path],
+    kindle_android_files: list[Path],
+) -> Path:
     starttime = time.time()
 
-    kindle_dbs, errors = k4mobidedrm.collectKDatabases(kindle_db_files)
+    kindle_dbs, errors = k4mobidedrm.collectKDatabases([str(f) for f in kindle_db_files])
     if len(errors) > 0:
         message = "Error collecting database files:"
         for dbfile, e in errors:
@@ -190,20 +191,18 @@ def decryptk4mobi(
 
     try:
         book = k4mobidedrm.GetDecryptedBook(
-            infile,
+            str(infile),
             kindle_dbs,
-            kindle_android_files,
+            [str(f) for f in kindle_android_files],
             kindle_serials,
             kindle_pids,
             starttime,
         )
 
         logger.info(f"Decrypted {infile}")
-        outfilename = k4mobidedrm.inferReasonableName(infile, book.getBookTitle())
-        outfilename = outfilename + "_nodrm"
-        outfile = os.path.join(outdir, outfilename + book.getBookExtension())
+        outfile = outdir / f"{k4mobidedrm.inferReasonableName(str(infile), book.getBookTitle())}_nodrm{book.getBookExtension()}"
 
-        book.getFile(outfile)
+        book.getFile(str(outfile))
 
         if is_topaz_book(book):
             logger.error(
