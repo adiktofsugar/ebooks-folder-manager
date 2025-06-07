@@ -6,7 +6,7 @@
   "scripts": {
     "test": "tsx --test",
     "build": "esbuild --bundle src/index.* --loader:.html=copy --outdir=../site --sourcemap",
-    "start": "npm run build -- --serve",
+    "start": "npm run build -- --serve --servedir=../site",
     "watch": "npm run build -- --watch"
   },
   "author": "",

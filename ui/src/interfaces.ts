@@ -1,9 +1,11 @@
+export interface Metadata {
+    title?: string;
+    author?: string;
+}
 
-export type SummaryResponse = {
-    files: string[];
-}
-export type BookDetailResponse = {
+export interface Result {
     filename: string;
-    title: string;
-    author: string;
+    metadata: Metadata
 }
+
+export type DbResponse = Result[];

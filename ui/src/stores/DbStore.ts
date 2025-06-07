@@ -1,21 +1,21 @@
 import { makeAutoObservable, runInAction } from "mobx";
 import yaml from 'yaml'
-import { SummaryResponse } from "../interfaces";
+import { DbResponse } from "../interfaces";
 
-export default class SummaryStore {
-    data: SummaryResponse | null = null;
+export default class DbStore {
+    data: DbResponse | null = null;
     error: string | null = null;
     pending: boolean = false;
     constructor() {
         makeAutoObservable(this);
     }
     get count() {
-        return this.data ? this.data.files.length : null;
+        return this.data ? this.data.length : null;
     }
     async load() {
         this.pending = true;
         try {
-            const response = await fetch(new URL('/metadata/summary.yaml', window.location.href));
+            const response = await fetch(new URL('db.yaml', window.location.href));
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }

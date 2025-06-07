@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 from typing import LiteralString
+from dataclasses import dataclass
 
 import pymupdf
 
@@ -10,37 +11,25 @@ from efm.exceptions import GetMetadataError
 logger = logging.getLogger(__name__)
 
 
-class Metadata(object):
-    def __init__(
-        self,
-        format: str | None,
-        encryption: str | None,
-        title: str | None,
-        author: str | None,
-        subject: str | None,
-        keywords: list[LiteralString] | None,
-        creator: str | None,
-        producer: str | None,
-        creation_date: str | None,
-        mod_date: str | None,
-        is_k2pdfopt_version: bool,
-    ):
-        self.format = format
-        self.is_pdf = format is not None and format.lower() == "pdf"
-        self.encryption = encryption
-        self.title = title
-        self.author = author
-        self.subject = subject
-        self.keywords = keywords
-        self.creator = creator
-        self.producer = producer
-        self.creation_date = creation_date
-        self.mod_date = mod_date
-        self.is_k2pdfopt_version = is_k2pdfopt_version
+@dataclass
+class Metadata:
+    format: str | None
+    encryption: str | None
+    title: str | None
+    author: str | None
+    subject: str | None
+    keywords: list[LiteralString] | None
+    creator: str | None
+    producer: str | None
+    creation_date: str | None
+    mod_date: str | None
+    is_k2pdfopt_version: bool
+
+    def __post_init__(self):
+        self.is_pdf = self.format is not None and self.format.lower() == "pdf"
 
 
-
-def get_metadata(filepath:Path) -> Metadata | None:
+def get_metadata(filepath: Path) -> Metadata | None:
     supported_formats = [
         "PDF",
         "XPS",
@@ -64,9 +53,7 @@ def get_metadata(filepath:Path) -> Metadata | None:
             return None
         format = f.metadata.get("format")
         keywords_raw = f.metadata.get("keywords")
-        keywords = (
-            keywords_raw.split(",") if keywords_raw is not None else []
-        )
+        keywords = keywords_raw.split(",") if keywords_raw is not None else []
         return Metadata(
             format=format,
             encryption=f.metadata.get("encryption"),

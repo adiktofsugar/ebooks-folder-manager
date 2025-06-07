@@ -1,3 +1,4 @@
+from dataclasses import asdict, dataclass
 import hashlib
 import logging
 from pathlib import Path
@@ -8,9 +9,31 @@ import traceback
 import yaml
 from efm.action import ALL_ACTIONS
 from efm.config import Config, get_closest_config
-from efm.metadata import get_metadata
+from efm.metadata import Metadata, get_metadata
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class TransactionResult:
+    # filename is the relative path to the output (book) file
+    filename: Path
+    metadata: Metadata | None
+
+    @classmethod
+    def from_file(cls, filepath: Path):
+        d = yaml.safe_load(filepath.read_text())
+        d["filename"] = Path(d["filename"])
+        return cls(**d)
+
+    def to_dict(self):
+        d = asdict(self)
+        d["filename"] = str(self.filename)
+        return d
+
+    def to_file(self, filepath: Path):
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        filepath.write_text(yaml.safe_dump(self.to_dict()))
 
 
 class Transaction:
@@ -27,16 +50,16 @@ class Transaction:
         self.original_filepath = original_filepath
         self.site_dirpath = site_dir
 
-    def perform(self) -> Path:
+    def perform(self) -> TransactionResult:
+        cache_dirpath = self.site_dirpath / "_cache"
         with open(self.original_filepath, "rb") as f:
             hash = hashlib.blake2b(f.read(), digest_size=20).hexdigest()
-        metadata_output_dirpath = self.site_dirpath / "metadata"
-        metadata_output_filepath = metadata_output_dirpath / f"{hash}.yaml"
-        if metadata_output_filepath.exists():
+        cached_result_filepath = cache_dirpath / f"{hash}.yaml"
+        if cached_result_filepath.exists():
             logger.info(
                 f"Skipping {self.original_filepath} because metadata has already been processed."
             )
-            return metadata_output_filepath
+            return TransactionResult.from_file(cached_result_filepath)
         books_output_dirpath = self.site_dirpath / "books"
         temp_dirpath = Path(tempfile.mkdtemp(prefix=hash))
         filepath = Path(shutil.copy(self.original_filepath, temp_dirpath))
@@ -60,23 +83,19 @@ class Transaction:
                 output_filename = f"{metadata.author}-{metadata.title}{filepath.suffix}"
 
             books_output_dirpath.mkdir(parents=True, exist_ok=True)
-            metadata_output_dirpath.mkdir(parents=True, exist_ok=True)
-            metadata_output_filepath.write_text(
-                yaml.dump(
-                    dict(
-                        filename=output_filename,
-                        author=metadata.author if metadata else None,
-                        title=metadata.title if metadata else None,
-                    )
-                )
-            )
-            shutil.copy(filepath, books_output_dirpath / output_filename)
+            book_output_filepath = books_output_dirpath / output_filename
+            shutil.copy(filepath, book_output_filepath)
             shutil.rmtree(temp_dirpath)
             logger.info(
-                f"Finished processing {self.original_filepath}. Output file is {self.site_dirpath / f'{hash}{filepath.suffix}'}"
+                f"Finished processing '{self.original_filepath}'. Output file is '{book_output_filepath}'"
             )
-            return metadata_output_filepath
 
+            result = TransactionResult(
+                filename=book_output_filepath.relative_to(self.site_dirpath),
+                metadata=metadata,
+            )
+            result.to_file(cached_result_filepath)
+            return result
         except:
             traceback.print_exc()
             logger.error(

@@ -13,7 +13,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", "kfxlib"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "adl"))
 
 from efm.exceptions import BookError
-from efm.transaction import Transaction
+from efm.transaction import Transaction, TransactionResult
 
 
 logger = logging.getLogger(__name__)
@@ -74,7 +74,7 @@ def main():
             all_files.extend(expanded)
 
     errors = list[tuple[Path, BookError]]()
-    metadata_filepaths: set[Path] = set()
+    results: list[TransactionResult] = []
 
     for original_filepath in all_files:
         if str(original_filepath).endswith(".bak"):
@@ -86,9 +86,9 @@ def main():
 
         logger.debug(f"Processing {original_filepath}")
         try:
-            metadata_filepaths.add(
-                Transaction(original_filepath, Path(args.out)).perform()
-            )
+            result = Transaction(original_filepath, Path(args.out)).perform()
+            if result not in results:
+                results.append(result)
         except Exception as e:
             if isinstance(e, BookError):
                 errors.append((original_filepath, e))
@@ -103,14 +103,8 @@ def main():
             )
         return 1
     site_dirpath = Path(args.out)
-    metadata_summary_filepath = site_dirpath / "metadata" / "summary.yaml"
-    metadata_summary_filepath.write_text(
-        yaml.dump(
-            dict(
-                files=[str(f.relative_to(site_dirpath)) for f in metadata_filepaths],
-            )
-        )
-    )
+    db_filepath = site_dirpath / "db.yaml"
+    db_filepath.write_text(yaml.dump([result.to_dict() for result in results]))
     return 0
 
 

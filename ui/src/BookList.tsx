@@ -8,16 +8,12 @@ export default observer(function BookList() {
   useEffect(() => {
     bookListStore.load();
   }, [bookListStore]);
-  const { error, pending, booksLoadProgress, books, searchQuery } =
-    bookListStore;
+  const { error, pending, books, searchQuery } = bookListStore;
   if (error) {
     return <div>Error: {error}</div>;
   }
   if (pending) {
     return <div>Loading...</div>;
-  }
-  if (booksLoadProgress < 1) {
-    return <div>Loading books... {Math.round(booksLoadProgress * 100)}%</div>;
   }
   if (!books) {
     return <div>No books available, or, more likely, something went wrong</div>;
@@ -34,9 +30,9 @@ export default observer(function BookList() {
         />
       </div>
       <ul>
-        {books.map(({ title, file, author }, i) => (
+        {books.map(({ title, filename, author }, i) => (
           <li key={i}>
-            <BookListItem title={title} file={file} author={author} />
+            <BookListItem title={title} filename={filename} author={author} />
           </li>
         ))}
       </ul>
