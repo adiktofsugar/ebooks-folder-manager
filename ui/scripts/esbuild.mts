@@ -8,11 +8,11 @@ import esbuild from "esbuild";
 import parseArgs from "minimist";
 
 const usage = `
-Usage: esbuild.mts [-h][--watch][--serve]
+Usage: esbuild.mts [-h][--watch]
 `;
 
 const args = parseArgs(process.argv.slice(2), {
-	boolean: ["watch", "serve", "help"],
+	boolean: ["watch", "help"],
 	alias: { h: "help" },
 });
 
@@ -22,7 +22,6 @@ if (args.help) {
 }
 
 const isWatch = args.watch || false;
-const isServe = args.serve || false;
 
 const indexFile = {
 	sourcePath: "src/index.html",
@@ -106,11 +105,7 @@ const config: esbuild.BuildOptions = {
 	],
 };
 
-if (isServe) {
-	const context = await esbuild.context(config);
-	const server = await context.serve();
-	console.log(`Server running at http://localhost:${server.port}`);
-} else if (isWatch) {
+if (isWatch) {
 	const context = await esbuild.context(config);
 	console.log("Watching for changes...");
 	await context.watch();
