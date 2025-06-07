@@ -1,0 +1,32 @@
+{
+  "name": "efm",
+  "private": true,
+  "version": "1.0.0",
+  "description": "ebooks folder manager",
+  "workspaces": [
+    "ui"
+  ],
+  "packageManager": "npm@10.9.2",
+  "scripts": {
+    "dev": "turbo watch dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "fix": "turbo run fix",
+    "dev:server": "mkdir -p site && python -m http.server -d site/",
+    "dev:copy": "mkdir -p site && ./bin/watchexec --ignore-nothing -w ui/dist/ -- rsync -av ui/dist/ site/"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/minimist": "^1.2.5",
+    "@types/node": "^22.15.30",
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.6",
+    "cheerio": "^1.0.0",
+    "dedent": "^1.6.0",
+    "esbuild": "^0.25.5",
+    "minimist": "^1.2.8",
+    "tsx": "^4.19.4",
+    "turbo": "^2.5.4"
+  }
+}

@@ -1,11 +1,11 @@
 export interface Metadata {
-    title?: string;
-    author?: string;
+	title?: string;
+	author?: string;
 }
 
 export interface Result {
-    filename: string;
-    metadata: Metadata
+	filename: string;
+	metadata: Metadata;
 }
 
 export type DbResponse = Result[];

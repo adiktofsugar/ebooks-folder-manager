@@ -1,5 +1,6 @@
-import { createRoot } from 'react-dom/client';
-import App from './App';
+import { createRoot } from "react-dom/client";
+import App from "./App";
 
-const el = document.getElementById('root')!;
+// biome-ignore lint/style/noNonNullAssertion: <explanation>
+const el = document.getElementById("root")!;
 createRoot(el).render(<App />);

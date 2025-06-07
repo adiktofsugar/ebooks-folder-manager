@@ -87,7 +87,7 @@ def main():
         logger.debug(f"Processing {original_filepath}")
         try:
             result = Transaction(original_filepath, Path(args.out)).perform()
-            if result not in results:
+            if result.filename not in [r.filename for r in results]:
                 results.append(result)
         except Exception as e:
             if isinstance(e, BookError):
@@ -105,6 +105,20 @@ def main():
     site_dirpath = Path(args.out)
     db_filepath = site_dirpath / "db.yaml"
     db_filepath.write_text(yaml.dump([result.to_dict() for result in results]))
+
+    ui_dist_dirpath = Path(__file__).parent.parent / "ui" / "dist"
+    if not ui_dist_dirpath.exists():
+        logger.error(
+            f"UI distribution directory {ui_dist_dirpath} does not exist. Can not generate site."
+        )
+        return 1
+    for root, dirs, files in os.walk(ui_dist_dirpath):
+        for file in files:
+            src_file = Path(root) / file
+            dest_file = site_dirpath / src_file.relative_to(ui_dist_dirpath)
+            if not dest_file.exists():
+                dest_file.parent.mkdir(parents=True, exist_ok=True)
+                dest_file.write_bytes(src_file.read_bytes())
     return 0
 
 

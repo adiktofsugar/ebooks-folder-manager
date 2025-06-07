@@ -1,9 +1,10 @@
 {
-    "compilerOptions": {
-        "module": "esnext",
-        "target": "esnext",
-        "moduleResolution": "bundler",
-        "jsx":"react-jsx",
-        "strict": true
-    }
+	"compilerOptions": {
+		"module": "esnext",
+		"target": "esnext",
+		"moduleResolution": "bundler",
+		"jsx": "react-jsx",
+		"strict": true
+	},
+	"include": ["**/*", "**/*.module.css"]
 }
