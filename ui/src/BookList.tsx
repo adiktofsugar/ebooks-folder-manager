@@ -1,8 +1,8 @@
 import { observer } from "mobx-react-lite";
 import { useEffect, useRef, useState } from "react";
+import styles from "./BookList.module.css";
 import BookListItem from "./BookListItem";
 import BookListStore from "./stores/BookListStore";
-import styles from "./BookList.module.css";
 
 export default observer(function BookList() {
 	const [bookListStore] = useState(() => new BookListStore());

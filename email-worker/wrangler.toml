@@ -1,0 +1,15 @@
+name = "email-worker"
+main = "src/index.ts"
+compatibility_date = "2024-12-20"
+
+[env.production]
+name = "email-worker-prod"
+
+# Email routing configuration
+# You'll need to set up email routing in Cloudflare dashboard
+# and add this worker as the destination
+
+# Environment variables for Google Drive API
+# Set these using wrangler secret
+# wrangler secret put GOOGLE_SERVICE_ACCOUNT_KEY
+# wrangler secret put GOOGLE_DRIVE_FOLDER_ID

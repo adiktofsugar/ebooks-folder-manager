@@ -1,0 +1,15 @@
+{
+	"name": "email-worker",
+	"version": "1.0.0",
+	"description": "Cloudflare Worker to receive emails and write to Google Drive",
+	"scripts": {
+		"lint": "biome check",
+		"fix": "biome check --fix --unsafe",
+		"dev": "wrangler dev",
+		"deploy": "wrangler deploy",
+		"tail": "wrangler tail"
+	},
+	"dependencies": {
+		"mimetext": "^3.0.0"
+	}
+}

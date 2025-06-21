@@ -114,14 +114,12 @@ if (isWatch) {
 }
 
 function getOutputKey(metafile: esbuild.Metafile, inputFile: string) {
-	return Object.keys(metafile.outputs).find(
-		(key) => {
-			const output = metafile.outputs[key];
-			if (inputFile in output.inputs) {
-				return true;
-			}
-		},
-	);
+	return Object.keys(metafile.outputs).find((key) => {
+		const output = metafile.outputs[key];
+		if (inputFile in output.inputs) {
+			return true;
+		}
+	});
 }
 
 function getOutputHref({
@@ -130,14 +128,14 @@ function getOutputHref({
 	cwd,
 	filepath,
 	outdir,
-	metafile
+	metafile,
 }: {
-	src?: string,
-	css?: boolean,
-	cwd: string,
-	filepath: string,
-	outdir: string,
-	metafile: esbuild.Metafile,
+	src?: string;
+	css?: boolean;
+	cwd: string;
+	filepath: string;
+	outdir: string;
+	metafile: esbuild.Metafile;
 }) {
 	if (!src) {
 		return src;
@@ -149,9 +147,7 @@ function getOutputHref({
 	// from this, we need to deduce the key for the input
 	const srcFilepath = path.resolve(path.dirname(filepath), src);
 	if (!fs.existsSync(srcFilepath)) {
-		throw new Error(
-			`${filepath} references nonexistent file ${srcFilepath}`,
-		);
+		throw new Error(`${filepath} references nonexistent file ${srcFilepath}`);
 	}
 	const srcInputKey = path.relative(cwd, srcFilepath);
 	const srcOutputKey = getOutputKey(metafile, srcInputKey);
@@ -168,9 +164,6 @@ function getOutputHref({
 		}
 		srcOutFilepath = path.resolve(cwd, relativeOutFilepath);
 	}
-	const newSrc = path.relative(
-		path.dirname(outFilePath),
-		srcOutFilepath,
-	);
-	return newSrc
+	const newSrc = path.relative(path.dirname(outFilePath), srcOutFilepath);
+	return newSrc;
 }
