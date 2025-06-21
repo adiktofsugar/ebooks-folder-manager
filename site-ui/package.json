@@ -1,5 +1,5 @@
 {
-	"name": "efm-ui",
+	"name": "site-ui",
 	"version": "1.0.0",
 	"description": "The ui for the generated site",
 	"scripts": {

@@ -17,7 +17,7 @@ Ebooks Folder Manager (EFM) is a Calibre replacement that provides minimal metad
   - `action.py`: Different processing actions
   - `kfxconvert.py`: Kindle format conversion
 
-### React Frontend (`ui/`)
+### React Frontend (`site-ui/`)
 - Static site UI with React 19 and MobX
 - Fuzzy search functionality
 - Displays books from YAML metadata
