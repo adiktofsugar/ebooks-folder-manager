@@ -4,9 +4,7 @@ import logging
 from pathlib import Path
 import shutil
 import tempfile
-import traceback
 from typing import List
-
 import yaml
 from efm.action import ALL_ACTIONS
 from efm.config import Config, get_closest_config
@@ -21,14 +19,26 @@ class TransactionResult:
     
     @classmethod
     def from_file(cls, filepath: Path):
-        d = yaml.safe_load(filepath.read_text())
+        return cls.from_dict(yaml.safe_load(filepath.read_text()))
+    @classmethod
+    def from_dict(cls, d: dict):
         # Determine which subclass to use based on presence of error field
         if d.get("error", False):
+            # Remove the error field before passing to constructor
+            d.pop("error")
+            if "original_filepath" in d:
+                d["original_filepath"] = Path(d["original_filepath"])
+            if "temp_directory" in d and d["temp_directory"]:
+                d["temp_directory"] = Path(d["temp_directory"])
             return TransactionError(**d)
         else:
-            # Handle backwards compatibility
+            # Remove the error field if present
+            d.pop("error", None)
+            # Handle path conversions
             if "filename" in d:
                 d["filename"] = Path(d["filename"])
+            if "original_filepath" in d:
+                d["original_filepath"] = Path(d["original_filepath"])
             return TransactionSuccess(**d)
     
     def to_dict(self):
@@ -44,11 +54,14 @@ class TransactionSuccess(TransactionResult):
     # filename is the relative path to the output (book) file
     filename: Path
     metadata: Metadata | None
+    hash: str
+    original_filepath: Path
     messages: List[str] = field(default_factory=list)
     
     def to_dict(self):
         d = super().to_dict()
         d["filename"] = str(self.filename)
+        d["original_filepath"] = str(self.original_filepath)
         d["error"] = False
         return d
 
@@ -56,13 +69,14 @@ class TransactionSuccess(TransactionResult):
 @dataclass
 class TransactionError(TransactionResult):
     error_message: str
-    traceback: str
+    original_filepath: Path
     temp_directory: Path | None = None
     messages: List[str] = field(default_factory=list)
     
     def to_dict(self):
         d = super().to_dict()
         d["error"] = True
+        d["original_filepath"] = str(self.original_filepath)
         if self.temp_directory:
             d["temp_directory"] = str(self.temp_directory)
         return d
@@ -72,7 +86,7 @@ class TransactionLogHandler(logging.Handler):
     def __init__(self):
         super().__init__()
         self.messages: List[str] = []
-
+    
     def emit(self, record):
         msg = self.format(record)
         self.messages.append(msg)
@@ -98,16 +112,23 @@ class Transaction:
         self.messages = []
 
     def perform(self) -> TransactionResult:
-        # Set up transaction-specific logging
+        
         log_handler = TransactionLogHandler()
-        formatter = logging.Formatter(
+        log_formatter = logging.Formatter(
             '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
         )
-        log_handler.setFormatter(formatter)
-        
-        # Get the root logger and add our handler
+        log_handler.setFormatter(log_formatter)
+        log_handler.setLevel(0)
         root_logger = logging.getLogger()
+        root_level = root_logger.level
+        root_handler_to_level = dict()
+        for h in root_logger.handlers:
+            root_handler_to_level[h] = h.level
+            h.setLevel(root_level)
         root_logger.addHandler(log_handler)
+        root_logger.setLevel(logging.DEBUG)
+
+    
         cache_dirpath = self.site_dirpath / "_cache"
         
         with open(self.original_filepath, "rb") as f:
@@ -155,23 +176,24 @@ class Transaction:
             result = TransactionSuccess(
                 filename=book_output_filepath.relative_to(self.site_dirpath),
                 metadata=metadata,
-                messages=log_handler.messages,
+                hash=hash,
+                original_filepath=self.original_filepath,
+                messages=log_handler.messages
             )
             result.to_file(cached_result_filepath)
             return result
         except Exception as e:
-            error_traceback = traceback.format_exc()
+            logger.exception(e)
             logger.error(
-                f"Failed to process {self.original_filepath}. Error: {str(e)}"
+                f"Failed to process {self.original_filepath}. Intermediate files are in {temp_dirpath}"
             )
-            logger.error(f"Intermediate files are in {temp_dirpath}")
             
             # Return an error result instead of raising
             result = TransactionError(
                 error_message=str(e),
-                traceback=error_traceback,
+                original_filepath=self.original_filepath,
                 temp_directory=temp_dirpath,
-                messages=log_handler.messages,
+                messages=log_handler.messages
             )
             
             # Still save the error result to cache so we don't retry failed conversions
@@ -179,5 +201,7 @@ class Transaction:
                 
             return result
         finally:
-            # Remove the handler when done
             root_logger.removeHandler(log_handler)
+            for h in root_logger.handlers:
+                h.setLevel(root_handler_to_level.get(h, root_level))
+            root_logger.setLevel(root_level)

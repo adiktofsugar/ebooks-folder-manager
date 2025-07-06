@@ -1,0 +1,37 @@
+- error: false
+  filename: books/Terry Pratchett-Interesting Times.epub
+  hash: HASH_PLACEHOLDER
+  messages:
+  - <TIMESTAMP> - efm.transaction - DEBUG - Processing /BOOKS_DIR/test.epub in /tmp/TEMP_DIR
+  - <TIMESTAMP> - efm.transaction - DEBUG - Performing action <bound method DownloadAcsmAction.id
+    of <class 'efm.action.DownloadAcsmAction'>> on /tmp/TEMP_DIR/test.epub
+  - <TIMESTAMP> - efm.action - DEBUG - Skipping /tmp/TEMP_DIR/test.epub because it's
+    not an ACSM file.
+  - <TIMESTAMP> - efm.transaction - DEBUG - Performing action <bound method Kfx2EpubAction.id
+    of <class 'efm.action.Kfx2EpubAction'>> on /tmp/TEMP_DIR/test.epub
+  - <TIMESTAMP> - efm.action - DEBUG - Skipping /tmp/TEMP_DIR/test.epub because it's
+    not a KFX-ZIP file (extensions kfx, kfx-zip, kpf).
+  - <TIMESTAMP> - efm.transaction - DEBUG - Performing action <bound method DeDrmAction.id
+    of <class 'efm.action.DeDrmAction'>> on /tmp/TEMP_DIR/test.epub
+  - <TIMESTAMP> - efm.action - DEBUG - Removing DRM from epub file /tmp/TEMP_DIR/test.epub...
+  - <TIMESTAMP> - efm.dedrm - DEBUG - test is not DRMed.
+  - <TIMESTAMP> - efm.transaction - DEBUG - Performing action <bound method ReformatPdfAction.id
+    of <class 'efm.action.ReformatPdfAction'>> on /tmp/TEMP_DIR/test.epub
+  - <TIMESTAMP> - efm.action - DEBUG - Skipping /tmp/TEMP_DIR/test.epub because it's
+    not a PDF. Format is EPUB.
+  - <TIMESTAMP> - efm.transaction - DEBUG - Finished processing '/BOOKS_DIR/test.epub'.
+    Output file is '/SITE_DIR/books/Terry Pratchett-Interesting Times.epub'
+  metadata:
+    author: Terry Pratchett
+    creation_date: ''
+    creator: ''
+    encryption: ''
+    format: EPUB
+    is_k2pdfopt_version: false
+    keywords:
+    - ''
+    mod_date: ''
+    producer: ''
+    subject: ''
+    title: Interesting Times
+  original_filepath: /BOOKS_DIR/test.epub

@@ -1,0 +1,29 @@
+- error: true
+  error_message: 'Error with book: /tmp/68ad4b8f840b976acac9344663f853cef545bcabakwoc4lc/document.pdf
+    - Couldn''t get metadata - Failed to open file ''/tmp/68ad4b8f840b976acac9344663f853cef545bcabakwoc4lc/document.pdf''.'
+  messages:
+  - '<TIMESTAMP> - efm.transaction - ERROR - Failed to process /tmp/TEMP_DIR/pytest-19/efm_cli_test_ramdisk0/test_c5d1800c/books/document.pdf.
+    Error: Error with book: /tmp/TEMP_DIR/document.pdf - Couldn''t get metadata -
+    Failed to open file ''/tmp/TEMP_DIR/document.pdf''.'
+  - <TIMESTAMP> - efm.transaction - ERROR - Intermediate files are in /tmp/TEMP_DIR
+  original_filepath: /TEST_ROOT/efm_cli_test_ramdisk0/test_UUID/books/document.pdf
+  temp_directory: /tmp/TEMP_DIR
+  traceback: <TRACEBACK_REMOVED>
+- error: false
+  filename: books/-.txt
+  hash: HASH_PLACEHOLDER
+  messages: []
+  metadata:
+    author: ''
+    creation_date: ''
+    creator: ''
+    encryption: ''
+    format: Text
+    is_k2pdfopt_version: false
+    keywords:
+    - ''
+    mod_date: ''
+    producer: ''
+    subject: ''
+    title: ''
+  original_filepath: /TEST_ROOT/efm_cli_test_ramdisk0/test_UUID/books/readme.txt

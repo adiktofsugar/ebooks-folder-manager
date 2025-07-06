@@ -1,0 +1,49 @@
+- error: true
+  error_message: 'Error with book: /tmp/TEMP_DIR/corrupted.epub - Couldn''t get metadata
+    - Failed to open file ''/tmp/TEMP_DIR/corrupted.epub''.'
+  messages:
+  - '<TIMESTAMP> - efm.transaction - ERROR - Failed to process /tmp/TEMP_DIR/pytest-26/efm_cli_test_ramdisk0/test_ee997c08/books/corrupted.epub.
+    Error: Error with book: /tmp/TEMP_DIR/corrupted.epub - Couldn''t get metadata
+    - Failed to open file ''/tmp/TEMP_DIR/corrupted.epub''.'
+  - <TIMESTAMP> - efm.transaction - ERROR - Intermediate files are in /tmp/TEMP_DIR
+  original_filepath: /TEST_ROOT/efm_cli_test_ramdisk0/test_UUID/books/corrupted.epub
+  temp_directory: /tmp/TEMP_DIR
+  traceback: <TRACEBACK_REMOVED>
+- error: false
+  filename: 'books/Noelle Nelson, Selin A. Malkoc, Baba Shiv-Emotions Know Best: The
+    Advantage of Emotional versus Cognitive Responses to Failure.pdf'
+  hash: HASH_PLACEHOLDER
+  messages: []
+  metadata:
+    author: Noelle Nelson, Selin A. Malkoc, Baba Shiv
+    creation_date: D:20170902103500+08'00'
+    creator: ''
+    encryption: null
+    format: PDF 1.3
+    is_k2pdfopt_version: false
+    keywords:
+    - ''
+    mod_date: D:20240209095801-08'00
+    producer: K2pdfopt v2.55
+    subject: ''
+    title: 'Emotions Know Best: The Advantage of Emotional versus Cognitive Responses
+      to Failure'
+  original_filepath: /TEST_ROOT/efm_cli_test_ramdisk0/test_UUID/books/test.pdf
+- error: false
+  filename: books/Terry Pratchett-Interesting Times.epub
+  hash: HASH_PLACEHOLDER
+  messages: []
+  metadata:
+    author: Terry Pratchett
+    creation_date: ''
+    creator: ''
+    encryption: ''
+    format: EPUB
+    is_k2pdfopt_version: false
+    keywords:
+    - ''
+    mod_date: ''
+    producer: ''
+    subject: ''
+    title: Interesting Times
+  original_filepath: /TEST_ROOT/efm_cli_test_ramdisk0/test_UUID/books/test.epub

@@ -61,7 +61,7 @@ def main():
 
     for original_filepath in files:
         logger.debug(f"Processing {original_filepath}")
-        p = Path(original_filepath)
+        p = Path(original_filepath).resolve()  # Convert to absolute path
         if p.is_dir():
             logger.debug(f"{original_filepath} is directory")
             all_files.extend(get_files_from_dirpath(p))
@@ -69,7 +69,7 @@ def main():
             logger.debug(f"{original_filepath} is file")
             all_files.append(p)
         else:
-            expanded = [Path(f) for f in glob.glob(original_filepath)]
+            expanded = [Path(f).resolve() for f in glob.glob(original_filepath)]
             logger.debug(f"{original_filepath} is glob, expanded to {expanded}")
             all_files.extend(expanded)
 
@@ -85,33 +85,46 @@ def main():
 
         logger.debug(f"Processing {original_filepath}")
         result = Transaction(original_filepath, Path(args.out)).perform()
-        # Check for duplicates only for successful results
-        if isinstance(result, TransactionSuccess):
-            if result.filename not in [r.filename for r in results if isinstance(r, TransactionSuccess)]:
-                results.append(result)
-        else:
-            # Always include error results
-            results.append(result)
+        results.append(result)
 
     # Count successes and failures
     successes = [r for r in results if isinstance(r, TransactionSuccess)]
     failures = [r for r in results if isinstance(r, TransactionError)]
     
+    # Deduplicate successful results by hash
+    seen_hashes = {}
+    deduplicated_results:list[TransactionResult] = []
+    duplicate_count = 0
+    
+    for result in results:
+        if isinstance(result, TransactionSuccess):
+            if result.hash in seen_hashes:
+                duplicate_count += 1
+                logger.debug(f"Skipping duplicate: {result.original_filepath} has same content as {seen_hashes[result.hash]}")
+            else:
+                seen_hashes[result.hash] = result.original_filepath
+                deduplicated_results.append(result)
+        else:
+            # Always include error results
+            deduplicated_results.append(result)
+    
     # Show summary
-    print(f"\nProcessed {len(results)} files:")
+    print(f"\nProcessed {len(all_files)} files:")
     print(f"  ✓ {len(successes)} successful")
+    if duplicate_count > 0:
+        print(f"  ≡ {duplicate_count} duplicates")
     if failures:
         print(f"  ✗ {len(failures)} failed")
         if loglevel == logging.DEBUG:
             print("\nFailed files:")
             for error_result in failures:
-                print(f"  - {error_result.messages[0] if error_result.messages else 'Unknown file'}")
+                print(f"  - {error_result.original_filepath}: {error_result.error_message}")
     site_dirpath = Path(args.out)
     db_filepath = site_dirpath / "db.yaml"
-    # Include both successful and failed results in the database
-    db_filepath.write_text(yaml.dump([result.to_dict() for result in results]))
+    # Include deduplicated results in the database
+    db_filepath.write_text(yaml.dump([result.to_dict() for result in deduplicated_results]))
 
-    ui_dist_dirpath = Path(__file__).parent.parent / "ui" / "dist"
+    ui_dist_dirpath = Path(__file__).parent.parent / "site-ui" / "dist"
     if not ui_dist_dirpath.exists():
         logger.error(
             f"UI distribution directory {ui_dist_dirpath} does not exist. Can not generate site."
@@ -132,7 +145,7 @@ def get_files_from_dirpath(dirpath: Path) -> list[Path]:
     all_files: list[Path] = []
     for root, dirs, files in os.walk(dirpath):
         for file in files:
-            all_files.append(Path(root) / file)
+            all_files.append((Path(root) / file).resolve())
     return all_files
 
 
