@@ -13,7 +13,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", "kfxlib"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "adl"))
 
 from efm.exceptions import BookError
-from efm.transaction import Transaction, TransactionResult
+from efm.transaction import Transaction, TransactionResult, TransactionSuccess, TransactionError
 
 
 logger = logging.getLogger(__name__)
@@ -73,7 +73,6 @@ def main():
             logger.debug(f"{original_filepath} is glob, expanded to {expanded}")
             all_files.extend(expanded)
 
-    errors = list[tuple[Path, BookError]]()
     results: list[TransactionResult] = []
 
     for original_filepath in all_files:
@@ -85,25 +84,31 @@ def main():
             continue
 
         logger.debug(f"Processing {original_filepath}")
-        try:
-            result = Transaction(original_filepath, Path(args.out)).perform()
-            if result.filename not in [r.filename for r in results]:
+        result = Transaction(original_filepath, Path(args.out)).perform()
+        # Check for duplicates only for successful results
+        if isinstance(result, TransactionSuccess):
+            if result.filename not in [r.filename for r in results if isinstance(r, TransactionSuccess)]:
                 results.append(result)
-        except Exception as e:
-            if isinstance(e, BookError):
-                errors.append((original_filepath, e))
-            else:
-                raise
+        else:
+            # Always include error results
+            results.append(result)
 
-    if len(errors) > 0:
-        logger.error("Errors occurred during processing:")
-        for filepath, error in errors:
-            logger.error(
-                f"> {filepath}:{os.linesep}{''.join([f'  | {line}' for line in traceback.format_exception_only(error)])}"
-            )
-        return 1
+    # Count successes and failures
+    successes = [r for r in results if isinstance(r, TransactionSuccess)]
+    failures = [r for r in results if isinstance(r, TransactionError)]
+    
+    # Show summary
+    print(f"\nProcessed {len(results)} files:")
+    print(f"  ✓ {len(successes)} successful")
+    if failures:
+        print(f"  ✗ {len(failures)} failed")
+        if loglevel == logging.DEBUG:
+            print("\nFailed files:")
+            for error_result in failures:
+                print(f"  - {error_result.messages[0] if error_result.messages else 'Unknown file'}")
     site_dirpath = Path(args.out)
     db_filepath = site_dirpath / "db.yaml"
+    # Include both successful and failed results in the database
     db_filepath.write_text(yaml.dump([result.to_dict() for result in results]))
 
     ui_dist_dirpath = Path(__file__).parent.parent / "ui" / "dist"
@@ -119,7 +124,8 @@ def main():
             if not dest_file.exists():
                 dest_file.parent.mkdir(parents=True, exist_ok=True)
                 dest_file.write_bytes(src_file.read_bytes())
-    return 0
+    # Return non-zero if there were any failures
+    return 1 if failures else 0
 
 
 def get_files_from_dirpath(dirpath: Path) -> list[Path]:
