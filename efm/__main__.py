@@ -78,10 +78,10 @@ def main():
 
     for original_filepath in all_files:
         if str(original_filepath).endswith(".bak"):
-            logger.info(f"Skipping {original_filepath} because it's a backup file.")
+            logger.debug(f"Skipping {original_filepath} because it's a backup file.")
             continue
         if original_filepath.name in ["efm.toml", "efm.yaml", "efm.yml", "efm.json"]:
-            logger.info(f"Skipping {original_filepath} because it's a config file.")
+            logger.debug(f"Skipping {original_filepath} because it's a config file.")
             continue
 
         logger.debug(f"Processing {original_filepath}")

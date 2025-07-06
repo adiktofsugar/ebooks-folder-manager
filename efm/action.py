@@ -220,7 +220,7 @@ class ReformatPdfAction(BaseAction):
 
         metadata.is_k2pdfopt_version = True
 
-        logger.info(f"Reformatted {self.filepath} with k2pdfopt")
+        logger.debug(f"Reformatted {self.filepath} with k2pdfopt")
         return temp_filepath_metadata
 
 
@@ -291,7 +291,7 @@ class Kfx2EpubAction(BaseAction):
             filepath = self.temp_dirpath / "after_kfx2epub.epub"
             with open(filepath, "wb") as f:
                 f.write(kfxconvert.convert_to_epub(str(self.filepath)))
-            logger.info(f"Converted {self.filepath} to {filepath}")
+            logger.debug(f"Converted {self.filepath} to {filepath}")
             return filepath
         logger.debug(
             f"Skipping {self.filepath} because it's not a KFX-ZIP file (extensions {', '.join(valid_extensions)})."

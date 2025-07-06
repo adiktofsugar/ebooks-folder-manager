@@ -39,7 +39,7 @@ def decryptepub(infile: Path, outdir: Path, key_files: list[Path]) -> Path:
                 try:
                     rv = ineptepub.decryptBook(userkey, str(zippath), str(outfile))
                     if rv == 0:
-                        logger.info(f"Decrypted {infile} with key file {key_file}")
+                        logger.debug(f"Decrypted {infile} with key file {key_file}")
                         return outfile
                 except Exception as e:
                     raise RemoveDrmError(infile, original_error=e)
@@ -47,7 +47,7 @@ def decryptepub(infile: Path, outdir: Path, key_files: list[Path]) -> Path:
         else:
             encryption = epubtest.encryption(str(zippath))
             if encryption == "Unencrypted":
-                logger.info("{0} is not DRMed.".format(filename))
+                logger.debug("{0} is not DRMed.".format(filename))
                 return infile
             raise UnsupportedEncryptionError(infile, encryption)
     finally:
@@ -83,7 +83,7 @@ def decryptpdf(
                 try:
                     rv = ineptpdf.decryptBook(key, str(infile), str(outfile))
                     if rv == 0:
-                        logger.info(f"Decrypted {infile} with {key_name}")
+                        logger.debug(f"Decrypted {infile} with {key_name}")
                         return outfile
                 except ineptpdf.ADEPTInvalidPasswordError:
                     logger.debug(f"Invalid password for {infile}: '{key_name}'")
@@ -129,7 +129,7 @@ def decryptpdb(infile: Path, outdir: Path, social_drm_file: Path) -> Path:
                 str(infile), str(outpath), True, erdr2pml.getuser_key(name, cc8)
             )
             if rv == 0:
-                logger.info(f"Decrypted {infile} with key {name}")
+                logger.debug(f"Decrypted {infile} with key {name}")
                 return outpath
         except Exception as e:
             logger.debug(f"Failed decrypting with key {name} - {e}")
@@ -199,7 +199,7 @@ def decryptk4mobi(
             starttime,
         )
 
-        logger.info(f"Decrypted {infile}")
+        logger.debug(f"Decrypted {infile}")
         outfile = outdir / f"{k4mobidedrm.inferReasonableName(str(infile), book.getBookTitle())}_nodrm{book.getBookExtension()}"
 
         book.getFile(str(outfile))
@@ -210,7 +210,7 @@ def decryptk4mobi(
             )
             # zipname = os.path.join(outdir, outfilename + "_SVG.zip")
             # book.getSVGZip(zipname)
-            # logger.info(
+            # logger.debug(
             #     "Saved SVG ZIP Archive for {1:s} after {0:.1f} seconds".format(
             #         time.time() - starttime, outfilename
             #     )

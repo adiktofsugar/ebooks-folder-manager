@@ -11,16 +11,25 @@ Ebooks Folder Manager (EFM) is a Calibre replacement that provides minimal metad
 ### Python Backend (`efm/`)
 - CLI tool for processing ebooks (entry point: `efm/__main__.py`)
 - Core modules:
-  - `transaction.py`: Processes individual ebooks
-  - `metadata.py`: Extracts/manages ebook metadata
+  - `transaction.py`: Processes individual ebooks with caching and result handling
+  - `metadata.py`: Extracts metadata using PyMuPDF (supports PDF, XPS, EPUB, MOBI, FB2, CBZ, SVG, TXT)
   - `dedrm.py`: DRM removal functionality
-  - `action.py`: Different processing actions
+  - `action.py`: Base class and implementations for processing actions
   - `kfxconvert.py`: Kindle format conversion
+  - `config.py`: Configuration management (supports TOML, YAML, JSON)
+  - `env.py`: Environment setup utilities
+  - `exceptions.py`: Custom exception classes
 
 ### React Frontend (`site-ui/`)
 - Static site UI with React 19 and MobX
-- Fuzzy search functionality
-- Displays books from YAML metadata
+- TypeScript with custom ESBuild script (`scripts/esbuild.mts`)
+- Key components:
+  - `App.tsx`: Root component
+  - `BookList.tsx`: Main book list with search
+  - `BookListItem.tsx`: Individual book display
+- Stores:
+  - `DbStore.ts`: Fetches and manages book database
+  - `BookListStore.ts`: Manages book list and fuzzy search
 
 ### External Libraries
 - `DeDRM_tools/`: DRM removal plugins (Calibre plugin)
@@ -50,8 +59,9 @@ efm                  # Run the CLI tool
 ### Testing
 ```bash
 # Run Python tests
-pytest               # Run all tests
-pytest -xvs          # Stop on first failure with verbose output
+uv run pytest               # Run all tests
+uv run pytest -xvs          # Stop on first failure with verbose output
+uv run pytest tests/test_metadata.py  # Run specific test file
 ```
 
 ### Processing Books
@@ -64,6 +74,16 @@ efm book.epub        # Process single book
 getadobekey          # Extract Adobe DRM keys
 epubtest file.epub   # Test EPUB DRM type
 epubdecrypt file.epub # Decrypt DRM-protected EPUB
+```
+
+### Python Development
+```bash
+# Type checking
+uv run pyright       # Run Python type checker
+
+# Linting
+uv run ruff check efm     # Check Python code
+uv run ruff format efm    # Format Python code
 ```
 
 ## Static Site Structure
@@ -90,11 +110,20 @@ The generated site in `site/` contains:
 
 5. **Python Version**: Requires Python 3.13+ and uses `uv` as the package manager.
 
-6. **Monorepo Structure**: Uses Turbo for task orchestration across Python backend and JavaScript frontend.
+6. **Monorepo Structure**: Uses Turbo for task orchestration across Python backend and JavaScript frontend. Check `package.json` for current workspaces configuration.
+
+7. **Development Server**: The dev command starts both a Python HTTP server (port 8000) and watches for UI changes, automatically copying built assets to the `site/` directory.
 
 ## Testing Resources
 
 Sample books for testing are available in `sample-books/` directory.
+
+## Configuration Format
+
+The configuration file supports various DRM key paths:
+- `adobekey`: Path to Adobe DRM key file
+- `kindlekey`: Path to Kindle DRM key file
+- Additional DRM-related settings
 
 ## Known Limitations
 
@@ -102,3 +131,6 @@ Sample books for testing are available in `sample-books/` directory.
 - Some ebooks may lack title/author metadata
 - DRM removal for certain Kindle formats may not work
 - Multiple format support (same book in EPUB/PDF) is planned but not implemented
+
+## Development Tips
+- Use uv efm to run any python program
