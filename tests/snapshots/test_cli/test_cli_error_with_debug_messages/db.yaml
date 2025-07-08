@@ -2,18 +2,54 @@
   error_message: 'Error with book: /tmp/TEMP_DIR/corrupted.epub - Couldn''t get metadata
     - Failed to open file ''/tmp/TEMP_DIR/corrupted.epub''.'
   messages:
-  - '<TIMESTAMP> - efm.transaction - ERROR - Failed to process /tmp/TEMP_DIR/pytest-26/efm_cli_test_ramdisk0/test_ee997c08/books/corrupted.epub.
-    Error: Error with book: /tmp/TEMP_DIR/corrupted.epub - Couldn''t get metadata
-    - Failed to open file ''/tmp/TEMP_DIR/corrupted.epub''.'
-  - <TIMESTAMP> - efm.transaction - ERROR - Intermediate files are in /tmp/TEMP_DIR
-  original_filepath: /TEST_ROOT/efm_cli_test_ramdisk0/test_UUID/books/corrupted.epub
+  - "<TIMESTAMP> - efm.transaction - ERROR - Error with book: /tmp/TEMP_DIR/corrupted.epub\
+    \ - Couldn't get metadata - Failed to open file '/tmp/TEMP_DIR/corrupted.epub'.\n\
+    Traceback (most recent call last):\n  File \"/home/sean/dev/ebooks-folder-manager/.venv/lib64/python3.13/site-packages/pymupdf/__init__.py\"\
+    , line 2975, in __init__\n    doc = mupdf.fz_open_document(filename)\n  File \"\
+    /home/sean/dev/ebooks-folder-manager/.venv/lib64/python3.13/site-packages/pymupdf/mupdf.py\"\
+    , line 48452, in fz_open_document\n    return _mupdf.fz_open_document(filename)\n\
+    \           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^\npymupdf.mupdf.FzErrorFormat: code=7:\
+    \ cannot find end of central directory\n\nThe above exception was the direct cause\
+    \ of the following exception:\n\nTraceback (most recent call last):\n  File \"\
+    /home/sean/dev/ebooks-folder-manager/efm/metadata.py\", line 50, in get_metadata\n\
+    \    f = pymupdf.open(filepath)\n  File \"/home/sean/dev/ebooks-folder-manager/.venv/lib64/python3.13/site-packages/pymupdf/__init__.py\"\
+    , line 2978, in __init__\n    raise FileDataError(f'Failed to open file {filename!r}.')\
+    \ from e\npymupdf.FileDataError: Failed to open file '/tmp/TEMP_DIR/corrupted.epub'.\n\
+    \nDuring handling of the above exception, another exception occurred:\n\nTraceback\
+    \ (most recent call last):\n  File \"/home/sean/dev/ebooks-folder-manager/efm/transaction.py\"\
+    , line 149, in perform\n    metadata = get_metadata(filepath)\n  File \"/home/sean/dev/ebooks-folder-manager/efm/metadata.py\"\
+    , line 76, in get_metadata\n    raise GetMetadataError(filepath, original_error=e)\n\
+    efm.exceptions.GetMetadataError: Error with book: /tmp/TEMP_DIR/corrupted.epub\
+    \ - Couldn't get metadata - Failed to open file '/tmp/TEMP_DIR/corrupted.epub'."
+  - <TIMESTAMP> - efm.transaction - ERROR - Failed to process /BOOKS_DIR/corrupted.epub.
+    Intermediate files are in /tmp/TEMP_DIR
+  original_filepath: /BOOKS_DIR/corrupted.epub
   temp_directory: /tmp/TEMP_DIR
-  traceback: <TRACEBACK_REMOVED>
 - error: false
   filename: 'books/Noelle Nelson, Selin A. Malkoc, Baba Shiv-Emotions Know Best: The
     Advantage of Emotional versus Cognitive Responses to Failure.pdf'
   hash: HASH_PLACEHOLDER
-  messages: []
+  messages:
+  - <TIMESTAMP> - efm.transaction - DEBUG - Processing /BOOKS_DIR/test.pdf in /tmp/TEMP_DIR
+  - <TIMESTAMP> - efm.transaction - DEBUG - Performing action <bound method DownloadAcsmAction.id
+    of <class 'efm.action.DownloadAcsmAction'>> on /tmp/TEMP_DIR/test.pdf
+  - <TIMESTAMP> - efm.action - DEBUG - Skipping /tmp/TEMP_DIR/test.pdf because it's
+    not an ACSM file.
+  - <TIMESTAMP> - efm.transaction - DEBUG - Performing action <bound method Kfx2EpubAction.id
+    of <class 'efm.action.Kfx2EpubAction'>> on /tmp/TEMP_DIR/test.pdf
+  - <TIMESTAMP> - efm.action - DEBUG - Skipping /tmp/TEMP_DIR/test.pdf because it's
+    not a KFX-ZIP file (extensions kfx, kfx-zip, kpf).
+  - <TIMESTAMP> - efm.transaction - DEBUG - Performing action <bound method DeDrmAction.id
+    of <class 'efm.action.DeDrmAction'>> on /tmp/TEMP_DIR/test.pdf
+  - <TIMESTAMP> - efm.action - DEBUG - Removing DRM from pdf file /tmp/TEMP_DIR/test.pdf...
+  - <TIMESTAMP> - efm.dedrm - DEBUG - Skipping /tmp/TEMP_DIR/test.pdf. has no drm
+  - <TIMESTAMP> - efm.transaction - DEBUG - Performing action <bound method ReformatPdfAction.id
+    of <class 'efm.action.ReformatPdfAction'>> on /tmp/TEMP_DIR/test.pdf
+  - <TIMESTAMP> - efm.action - DEBUG - Skipping /tmp/TEMP_DIR/test.pdf because it's
+    not a PDF. Format is PDF 1.3.
+  - '<TIMESTAMP> - efm.transaction - DEBUG - Finished processing ''/BOOKS_DIR/test.pdf''.
+    Output file is ''/SITE_DIR/books/Noelle Nelson, Selin A. Malkoc, Baba Shiv-Emotions
+    Know Best: The Advantage of Emotional versus Cognitive Responses to Failure.pdf'''
   metadata:
     author: Noelle Nelson, Selin A. Malkoc, Baba Shiv
     creation_date: D:20170902103500+08'00'
@@ -28,11 +64,30 @@
     subject: ''
     title: 'Emotions Know Best: The Advantage of Emotional versus Cognitive Responses
       to Failure'
-  original_filepath: /TEST_ROOT/efm_cli_test_ramdisk0/test_UUID/books/test.pdf
+  original_filepath: /BOOKS_DIR/test.pdf
 - error: false
   filename: books/Terry Pratchett-Interesting Times.epub
   hash: HASH_PLACEHOLDER
-  messages: []
+  messages:
+  - <TIMESTAMP> - efm.transaction - DEBUG - Processing /BOOKS_DIR/test.epub in /tmp/TEMP_DIR
+  - <TIMESTAMP> - efm.transaction - DEBUG - Performing action <bound method DownloadAcsmAction.id
+    of <class 'efm.action.DownloadAcsmAction'>> on /tmp/TEMP_DIR/test.epub
+  - <TIMESTAMP> - efm.action - DEBUG - Skipping /tmp/TEMP_DIR/test.epub because it's
+    not an ACSM file.
+  - <TIMESTAMP> - efm.transaction - DEBUG - Performing action <bound method Kfx2EpubAction.id
+    of <class 'efm.action.Kfx2EpubAction'>> on /tmp/TEMP_DIR/test.epub
+  - <TIMESTAMP> - efm.action - DEBUG - Skipping /tmp/TEMP_DIR/test.epub because it's
+    not a KFX-ZIP file (extensions kfx, kfx-zip, kpf).
+  - <TIMESTAMP> - efm.transaction - DEBUG - Performing action <bound method DeDrmAction.id
+    of <class 'efm.action.DeDrmAction'>> on /tmp/TEMP_DIR/test.epub
+  - <TIMESTAMP> - efm.action - DEBUG - Removing DRM from epub file /tmp/TEMP_DIR/test.epub...
+  - <TIMESTAMP> - efm.dedrm - DEBUG - test is not DRMed.
+  - <TIMESTAMP> - efm.transaction - DEBUG - Performing action <bound method ReformatPdfAction.id
+    of <class 'efm.action.ReformatPdfAction'>> on /tmp/TEMP_DIR/test.epub
+  - <TIMESTAMP> - efm.action - DEBUG - Skipping /tmp/TEMP_DIR/test.epub because it's
+    not a PDF. Format is EPUB.
+  - <TIMESTAMP> - efm.transaction - DEBUG - Finished processing '/BOOKS_DIR/test.epub'.
+    Output file is '/SITE_DIR/books/Terry Pratchett-Interesting Times.epub'
   metadata:
     author: Terry Pratchett
     creation_date: ''
@@ -46,4 +101,4 @@
     producer: ''
     subject: ''
     title: Interesting Times
-  original_filepath: /TEST_ROOT/efm_cli_test_ramdisk0/test_UUID/books/test.epub
+  original_filepath: /BOOKS_DIR/test.epub

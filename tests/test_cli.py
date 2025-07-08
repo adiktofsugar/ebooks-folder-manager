@@ -1,17 +1,15 @@
 """High-level tests for the efm CLI using ramdisk and snapshots."""
 
 import pytest
-import tempfile
 import shutil
 from pathlib import Path
 import yaml
 import sys
-import re
 import uuid
 
 from efm.__main__ import main
 from efm.transaction import TransactionError, TransactionResult, TransactionSuccess
-from conftest import sanitize_string, sanitize_transaction
+from conftest import sanitize_transaction
 
 
 @pytest.fixture(scope="session")
@@ -123,14 +121,36 @@ def test_cli_multiple_files_with_duplicates(test_env, monkeypatch, snapshot):
     db_file = test_env["site"] / "db.yaml"
     db_data = yaml.safe_load(db_file.read_text())
     
+    # Debug: print the database entries BEFORE sanitization
+    print(f"\nDatabase contains {len(db_data)} entries (BEFORE sanitization)")
+    for i, entry in enumerate(db_data):
+        error_val = entry.get("error", None)
+        print(f"  Entry {i}: error={error_val} - {entry.get('original_filepath', 'unknown')}")
+    
+    # Verify we have both success and error entries BEFORE sanitization
+    # Note: duplicates are removed from the database, so we only see unique successes
+    successes = [d for d in db_data if not d.get("error", False)]
+    errors = [d for d in db_data if d.get("error", False)]
+    print(f"\nBEFORE sanitization - Successes: {len(successes)}, Errors: {len(errors)}")
+    
     # Sanitize and snapshot
     sanitized_db = sanitize_db_for_snapshot(db_data, test_env)
     snapshot.assert_match(yaml.dump(sanitized_db, sort_keys=True), "db.yaml")
     
-    # Verify we have both success and error entries
+    # Check AFTER sanitization
+    print(f"\nDatabase contains {len(db_data)} entries (AFTER sanitization)")
+    for i, entry in enumerate(db_data):
+        error_val = entry.get("error", None)
+        print(f"  Entry {i}: error={error_val} - {entry.get('original_filepath', 'unknown')}")
+    
+    # Re-check successes and errors
     successes = [d for d in db_data if not d.get("error", False)]
     errors = [d for d in db_data if d.get("error", False)]
-    assert len(successes) == 1
+    print(f"\nSuccesses: {len(successes)}")
+    print(f"Errors: {len(errors)}")
+    for s in successes:
+        print(f"  Success: error={s.get('error')}, path={s.get('original_filepath')}")
+    assert len(successes) == 1  # Only one unique success (duplicates removed)
     assert len(errors) == 1
     
     # Verify error has messages
