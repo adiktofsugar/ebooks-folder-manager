@@ -47,7 +47,7 @@ def get_metadata(filepath: Path) -> Metadata | None:
         )
         return None
     try:
-        f = pymupdf.open(filepath)
+        f: pymupdf.Document = pymupdf.open(filepath)
         if f.metadata is None:
             logger.info(f"{filepath} has no metadata.")
             return None

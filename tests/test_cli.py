@@ -116,6 +116,7 @@ def test_cli_multiple_files_with_duplicates(test_env, monkeypatch, snapshot):
     
     # Run main
     exit_code = main()
+    assert exit_code == 0
     
     # Load database
     db_file = test_env["site"] / "db.yaml"
@@ -171,6 +172,7 @@ def test_cli_text_file_processing(test_env, monkeypatch, snapshot):
     
     # Run main
     exit_code = main()
+    assert exit_code == 0
     
     # Load database
     db_file = test_env["site"] / "db.yaml"
@@ -286,3 +288,209 @@ def test_cli_error_with_debug_messages(test_env, monkeypatch, snapshot):
     assert len(error_result.messages) >= 2
     error_levels = [msg.split(" - ")[2] for msg in error_result.messages if len(msg.split(" - ")) >= 3]
     assert "ERROR" in error_levels
+
+
+def test_cli_interesting_times_epub(test_env, monkeypatch, snapshot):
+    """Test processing InterestingTimes.epub specifically via CLI."""
+    source_book = Path("sample-books/InterestingTimes.epub")
+    if not source_book.exists():
+        pytest.skip("InterestingTimes.epub not found in sample-books")
+    
+    test_book = test_env["books"] / "InterestingTimes.epub"
+    shutil.copy(source_book, test_book)
+    
+    monkeypatch.setattr(sys, "argv", ["efm", str(test_book), "-o", str(test_env["site"])])
+    exit_code = main()
+    assert exit_code == 0
+    
+    db_file = test_env["site"] / "db.yaml"
+    db_data = yaml.safe_load(db_file.read_text())
+    
+    assert len(db_data) == 1
+    result = TransactionResult.from_dict(db_data[0])
+    
+    assert isinstance(result, TransactionSuccess)
+    assert result.metadata is not None
+    assert result.metadata.title == "Interesting Times"
+    assert result.metadata.author == "Terry Pratchett"
+    assert result.metadata.format == "EPUB"
+    assert result.filename == Path("books/Terry Pratchett-Interesting Times.epub")
+    
+    output_file = test_env["site"] / result.filename
+    assert output_file.exists()
+    
+    cache_file = test_env["site"] / "_cache" / f"{result.hash}.yaml"
+    assert cache_file.exists()
+
+
+def test_cli_emotions_pdf(test_env, monkeypatch, snapshot):
+    """Test processing Emotions.pdf specifically via CLI."""
+    source_book = Path("sample-books/Emotions.pdf")
+    if not source_book.exists():
+        pytest.skip("Emotions.pdf not found in sample-books")
+    
+    test_book = test_env["books"] / "Emotions.pdf"
+    shutil.copy(source_book, test_book)
+    
+    monkeypatch.setattr(sys, "argv", ["efm", str(test_book), "-o", str(test_env["site"])])
+    exit_code = main()
+    
+    assert exit_code in (0, 1)
+    
+    db_file = test_env["site"] / "db.yaml"
+    db_data = yaml.safe_load(db_file.read_text())
+    
+    assert len(db_data) == 1
+    result = TransactionResult.from_dict(db_data[0])
+    
+    assert isinstance(result, (TransactionSuccess, TransactionError))
+    
+    if isinstance(result, TransactionSuccess):
+        assert result.metadata is not None
+        assert result.metadata.format in ["PDF", "PDF document"]
+        if result.metadata.title and result.metadata.author:
+            assert result.metadata.author in str(result.filename)
+
+
+def test_cli_corrupted_epub_handling(test_env, monkeypatch, snapshot):
+    """Test CLI handling of a corrupted EPUB file."""
+    bad_epub = test_env["books"] / "corrupted.epub"
+    bad_epub.write_text("This is not a valid EPUB file!")
+    
+    monkeypatch.setattr(sys, "argv", ["efm", str(bad_epub), "-o", str(test_env["site"])])
+    exit_code = main()
+    
+    assert exit_code == 1
+    
+    db_file = test_env["site"] / "db.yaml"
+    db_data = yaml.safe_load(db_file.read_text())
+    
+    assert len(db_data) == 1
+    result = TransactionResult.from_dict(db_data[0])
+    
+    assert isinstance(result, TransactionError)
+    assert "corrupted.epub" in str(result.original_filepath)
+    assert result.error_message is not None
+    assert "metadata" in result.error_message.lower() or "open" in result.error_message.lower()
+    assert len(result.messages) >= 2
+    
+    cache_files = list((test_env["site"] / "_cache").glob("*.yaml"))
+    assert len(cache_files) == 1
+    
+    cache_data = yaml.safe_load(cache_files[0].read_text())
+    assert cache_data["error"] is True
+
+
+def test_cli_duplicate_book_processing(test_env, monkeypatch, snapshot):
+    """Test CLI processing the same file twice uses cache."""
+    source_book = Path("sample-books/InterestingTimes.epub")
+    if not source_book.exists():
+        pytest.skip("InterestingTimes.epub not found in sample-books")
+    
+    test_book = test_env["books"] / "test.epub"
+    shutil.copy(source_book, test_book)
+    
+    monkeypatch.setattr(sys, "argv", ["efm", str(test_book), "-o", str(test_env["site"]), "--loglevel", "debug"])
+    exit_code1 = main()
+    assert exit_code1 == 0
+    
+    db_file = test_env["site"] / "db.yaml"
+    db_data1 = yaml.safe_load(db_file.read_text())
+    result1 = TransactionResult.from_dict(db_data1[0])
+    assert isinstance(result1, TransactionSuccess)
+    
+    monkeypatch.setattr(sys, "argv", ["efm", str(test_book), "-o", str(test_env["site"]), "--loglevel", "debug"])
+    exit_code2 = main()
+    assert exit_code2 == 0
+    
+    db_data2 = yaml.safe_load(db_file.read_text())
+    result2 = TransactionResult.from_dict(db_data2[0])
+    
+    assert isinstance(result2, TransactionSuccess)
+    assert result2.hash == result1.hash
+    assert result2.filename == result1.filename
+    
+    assert any("Skipping" in msg and "already been processed" in msg for msg in result2.messages)
+
+
+def test_cli_duplicate_content_different_filenames(test_env, monkeypatch, snapshot):
+    """Test CLI processing identical content with different filenames."""
+    source_book = Path("sample-books/InterestingTimes.epub")
+    if not source_book.exists():
+        pytest.skip("InterestingTimes.epub not found in sample-books")
+    
+    book1 = test_env["books"] / "book1.epub"
+    book2 = test_env["books"] / "book2.epub"
+    shutil.copy(source_book, book1)
+    shutil.copy(source_book, book2)
+    
+    monkeypatch.setattr(sys, "argv", ["efm", str(book1), str(book2), "-o", str(test_env["site"])])
+    exit_code = main()
+    assert exit_code == 0
+    
+    db_file = test_env["site"] / "db.yaml"
+    db_data = yaml.safe_load(db_file.read_text())
+    
+    assert len(db_data) == 1
+    result = TransactionResult.from_dict(db_data[0])
+    
+    assert isinstance(result, TransactionSuccess)
+    assert str(result.original_filepath) in (str(book1), str(book2))
+    
+    cache_files = list((test_env["site"] / "_cache").glob("*.yaml"))
+    assert len(cache_files) == 1
+
+
+def test_cli_plain_text_file(test_env, monkeypatch, snapshot):
+    """Test CLI processing a plain text file."""
+    text_file = test_env["books"] / "readme.txt"
+    text_file.write_text("This is a plain text file.\nIt has multiple lines.")
+    
+    monkeypatch.setattr(sys, "argv", ["efm", str(text_file), "-o", str(test_env["site"])])
+    exit_code = main()
+    assert exit_code == 0
+    
+    db_file = test_env["site"] / "db.yaml"
+    db_data = yaml.safe_load(db_file.read_text())
+    
+    assert len(db_data) == 1
+    result = TransactionResult.from_dict(db_data[0])
+    
+    assert isinstance(result, TransactionSuccess)
+    assert result.metadata is not None
+    assert result.metadata.format == "Text"
+    
+    assert result.metadata.author == ""
+    assert result.metadata.title == ""
+    
+    assert "readme.txt" in str(result.filename)
+
+
+def test_cli_debug_message_capture(test_env, monkeypatch, snapshot):
+    """Test that CLI properly captures debug messages during processing."""
+    source_book = Path("sample-books/InterestingTimes.epub")
+    if not source_book.exists():
+        pytest.skip("InterestingTimes.epub not found in sample-books")
+    
+    test_book = test_env["books"] / "test_messages.epub"
+    shutil.copy(source_book, test_book)
+    
+    monkeypatch.setattr(sys, "argv", [
+        "efm", str(test_book), "-o", str(test_env["site"]), "--loglevel", "debug"
+    ])
+    exit_code = main()
+    assert exit_code == 0
+    
+    db_file = test_env["site"] / "db.yaml"
+    db_data = yaml.safe_load(db_file.read_text())
+    
+    assert len(db_data) == 1
+    result = TransactionResult.from_dict(db_data[0])
+    
+    assert isinstance(result, TransactionSuccess)
+    assert len(result.messages) > 0
+    
+    debug_messages = [msg for msg in result.messages if "DEBUG" in msg]
+    assert len(debug_messages) > 0
+    
+    assert any("Processing" in msg for msg in result.messages)

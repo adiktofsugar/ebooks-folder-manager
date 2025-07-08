@@ -3,7 +3,6 @@ import glob
 import logging
 import os
 import sys
-import traceback
 from pathlib import Path
 
 import yaml
@@ -12,7 +11,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", "DeDRM_tools"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "kfxlib"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "adl"))
 
-from efm.exceptions import BookError
 from efm.transaction import Transaction, TransactionResult, TransactionSuccess, TransactionError
 
 
