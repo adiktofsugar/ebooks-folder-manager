@@ -17,7 +17,7 @@
     \ from e\npymupdf.FileDataError: Failed to open file '/tmp/TEMP_DIR/corrupted.epub'.\n\
     \nDuring handling of the above exception, another exception occurred:\n\nTraceback\
     \ (most recent call last):\n  File \"/home/sean/dev/ebooks-folder-manager/efm/transaction.py\"\
-    , line 149, in perform\n    metadata = get_metadata(filepath)\n  File \"/home/sean/dev/ebooks-folder-manager/efm/metadata.py\"\
+    , line 144, in perform\n    metadata = get_metadata(filepath)\n  File \"/home/sean/dev/ebooks-folder-manager/efm/metadata.py\"\
     , line 76, in get_metadata\n    raise GetMetadataError(filepath, original_error=e)\n\
     efm.exceptions.GetMetadataError: Error with book: /tmp/TEMP_DIR/corrupted.epub\
     \ - Couldn't get metadata - Failed to open file '/tmp/TEMP_DIR/corrupted.epub'."

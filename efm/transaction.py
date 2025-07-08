@@ -22,23 +22,16 @@ class TransactionResult:
         return cls.from_dict(yaml.safe_load(filepath.read_text()))
     @classmethod
     def from_dict(cls, d: dict):
+        if "original_filepath" in d:
+            d["original_filepath"] = Path(d["original_filepath"])
+        if "temp_directory" in d and d["temp_directory"]:
+            d["temp_directory"] = Path(d["temp_directory"])
+        if "filename" in d:
+            d["filename"] = Path(d["filename"])
         # Determine which subclass to use based on presence of error field
         if d.get("error", False):
-            # Remove the error field before passing to constructor
-            d.pop("error")
-            if "original_filepath" in d:
-                d["original_filepath"] = Path(d["original_filepath"])
-            if "temp_directory" in d and d["temp_directory"]:
-                d["temp_directory"] = Path(d["temp_directory"])
             return TransactionError(**d)
         else:
-            # Remove the error field if present
-            d.pop("error", None)
-            # Handle path conversions
-            if "filename" in d:
-                d["filename"] = Path(d["filename"])
-            if "original_filepath" in d:
-                d["original_filepath"] = Path(d["original_filepath"])
             return TransactionSuccess(**d)
     
     def to_dict(self):
@@ -56,6 +49,7 @@ class TransactionSuccess(TransactionResult):
     metadata: Metadata | None
     hash: str
     original_filepath: Path
+    error:bool = False
     messages: List[str] = field(default_factory=list)
     
     def to_dict(self):
@@ -71,6 +65,7 @@ class TransactionError(TransactionResult):
     error_message: str
     original_filepath: Path
     temp_directory: Path | None = None
+    error:bool = True
     messages: List[str] = field(default_factory=list)
     
     def to_dict(self):
