@@ -1,18 +1,51 @@
 - error: true
-  error_message: 'Error with book: /tmp/68ad4b8f840b976acac9344663f853cef545bcabakwoc4lc/document.pdf
-    - Couldn''t get metadata - Failed to open file ''/tmp/68ad4b8f840b976acac9344663f853cef545bcabakwoc4lc/document.pdf''.'
+  error_message: 'Error with book: /tmp/TEMP_DIR/document.pdf - Couldn''t get metadata
+    - Failed to open file ''/tmp/TEMP_DIR/document.pdf''.'
   messages:
-  - '<TIMESTAMP> - efm.transaction - ERROR - Failed to process /tmp/TEMP_DIR/pytest-19/efm_cli_test_ramdisk0/test_c5d1800c/books/document.pdf.
-    Error: Error with book: /tmp/TEMP_DIR/document.pdf - Couldn''t get metadata -
-    Failed to open file ''/tmp/TEMP_DIR/document.pdf''.'
-  - <TIMESTAMP> - efm.transaction - ERROR - Intermediate files are in /tmp/TEMP_DIR
-  original_filepath: /TEST_ROOT/efm_cli_test_ramdisk0/test_UUID/books/document.pdf
+  - "<TIMESTAMP> - efm.transaction - ERROR - Error with book: /tmp/TEMP_DIR/document.pdf\
+    \ - Couldn't get metadata - Failed to open file '/tmp/TEMP_DIR/document.pdf'.\n\
+    Traceback (most recent call last):\n  File \"/home/sean/dev/ebooks-folder-manager/.venv/lib64/python3.13/site-packages/pymupdf/__init__.py\"\
+    , line 2975, in __init__\n    doc = mupdf.fz_open_document(filename)\n  File \"\
+    /home/sean/dev/ebooks-folder-manager/.venv/lib64/python3.13/site-packages/pymupdf/mupdf.py\"\
+    , line 48452, in fz_open_document\n    return _mupdf.fz_open_document(filename)\n\
+    \           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^\npymupdf.mupdf.FzErrorFormat: code=7:\
+    \ no objects found\n\nThe above exception was the direct cause of the following\
+    \ exception:\n\nTraceback (most recent call last):\n  File \"/home/sean/dev/ebooks-folder-manager/efm/metadata.py\"\
+    , line 50, in get_metadata\n    f = pymupdf.open(filepath)\n  File \"/home/sean/dev/ebooks-folder-manager/.venv/lib64/python3.13/site-packages/pymupdf/__init__.py\"\
+    , line 2978, in __init__\n    raise FileDataError(f'Failed to open file {filename!r}.')\
+    \ from e\npymupdf.FileDataError: Failed to open file '/tmp/TEMP_DIR/document.pdf'.\n\
+    \nDuring handling of the above exception, another exception occurred:\n\nTraceback\
+    \ (most recent call last):\n  File \"/home/sean/dev/ebooks-folder-manager/efm/transaction.py\"\
+    , line 144, in perform\n    metadata = get_metadata(filepath)\n  File \"/home/sean/dev/ebooks-folder-manager/efm/metadata.py\"\
+    , line 76, in get_metadata\n    raise GetMetadataError(filepath, original_error=e)\n\
+    efm.exceptions.GetMetadataError: Error with book: /tmp/TEMP_DIR/document.pdf -\
+    \ Couldn't get metadata - Failed to open file '/tmp/TEMP_DIR/document.pdf'."
+  - <TIMESTAMP> - efm.transaction - ERROR - Failed to process /BOOKS_DIR/document.pdf.
+    Intermediate files are in /tmp/TEMP_DIR
+  original_filepath: /BOOKS_DIR/document.pdf
   temp_directory: /tmp/TEMP_DIR
-  traceback: <TRACEBACK_REMOVED>
 - error: false
   filename: books/-.txt
   hash: HASH_PLACEHOLDER
-  messages: []
+  messages:
+  - <TIMESTAMP> - efm.transaction - DEBUG - Processing /BOOKS_DIR/readme.txt in /tmp/TEMP_DIR
+  - <TIMESTAMP> - efm.transaction - DEBUG - Performing action <bound method DownloadAcsmAction.id
+    of <class 'efm.action.DownloadAcsmAction'>> on /tmp/TEMP_DIR/readme.txt
+  - <TIMESTAMP> - efm.action - DEBUG - Skipping /tmp/TEMP_DIR/readme.txt because it's
+    not an ACSM file.
+  - <TIMESTAMP> - efm.transaction - DEBUG - Performing action <bound method Kfx2EpubAction.id
+    of <class 'efm.action.Kfx2EpubAction'>> on /tmp/TEMP_DIR/readme.txt
+  - <TIMESTAMP> - efm.action - DEBUG - Skipping /tmp/TEMP_DIR/readme.txt because it's
+    not a KFX-ZIP file (extensions kfx, kfx-zip, kpf).
+  - <TIMESTAMP> - efm.transaction - DEBUG - Performing action <bound method DeDrmAction.id
+    of <class 'efm.action.DeDrmAction'>> on /tmp/TEMP_DIR/readme.txt
+  - <TIMESTAMP> - efm.action - INFO - No DeDRM support for format txt files.
+  - <TIMESTAMP> - efm.transaction - DEBUG - Performing action <bound method ReformatPdfAction.id
+    of <class 'efm.action.ReformatPdfAction'>> on /tmp/TEMP_DIR/readme.txt
+  - <TIMESTAMP> - efm.action - DEBUG - Skipping /tmp/TEMP_DIR/readme.txt because it's
+    not a PDF. Format is Text.
+  - <TIMESTAMP> - efm.transaction - DEBUG - Finished processing '/BOOKS_DIR/readme.txt'.
+    Output file is '/SITE_DIR/books/-.txt'
   metadata:
     author: ''
     creation_date: ''
@@ -26,4 +59,4 @@
     producer: ''
     subject: ''
     title: ''
-  original_filepath: /TEST_ROOT/efm_cli_test_ramdisk0/test_UUID/books/readme.txt
+  original_filepath: /BOOKS_DIR/readme.txt

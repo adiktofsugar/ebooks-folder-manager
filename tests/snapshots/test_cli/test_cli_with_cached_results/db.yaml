@@ -2,8 +2,8 @@
   filename: books/Terry Pratchett-Interesting Times.epub
   hash: HASH_PLACEHOLDER
   messages:
-  - <TIMESTAMP> - efm.transaction - DEBUG - Skipping /tmp/TEMP_DIR/pytest-23/efm_cli_test_ramdisk0/test_0f532d4c/books/cached.epub
-    because metadata has already been processed.
+  - <TIMESTAMP> - efm.transaction - DEBUG - Skipping /BOOKS_DIR/cached.epub because
+    metadata has already been processed.
   metadata:
     author: Terry Pratchett
     creation_date: ''
@@ -17,4 +17,4 @@
     producer: ''
     subject: ''
     title: Interesting Times
-  original_filepath: /TEST_ROOT/efm_cli_test_ramdisk0/test_UUID/books/cached.epub
+  original_filepath: /BOOKS_DIR/cached.epub
