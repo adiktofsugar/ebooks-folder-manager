@@ -3,7 +3,7 @@
 	"private": true,
 	"version": "1.0.0",
 	"description": "ebooks folder manager",
-	"workspaces": ["site-ui", "email-worker"],
+	"workspaces": ["site-ui"],
 	"packageManager": "npm@10.9.2",
 	"scripts": {
 		"dev": "turbo watch dev",
@@ -16,7 +16,6 @@
 	"license": "ISC",
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.4",
-		"@cloudflare/workers-types": "^4.20241218.0",
 		"@types/mimetext": "^2.0.4",
 		"@types/minimist": "^1.2.5",
 		"@types/node": "^22.15.30",
@@ -29,7 +28,6 @@
 		"tsx": "^4.19.4",
 		"turbo": "^2.5.4",
 		"type-fest": "^4.41.0",
-		"typescript": "^5.7.2",
-		"wrangler": "^3.102.0"
+		"typescript": "^5.7.2"
 	}
 }
