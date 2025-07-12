@@ -28,17 +28,29 @@ export default class BookListStore {
 		return this.dbStore.data !== null;
 	}
 
+	get errors() {
+		const { data } = this;
+		if (!data) {
+			return [];
+		}
+		return data.filter((d) => d.error === true);
+	}
+
 	get books(): { title: string; filename: string; author: string }[] {
 		const { data, searchQuery } = this;
 		if (!data) {
 			return [];
 		}
-		const books = data.map(({ filename, metadata: { title, author } }) => ({
-			title: title || "(unknown)",
-			author: author || "(unknown)",
-			filename,
-			score: 0,
-		}));
+		// TODO: handle errors - probably that means
+		//   something else at the root?
+		const books = data
+			.filter((d) => d.error === false)
+			.map(({ filename, metadata: { title, author } }) => ({
+				title: title || "(unknown)",
+				author: author || "(unknown)",
+				filename,
+				score: 0,
+			}));
 		if (!searchQuery) {
 			return books;
 		}

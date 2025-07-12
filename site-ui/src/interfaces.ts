@@ -3,9 +3,21 @@ export interface Metadata {
 	author?: string;
 }
 
-export interface Result {
-	filename: string;
-	metadata: Metadata;
+export interface ErrorResult {
+	error: true;
+	error_message: string;
+	messages: string[];
+	original_filepath: string;
+	temp_directory: string;
 }
+export interface BookResult {
+	error: false;
+	metadata: Metadata;
+	filename: string;
+	hash: string;
+	messages: string[];
+	original_filepath: string;
+}
+export type Result = ErrorResult | BookResult;
 
 export type DbResponse = Result[];

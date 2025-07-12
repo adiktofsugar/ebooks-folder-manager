@@ -2,23 +2,10 @@ import { observer } from "mobx-react-lite";
 import { useEffect, useRef, useState } from "react";
 import styles from "./BookList.module.css";
 import BookListItem from "./BookListItem";
-import BookListStore from "./stores/BookListStore";
+import type BookListStore from "./stores/BookListStore";
 
-export default observer(function BookList() {
-	const [bookListStore] = useState(() => new BookListStore());
-	useEffect(() => {
-		bookListStore.load();
-	}, [bookListStore]);
-	const { error, pending, books, searchQuery } = bookListStore;
-	if (error) {
-		return <div>Error: {error}</div>;
-	}
-	if (pending) {
-		return <div>Loading...</div>;
-	}
-	if (!books) {
-		return <div>No books available, or, more likely, something went wrong</div>;
-	}
+export default observer(function BookList({ store }: { store: BookListStore }) {
+	const { searchQuery, books } = store;
 
 	return (
 		<div>
@@ -29,7 +16,7 @@ export default observer(function BookList() {
 					type="text"
 					placeholder="Search books..."
 					value={searchQuery}
-					onChange={(e) => bookListStore.setSearchQuery(e.target.value)}
+					onChange={(e) => store.setSearchQuery(e.target.value)}
 				/>
 			</div>
 			<ul>

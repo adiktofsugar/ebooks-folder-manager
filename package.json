@@ -9,9 +9,7 @@
 		"dev": "turbo watch dev",
 		"build": "turbo run build",
 		"lint": "turbo run lint",
-		"fix": "turbo run fix",
-		"dev:server": "mkdir -p site && python -m http.server -d site/",
-		"dev:copy": "mkdir -p site && ./bin/watchexec --ignore-nothing -w site-ui/dist/ -- rsync -av site-ui/dist/ site/"
+		"fix": "turbo run fix"
 	},
 	"license": "ISC",
 	"devDependencies": {
@@ -26,7 +24,7 @@
 		"esbuild": "^0.25.5",
 		"minimist": "^1.2.8",
 		"tsx": "^4.19.4",
-		"turbo": "^2.5.4",
+		"turbo": "~2.4",
 		"type-fest": "^4.41.0",
 		"typescript": "^5.7.2"
 	}
