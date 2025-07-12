@@ -1,29 +1,19 @@
 .header {
-	position: sticky;
-	top: 0;
-	left: 0;
-	z-index: 100;
-	background-color: var(--bg-primary);
-	padding: 1rem 0;
 	margin-bottom: 2rem;
-	border-bottom: 1px solid var(--border-color);
 }
 
 .searchInput {
 	width: 100%;
-	padding: 0.75rem 1rem;
+	padding: 0.5rem;
 	font-size: 1rem;
-	border: 2px solid var(--border-color);
-	border-radius: 8px;
-	background-color: var(--bg-secondary);
+	border: 1px solid var(--border-color);
+	background-color: var(--bg-primary);
 	color: var(--text-primary);
-	transition: all 0.3s ease;
+	font-family: inherit;
 }
 
 .searchInput:focus {
-	outline: none;
-	border-color: var(--link-color);
-	box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+	outline: 1px solid var(--text-primary);
 }
 
 .searchInput::placeholder {
@@ -31,6 +21,7 @@
 }
 
 .bookList {
-	display: grid;
-	gap: 1rem;
+	list-style: none;
+	padding: 0;
+	margin: 0;
 }

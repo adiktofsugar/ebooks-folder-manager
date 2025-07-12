@@ -1,21 +1,16 @@
 .bookItem {
-	background-color: var(--bg-secondary);
-	border-radius: 12px;
-	padding: 1.5rem;
-	box-shadow: var(--shadow-sm);
-	transition: all 0.3s ease;
-	border: 1px solid var(--border-color);
+	margin-bottom: 2rem;
+	padding-bottom: 2rem;
+	border-bottom: 1px solid var(--border-color);
 }
 
-.bookItem:hover {
-	transform: translateY(-2px);
-	box-shadow: var(--shadow-md);
-	border-color: var(--link-color);
+.bookItem:last-child {
+	border-bottom: none;
 }
 
 .title {
-	font-size: 1.25rem;
-	font-weight: 600;
+	font-size: 1.2rem;
+	font-weight: bold;
 	margin: 0 0 0.5rem 0;
 	color: var(--text-primary);
 }
@@ -23,28 +18,14 @@
 .author {
 	font-size: 1rem;
 	color: var(--text-secondary);
-	margin: 0 0 1rem 0;
+	margin: 0 0 0.5rem 0;
 }
 
 .downloadLink {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.5rem;
-	padding: 0.5rem 1rem;
-	background-color: var(--link-color);
-	color: white;
-	border-radius: 6px;
-	font-weight: 500;
-	transition: all 0.2s ease;
+	color: var(--link-color);
+	text-decoration: underline;
 }
 
 .downloadLink:hover {
-	background-color: var(--link-hover);
-	text-decoration: none;
-	transform: scale(1.05);
-}
-
-.downloadLink::before {
-	content: "⬇";
-	font-size: 1.2rem;
+	color: var(--link-hover);
 }

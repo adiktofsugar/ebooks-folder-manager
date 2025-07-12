@@ -29,7 +29,7 @@ function AppContent() {
 	return (
 		<>
 			<ThemeToggle />
-			<div className={styles.container}>
+			<div>
 				<h1 className={styles.title}>Ebook Library</h1>
 				<ErrorList store={store} />
 				<BookList store={store} />
