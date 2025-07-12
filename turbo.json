@@ -9,7 +9,9 @@
 			"outputs": ["dist/**"]
 		},
 		"dev": {
-			"dependsOn": ["^dev", "build", "fix"]
+			"dependsOn": ["^dev", "build", "fix"],
+			"interruptible": true,
+			"persistent": true
 		},
 		"lint": {
 			"dependsOn": ["^lint"]

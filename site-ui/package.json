@@ -6,7 +6,7 @@
 		"build": "tsx ./scripts/build.mts",
 		"lint": "biome check",
 		"fix": "biome check --fix --unsafe",
-		"dev": "rsync -av dist/ ~/ebooks-site/"
+		"dev": "rsync --info=progress2 -a dist/ ~/ebooks-site/ && python -m http.server -d ~/ebooks-site"
 	},
 	"author": "",
 	"license": "ISC",
