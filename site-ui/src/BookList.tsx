@@ -17,9 +17,10 @@ export default observer(function BookList({ store }: { store: BookListStore }) {
 					placeholder="Search books..."
 					value={searchQuery}
 					onChange={(e) => store.setSearchQuery(e.target.value)}
+					className={styles.searchInput}
 				/>
 			</div>
-			<ul>
+			<ul className={styles.bookList}>
 				{books.map(({ title, filename, author }) => (
 					<li key={filename}>
 						<BookListItem title={title} filename={filename} author={author} />

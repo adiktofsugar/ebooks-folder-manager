@@ -1,0 +1,36 @@
+.errorContainer {
+	background-color: #fef2f2;
+	border: 1px solid #fecaca;
+	border-radius: 8px;
+	padding: 1rem;
+	margin-bottom: 2rem;
+}
+
+:root.dark .errorContainer {
+	background-color: #450a0a;
+	border-color: #991b1b;
+}
+
+.errorTitle {
+	color: #991b1b;
+	font-size: 1.25rem;
+	margin: 0 0 0.75rem 0;
+}
+
+:root.dark .errorTitle {
+	color: #fca5a5;
+}
+
+.errorList {
+	margin: 0;
+	padding-left: 1.5rem;
+	color: #7f1d1d;
+}
+
+:root.dark .errorList {
+	color: #fecaca;
+}
+
+.errorItem {
+	margin-bottom: 0.5rem;
+}

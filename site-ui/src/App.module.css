@@ -1,0 +1,42 @@
+.container {
+	animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.title {
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin-bottom: 2rem;
+	text-align: center;
+	background: linear-gradient(135deg, var(--link-color), var(--link-hover));
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+.loading,
+.error {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-height: 100vh;
+	font-size: 1.2rem;
+}
+
+.loading {
+	color: var(--text-secondary);
+}
+
+.error {
+	color: #dc3545;
+}

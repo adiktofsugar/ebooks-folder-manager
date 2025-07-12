@@ -1,4 +1,5 @@
 import { observer } from "mobx-react-lite";
+import styles from "./ErrorList.module.css";
 import type BookListStore from "./stores/BookListStore";
 
 export default observer(function ErrorList({
@@ -9,11 +10,15 @@ export default observer(function ErrorList({
 		return null;
 	}
 	return (
-		<div>
-			<h1>Errors while processing</h1>
-			<ul>
+		<div className={styles.errorContainer}>
+			<h2 className={styles.errorTitle}>Errors while processing</h2>
+			<ul className={styles.errorList}>
 				{errors.map((e) => {
-					return <li key={e.original_filepath}>{e.error_message}</li>;
+					return (
+						<li key={e.original_filepath} className={styles.errorItem}>
+							{e.error_message}
+						</li>
+					);
 				})}
 			</ul>
 		</div>
