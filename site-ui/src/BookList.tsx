@@ -21,13 +21,14 @@ export default observer(function BookList({ store }: { store: BookListStore }) {
 				/>
 			</div>
 			<ul className={styles.bookList}>
-				{books.map(({ title, filename, author, hash }) => (
+				{books.map(({ title, filename, author, hash, messages }) => (
 					<li key={filename}>
 						<BookListItem
 							title={title}
 							filename={filename}
 							author={author}
 							hash={hash}
+							messages={messages}
 						/>
 					</li>
 				))}

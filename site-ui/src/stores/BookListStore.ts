@@ -41,6 +41,7 @@ export default class BookListStore {
 		filename: string;
 		author: string;
 		hash: string;
+		messages: string[];
 	}[] {
 		const { data, searchQuery } = this;
 		if (!data) {
@@ -50,11 +51,12 @@ export default class BookListStore {
 		//   something else at the root?
 		const books = data
 			.filter((d) => d.error === false)
-			.map(({ filename, metadata: { title, author }, hash }) => ({
+			.map(({ filename, metadata: { title, author }, hash, messages }) => ({
 				title: title || "(unknown)",
 				author: author || "(unknown)",
 				filename,
 				hash,
+				messages: messages || [],
 				score: 0,
 			}));
 		if (!searchQuery) {

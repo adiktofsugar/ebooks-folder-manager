@@ -1,4 +1,5 @@
 import { observer } from "mobx-react-lite";
+import { useState } from "react";
 import BookCover from "./BookCover";
 import styles from "./BookListItem.module.css";
 
@@ -7,12 +8,15 @@ export default observer(function BookListItem({
 	author,
 	filename,
 	hash,
+	messages,
 }: {
 	title: string;
 	author: string;
 	filename: string;
 	hash: string;
+	messages: string[];
 }) {
+	const [showMessages, setShowMessages] = useState(false);
 	return (
 		<div className={styles.bookItem}>
 			<div className={styles.bookContent}>
@@ -30,6 +34,27 @@ export default observer(function BookListItem({
 				>
 					Download
 				</a>
+				{messages.length > 0 && (
+					<div className={styles.messagesSection}>
+						<button
+							type="button"
+							onClick={() => setShowMessages(!showMessages)}
+							className={styles.messagesToggle}
+						>
+							{showMessages ? "Hide" : "Show"} Messages ({messages.length})
+						</button>
+						{showMessages && (
+							<div className={styles.messagesList}>
+								{messages.map((message, index) => (
+									// biome-ignore lint/suspicious/noArrayIndexKey: messages are unique log entries
+									<div key={index} className={styles.message}>
+										{message}
+									</div>
+								))}
+							</div>
+						)}
+					</div>
+				)}
 			</div>
 			<div className={styles.bookImage}>
 				<BookCover

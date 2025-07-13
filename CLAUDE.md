@@ -139,3 +139,6 @@ The configuration file supports various DRM key paths:
 
 ## Execution Notes
 - You have to run efm with uv run efm
+
+## React Context and Store Guidelines
+- You can add MobX stores to context, but there should be no other kind of react context

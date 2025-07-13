@@ -44,3 +44,45 @@
 	display: block;
 	border: 1px solid var(--border-color);
 }
+
+.messagesSection {
+	margin-top: 1rem;
+}
+
+.messagesToggle {
+	background: none;
+	border: 1px solid var(--border-color);
+	padding: 0.25rem 0.5rem;
+	font-size: 0.875rem;
+	color: var(--text-secondary);
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.messagesToggle:hover {
+	background-color: var(--bg-hover);
+	color: var(--text-primary);
+}
+
+.messagesList {
+	margin-top: 0.5rem;
+	padding: 0.5rem;
+	background-color: var(--bg-secondary);
+	border: 1px solid var(--border-color);
+	border-radius: 4px;
+	max-height: 200px;
+	overflow-y: auto;
+}
+
+.message {
+	font-size: 0.75rem;
+	font-family: monospace;
+	color: var(--text-secondary);
+	padding: 0.25rem 0;
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.message + .message {
+	border-top: 1px solid var(--border-color);
+}

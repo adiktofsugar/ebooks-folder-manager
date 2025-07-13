@@ -1,6 +1,7 @@
 :root {
 	--bg-primary: #ffffff;
-	--bg-secondary: #ffffff;
+	--bg-secondary: #f5f5f5;
+	--bg-hover: #f0f0f0;
 	--text-primary: #000000;
 	--text-secondary: #333333;
 	--text-muted: #666666;
@@ -11,7 +12,8 @@
 
 :root.dark {
 	--bg-primary: #0a0a0a;
-	--bg-secondary: #0a0a0a;
+	--bg-secondary: #1a1a1a;
+	--bg-hover: #2a2a2a;
 	--text-primary: #dddddd;
 	--text-secondary: #bbbbbb;
 	--text-muted: #888888;

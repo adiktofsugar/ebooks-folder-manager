@@ -124,23 +124,22 @@ class Transaction:
         root_logger.addHandler(log_handler)
         root_logger.setLevel(logging.DEBUG)
 
-    
-        cache_dirpath = self.site_dirpath / "_cache"
-        
-        with open(self.original_filepath, "rb") as f:
-            hash = hashlib.blake2b(f.read(), digest_size=20).hexdigest()
-        cached_result_filepath = cache_dirpath / f"{hash}.yaml"
-        if cached_result_filepath.exists():
-            logger.debug(
-                f"Skipping {self.original_filepath} because metadata has already been processed."
-            )
-            result = TransactionResult.from_file(cached_result_filepath)
-            # Add any log messages that were captured
-            result.messages = log_handler.messages
-            return result
-        books_output_dirpath = self.site_dirpath / "books"
-        temp_dirpath = Path(tempfile.mkdtemp(prefix=hash))
         try:
+            cache_dirpath = self.site_dirpath / "_cache"
+            
+            with open(self.original_filepath, "rb") as f:
+                hash = hashlib.blake2b(f.read(), digest_size=20).hexdigest()
+            cached_result_filepath = cache_dirpath / f"{hash}.yaml"
+            if cached_result_filepath.exists():
+                logger.debug(
+                    f"Skipping {self.original_filepath} because metadata has already been processed."
+                )
+                result = TransactionResult.from_file(cached_result_filepath)
+                result.messages = log_handler.messages
+                return result
+            books_output_dirpath = self.site_dirpath / "books"
+            temp_dirpath = Path(tempfile.mkdtemp(prefix=hash))
+            
             filepath = Path(shutil.copy(self.original_filepath, temp_dirpath))
             metadata = get_metadata(filepath)
             

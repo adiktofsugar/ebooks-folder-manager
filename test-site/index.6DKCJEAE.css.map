@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../src/BookList.module.css"],
-  "sourcesContent": [".header {\n    position: sticky;\n    top: 0;\n    left: 0;\n    z-index: 100;\n}"],
-  "mappings": ";AAAA,CAACA;AACG,YAAU;AACV,OAAK;AACL,QAAM;AACN,WAAS;AACb;",
-  "names": ["header"]
-}
