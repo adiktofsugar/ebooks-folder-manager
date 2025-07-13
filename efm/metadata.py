@@ -705,3 +705,92 @@ def extract_cover_image(filepath: Path, metadata: Metadata | None,
         logger.info(f"Saved cover image to {cover_path}")
     
     return cover_hash
+
+
+def set_cover_image(book_filepath: Path, cover_source: str) -> None:
+    """Set a custom cover image for a book.
+    
+    Args:
+        book_filepath: Path to the book file
+        cover_source: Path to cover image (local file or URL)
+    
+    Raises:
+        ValueError: If cover source is invalid
+        FileNotFoundError: If book or cover file not found
+    """
+    import urllib.request
+    import urllib.parse
+    import tempfile
+    
+    if not book_filepath.exists():
+        raise FileNotFoundError(f"Book file not found: {book_filepath}")
+    
+    # Get the book hash to create cache entry
+    file_hash = hashlib.sha256(book_filepath.read_bytes()).hexdigest()
+    
+    # Determine cache directory
+    cache_dir = book_filepath.parent / "_cache" / "covers"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Load cover data
+    cover_data = None
+    
+    if cover_source.startswith(("http://", "https://")):
+        # Download from URL
+        logger.info(f"Downloading cover from URL: {cover_source}")
+        try:
+            with urllib.request.urlopen(cover_source) as response:
+                cover_data = response.read()
+        except Exception as e:
+            raise ValueError(f"Failed to download cover from URL: {e}")
+    else:
+        # Local file path
+        cover_path = Path(cover_source)
+        
+        # Try relative to book directory first
+        if not cover_path.is_absolute():
+            cover_path = book_filepath.parent / cover_path
+        
+        if not cover_path.exists():
+            raise FileNotFoundError(f"Cover image file not found: {cover_source}")
+        
+        cover_data = cover_path.read_bytes()
+    
+    # Validate it's an image
+    try:
+        img = Image.open(io.BytesIO(cover_data))
+        img.verify()
+    except Exception as e:
+        raise ValueError(f"Invalid image file: {e}")
+    
+    # Save with book's hash as filename
+    # This ensures the cover is associated with this specific book
+    cover_filename = f"{file_hash}.png"
+    cover_path = cache_dir / cover_filename
+    
+    # Convert to PNG if needed
+    img = Image.open(io.BytesIO(cover_data))
+    if img.format != "PNG":
+        output = io.BytesIO()
+        img.save(output, format="PNG")
+        cover_data = output.getvalue()
+    
+    cover_path.write_bytes(cover_data)
+    logger.info(f"Set custom cover for {book_filepath.name} at {cover_path}")
+    
+    # Update book metadata cache if it exists
+    metadata_cache_path = book_filepath.parent / "_cache" / f"{file_hash}.yaml"
+    if metadata_cache_path.exists():
+        import yaml
+        
+        # Load existing metadata
+        with open(metadata_cache_path) as f:
+            cached_data = yaml.safe_load(f)
+        
+        # Update cover hash
+        cover_hash = hashlib.sha256(cover_data).hexdigest()
+        cached_data["metadata"]["cover_image_hash"] = cover_hash
+        
+        # Write back
+        with open(metadata_cache_path, "w") as f:
+            yaml.dump(cached_data, f)

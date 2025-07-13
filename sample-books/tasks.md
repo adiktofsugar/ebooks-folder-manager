@@ -1,6 +1,5 @@
-| description | status |
-|-------------|--------|
-| generate_covers | success |
-| update_metadata | success |
-| check_duplicates | success |
-| validate_formats | success |
+# Book Processing Tasks
+
+| description | parameters | status |
+|-------------|------------|--------|
+| set_cover | test_cover.png,Acrobatics.epub | |

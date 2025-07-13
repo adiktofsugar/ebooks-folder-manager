@@ -164,6 +164,7 @@ def main():
                     f"  - {error_result.original_filepath}: {error_result.error_message}"
                 )
     site_dirpath = Path(args.out)
+    site_dirpath.mkdir(parents=True, exist_ok=True)
     db_filepath = site_dirpath / "db.yaml"
     # Include deduplicated results in the database
     db_filepath.write_text(

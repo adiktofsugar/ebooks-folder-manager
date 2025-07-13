@@ -145,3 +145,6 @@ The configuration file supports various DRM key paths:
 
 ## Execution Warnings
 - You MUST NEVER directly invoke a python script. ALWAYS use uv
+
+## Testing Memories
+- run pytest with uv run pytest

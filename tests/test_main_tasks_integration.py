@@ -16,10 +16,10 @@ def test_main_processes_tasks_file():
         
         # Create a tasks.md file
         tasks_file = tmppath / "tasks.md"
-        tasks_file.write_text("""| description | status |
-|-------------|--------|
-| generate_covers | |
-| validate_formats | |
+        tasks_file.write_text("""| description | parameters | status |
+|-------------|------------|--------|
+| generate_covers | | |
+| validate_formats | | |
 """)
         
         # Run efm on the directory
