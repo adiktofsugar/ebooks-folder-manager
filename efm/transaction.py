@@ -8,7 +8,7 @@ from typing import List
 import yaml
 from efm.action import ALL_ACTIONS
 from efm.config import Config, get_closest_config
-from efm.metadata import Metadata, get_metadata
+from efm.metadata import Metadata, get_metadata, extract_cover_image
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +51,7 @@ class TransactionSuccess(TransactionResult):
     original_filepath: Path
     error:bool = False
     messages: List[str] = field(default_factory=list)
+    cover_image_hash: str | None = None
     
     def to_dict(self):
         d = super().to_dict()
@@ -163,6 +164,23 @@ class Transaction:
             books_output_dirpath.mkdir(parents=True, exist_ok=True)
             book_output_filepath = books_output_dirpath / output_filename
             shutil.copy(filepath, book_output_filepath)
+            
+            # Extract or generate cover image
+            covers_cache_dir = cache_dirpath / "covers"
+            cover_hash = extract_cover_image(filepath, metadata, covers_cache_dir)
+            
+            # Update metadata with cover hash
+            if cover_hash and metadata:
+                metadata.cover_image_hash = cover_hash
+            
+            # Copy cover to books directory
+            if cover_hash:
+                cover_src = covers_cache_dir / f"{cover_hash}.png"
+                cover_dst = books_output_dirpath / f"{hash}.png"
+                if cover_src.exists() and not cover_dst.exists():
+                    shutil.copy(cover_src, cover_dst)
+                    logger.debug(f"Copied cover image to {cover_dst}")
+            
             shutil.rmtree(temp_dirpath)
             logger.debug(
                 f"Finished processing '{self.original_filepath}'. Output file is '{book_output_filepath}'"
@@ -173,7 +191,8 @@ class Transaction:
                 metadata=metadata,
                 hash=hash,
                 original_filepath=self.original_filepath,
-                messages=log_handler.messages
+                messages=log_handler.messages,
+                cover_image_hash=cover_hash
             )
             result.to_file(cached_result_filepath)
             return result

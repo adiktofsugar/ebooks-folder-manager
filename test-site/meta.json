@@ -1,0 +1,2480 @@
+{
+  "inputs": {
+    "../node_modules/scheduler/cjs/scheduler.production.js": {
+      "bytes": 10181,
+      "imports": [],
+      "format": "cjs"
+    },
+    "../node_modules/scheduler/index.js": {
+      "bytes": 194,
+      "imports": [
+        {
+          "path": "../node_modules/scheduler/cjs/scheduler.production.js",
+          "kind": "require-call",
+          "original": "./cjs/scheduler.production.js"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../node_modules/react/cjs/react.production.js": {
+      "bytes": 17075,
+      "imports": [],
+      "format": "cjs"
+    },
+    "../node_modules/react/index.js": {
+      "bytes": 186,
+      "imports": [
+        {
+          "path": "../node_modules/react/cjs/react.production.js",
+          "kind": "require-call",
+          "original": "./cjs/react.production.js"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../node_modules/react-dom/cjs/react-dom.production.js": {
+      "bytes": 6655,
+      "imports": [
+        {
+          "path": "../node_modules/react/index.js",
+          "kind": "require-call",
+          "original": "react"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../node_modules/react-dom/index.js": {
+      "bytes": 1359,
+      "imports": [
+        {
+          "path": "../node_modules/react-dom/cjs/react-dom.production.js",
+          "kind": "require-call",
+          "original": "./cjs/react-dom.production.js"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../node_modules/react-dom/cjs/react-dom-client.production.js": {
+      "bytes": 515019,
+      "imports": [
+        {
+          "path": "../node_modules/scheduler/index.js",
+          "kind": "require-call",
+          "original": "scheduler"
+        },
+        {
+          "path": "../node_modules/react/index.js",
+          "kind": "require-call",
+          "original": "react"
+        },
+        {
+          "path": "../node_modules/react-dom/index.js",
+          "kind": "require-call",
+          "original": "react-dom"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../node_modules/react-dom/client.js": {
+      "bytes": 1373,
+      "imports": [
+        {
+          "path": "../node_modules/react-dom/cjs/react-dom-client.production.js",
+          "kind": "require-call",
+          "original": "./cjs/react-dom-client.production.js"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../node_modules/mobx/dist/mobx.esm.js": {
+      "bytes": 210168,
+      "imports": [],
+      "format": "esm"
+    },
+    "../node_modules/mobx-react-lite/es/utils/assertEnvironment.js": {
+      "bytes": 327,
+      "imports": [
+        {
+          "path": "../node_modules/mobx/dist/mobx.esm.js",
+          "kind": "import-statement",
+          "original": "mobx"
+        },
+        {
+          "path": "../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/mobx-react-lite/es/utils/reactBatchedUpdates.js": {
+      "bytes": 100,
+      "imports": [
+        {
+          "path": "../node_modules/react-dom/index.js",
+          "kind": "import-statement",
+          "original": "react-dom"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/mobx-react-lite/es/utils/observerBatching.js": {
+      "bytes": 667,
+      "imports": [
+        {
+          "path": "../node_modules/mobx/dist/mobx.esm.js",
+          "kind": "import-statement",
+          "original": "mobx"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/mobx-react-lite/es/utils/utils.js": {
+      "bytes": 217,
+      "imports": [],
+      "format": "esm"
+    },
+    "../node_modules/mobx-react-lite/es/utils/printDebugValue.js": {
+      "bytes": 157,
+      "imports": [
+        {
+          "path": "../node_modules/mobx/dist/mobx.esm.js",
+          "kind": "import-statement",
+          "original": "mobx"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/mobx-react-lite/es/staticRendering.js": {
+      "bytes": 264,
+      "imports": [],
+      "format": "esm"
+    },
+    "../node_modules/mobx-react-lite/es/utils/UniversalFinalizationRegistry.js": {
+      "bytes": 3446,
+      "imports": [],
+      "format": "esm"
+    },
+    "../node_modules/mobx-react-lite/es/utils/observerFinalizationRegistry.js": {
+      "bytes": 346,
+      "imports": [
+        {
+          "path": "../node_modules/mobx-react-lite/es/utils/UniversalFinalizationRegistry.js",
+          "kind": "import-statement",
+          "original": "./UniversalFinalizationRegistry"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/use-sync-external-store/cjs/use-sync-external-store-shim.production.js": {
+      "bytes": 1967,
+      "imports": [
+        {
+          "path": "../node_modules/react/index.js",
+          "kind": "require-call",
+          "original": "react"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../node_modules/use-sync-external-store/shim/index.js": {
+      "bytes": 234,
+      "imports": [
+        {
+          "path": "../node_modules/use-sync-external-store/cjs/use-sync-external-store-shim.production.js",
+          "kind": "require-call",
+          "original": "../cjs/use-sync-external-store-shim.production.js"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../node_modules/mobx-react-lite/es/useObserver.js": {
+      "bytes": 3974,
+      "imports": [
+        {
+          "path": "../node_modules/mobx/dist/mobx.esm.js",
+          "kind": "import-statement",
+          "original": "mobx"
+        },
+        {
+          "path": "../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../node_modules/mobx-react-lite/es/utils/printDebugValue.js",
+          "kind": "import-statement",
+          "original": "./utils/printDebugValue"
+        },
+        {
+          "path": "../node_modules/mobx-react-lite/es/staticRendering.js",
+          "kind": "import-statement",
+          "original": "./staticRendering"
+        },
+        {
+          "path": "../node_modules/mobx-react-lite/es/utils/observerFinalizationRegistry.js",
+          "kind": "import-statement",
+          "original": "./utils/observerFinalizationRegistry"
+        },
+        {
+          "path": "../node_modules/use-sync-external-store/shim/index.js",
+          "kind": "import-statement",
+          "original": "use-sync-external-store/shim"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/mobx-react-lite/es/observer.js": {
+      "bytes": 5177,
+      "imports": [
+        {
+          "path": "../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../node_modules/mobx-react-lite/es/staticRendering.js",
+          "kind": "import-statement",
+          "original": "./staticRendering"
+        },
+        {
+          "path": "../node_modules/mobx-react-lite/es/useObserver.js",
+          "kind": "import-statement",
+          "original": "./useObserver"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/mobx-react-lite/es/ObserverComponent.js": {
+      "bytes": 1401,
+      "imports": [
+        {
+          "path": "../node_modules/mobx-react-lite/es/useObserver.js",
+          "kind": "import-statement",
+          "original": "./useObserver"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/mobx-react-lite/es/useLocalObservable.js": {
+      "bytes": 288,
+      "imports": [
+        {
+          "path": "../node_modules/mobx/dist/mobx.esm.js",
+          "kind": "import-statement",
+          "original": "mobx"
+        },
+        {
+          "path": "../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/mobx-react-lite/es/useAsObservableSource.js": {
+      "bytes": 994,
+      "imports": [
+        {
+          "path": "../node_modules/mobx-react-lite/es/utils/utils.js",
+          "kind": "import-statement",
+          "original": "./utils/utils"
+        },
+        {
+          "path": "../node_modules/mobx/dist/mobx.esm.js",
+          "kind": "import-statement",
+          "original": "mobx"
+        },
+        {
+          "path": "../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/mobx-react-lite/es/useLocalStore.js": {
+      "bytes": 614,
+      "imports": [
+        {
+          "path": "../node_modules/mobx/dist/mobx.esm.js",
+          "kind": "import-statement",
+          "original": "mobx"
+        },
+        {
+          "path": "../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "../node_modules/mobx-react-lite/es/utils/utils.js",
+          "kind": "import-statement",
+          "original": "./utils/utils"
+        },
+        {
+          "path": "../node_modules/mobx-react-lite/es/useAsObservableSource.js",
+          "kind": "import-statement",
+          "original": "./useAsObservableSource"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/mobx-react-lite/es/index.js": {
+      "bytes": 1791,
+      "imports": [
+        {
+          "path": "../node_modules/mobx-react-lite/es/utils/assertEnvironment.js",
+          "kind": "import-statement",
+          "original": "./utils/assertEnvironment"
+        },
+        {
+          "path": "../node_modules/mobx-react-lite/es/utils/reactBatchedUpdates.js",
+          "kind": "import-statement",
+          "original": "./utils/reactBatchedUpdates"
+        },
+        {
+          "path": "../node_modules/mobx-react-lite/es/utils/observerBatching.js",
+          "kind": "import-statement",
+          "original": "./utils/observerBatching"
+        },
+        {
+          "path": "../node_modules/mobx-react-lite/es/utils/utils.js",
+          "kind": "import-statement",
+          "original": "./utils/utils"
+        },
+        {
+          "path": "../node_modules/mobx-react-lite/es/useObserver.js",
+          "kind": "import-statement",
+          "original": "./useObserver"
+        },
+        {
+          "path": "../node_modules/mobx-react-lite/es/staticRendering.js",
+          "kind": "import-statement",
+          "original": "./staticRendering"
+        },
+        {
+          "path": "../node_modules/mobx-react-lite/es/utils/observerFinalizationRegistry.js",
+          "kind": "import-statement",
+          "original": "./utils/observerFinalizationRegistry"
+        },
+        {
+          "path": "../node_modules/mobx-react-lite/es/staticRendering.js",
+          "kind": "import-statement",
+          "original": "./staticRendering"
+        },
+        {
+          "path": "../node_modules/mobx-react-lite/es/observer.js",
+          "kind": "import-statement",
+          "original": "./observer"
+        },
+        {
+          "path": "../node_modules/mobx-react-lite/es/ObserverComponent.js",
+          "kind": "import-statement",
+          "original": "./ObserverComponent"
+        },
+        {
+          "path": "../node_modules/mobx-react-lite/es/useLocalObservable.js",
+          "kind": "import-statement",
+          "original": "./useLocalObservable"
+        },
+        {
+          "path": "../node_modules/mobx-react-lite/es/useLocalStore.js",
+          "kind": "import-statement",
+          "original": "./useLocalStore"
+        },
+        {
+          "path": "../node_modules/mobx-react-lite/es/useAsObservableSource.js",
+          "kind": "import-statement",
+          "original": "./useAsObservableSource"
+        },
+        {
+          "path": "../node_modules/mobx-react-lite/es/utils/observerBatching.js",
+          "kind": "import-statement",
+          "original": "./utils/observerBatching"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/BookList.module.css": {
+      "bytes": 65,
+      "imports": []
+    },
+    "../node_modules/react/cjs/react-jsx-runtime.production.js": {
+      "bytes": 976,
+      "imports": [],
+      "format": "cjs"
+    },
+    "../node_modules/react/jsx-runtime.js": {
+      "bytes": 210,
+      "imports": [
+        {
+          "path": "../node_modules/react/cjs/react-jsx-runtime.production.js",
+          "kind": "require-call",
+          "original": "./cjs/react-jsx-runtime.production.js"
+        }
+      ],
+      "format": "cjs"
+    },
+    "src/BookListItem.tsx": {
+      "bytes": 630,
+      "imports": [
+        {
+          "path": "../node_modules/mobx-react-lite/es/index.js",
+          "kind": "import-statement",
+          "original": "mobx-react-lite"
+        },
+        {
+          "path": "../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/fuzzy/lib/fuzzy.js": {
+      "bytes": 3926,
+      "imports": [],
+      "format": "cjs"
+    },
+    "../node_modules/yaml/browser/dist/nodes/identity.js": {
+      "bytes": 1513,
+      "imports": [],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/visit.js": {
+      "bytes": 9107,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "./nodes/identity.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/doc/directives.js": {
+      "bytes": 6188,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "../nodes/identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/visit.js",
+          "kind": "import-statement",
+          "original": "../visit.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/doc/anchors.js": {
+      "bytes": 2276,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "../nodes/identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/visit.js",
+          "kind": "import-statement",
+          "original": "../visit.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/doc/applyReviver.js": {
+      "bytes": 1923,
+      "imports": [],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/nodes/toJS.js": {
+      "bytes": 1266,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "./identity.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/nodes/Node.js": {
+      "bytes": 1339,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/doc/applyReviver.js",
+          "kind": "import-statement",
+          "original": "../doc/applyReviver.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "./identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/toJS.js",
+          "kind": "import-statement",
+          "original": "./toJS.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/nodes/Alias.js": {
+      "bytes": 3757,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/doc/anchors.js",
+          "kind": "import-statement",
+          "original": "../doc/anchors.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/visit.js",
+          "kind": "import-statement",
+          "original": "../visit.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "./identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Node.js",
+          "kind": "import-statement",
+          "original": "./Node.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/toJS.js",
+          "kind": "import-statement",
+          "original": "./toJS.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/nodes/Scalar.js": {
+      "bytes": 700,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "./identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Node.js",
+          "kind": "import-statement",
+          "original": "./Node.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/toJS.js",
+          "kind": "import-statement",
+          "original": "./toJS.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/doc/createNode.js": {
+      "bytes": 3061,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Alias.js",
+          "kind": "import-statement",
+          "original": "../nodes/Alias.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "../nodes/identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Scalar.js",
+          "kind": "import-statement",
+          "original": "../nodes/Scalar.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/nodes/Collection.js": {
+      "bytes": 5076,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/doc/createNode.js",
+          "kind": "import-statement",
+          "original": "../doc/createNode.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "./identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Node.js",
+          "kind": "import-statement",
+          "original": "./Node.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/stringify/stringifyComment.js": {
+      "bytes": 724,
+      "imports": [],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/stringify/foldFlowLines.js": {
+      "bytes": 4794,
+      "imports": [],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/stringify/stringifyString.js": {
+      "bytes": 13187,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Scalar.js",
+          "kind": "import-statement",
+          "original": "../nodes/Scalar.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/stringify/foldFlowLines.js",
+          "kind": "import-statement",
+          "original": "./foldFlowLines.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/stringify/stringify.js": {
+      "bytes": 4370,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/doc/anchors.js",
+          "kind": "import-statement",
+          "original": "../doc/anchors.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "../nodes/identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/stringify/stringifyComment.js",
+          "kind": "import-statement",
+          "original": "./stringifyComment.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/stringify/stringifyString.js",
+          "kind": "import-statement",
+          "original": "./stringifyString.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/stringify/stringifyPair.js": {
+      "bytes": 5269,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "../nodes/identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Scalar.js",
+          "kind": "import-statement",
+          "original": "../nodes/Scalar.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/stringify/stringify.js",
+          "kind": "import-statement",
+          "original": "./stringify.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/stringify/stringifyComment.js",
+          "kind": "import-statement",
+          "original": "./stringifyComment.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/log.js": {
+      "bytes": 260,
+      "imports": [],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/schema/yaml-1.1/merge.js": {
+      "bytes": 2447,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "../../nodes/identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Scalar.js",
+          "kind": "import-statement",
+          "original": "../../nodes/Scalar.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/nodes/addPairToJSMap.js": {
+      "bytes": 2289,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/log.js",
+          "kind": "import-statement",
+          "original": "../log.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/yaml-1.1/merge.js",
+          "kind": "import-statement",
+          "original": "../schema/yaml-1.1/merge.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/stringify/stringify.js",
+          "kind": "import-statement",
+          "original": "../stringify/stringify.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "./identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/toJS.js",
+          "kind": "import-statement",
+          "original": "./toJS.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/nodes/Pair.js": {
+      "bytes": 1124,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/doc/createNode.js",
+          "kind": "import-statement",
+          "original": "../doc/createNode.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/stringify/stringifyPair.js",
+          "kind": "import-statement",
+          "original": "../stringify/stringifyPair.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/addPairToJSMap.js",
+          "kind": "import-statement",
+          "original": "./addPairToJSMap.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "./identity.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/stringify/stringifyCollection.js": {
+      "bytes": 5193,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "../nodes/identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/stringify/stringify.js",
+          "kind": "import-statement",
+          "original": "./stringify.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/stringify/stringifyComment.js",
+          "kind": "import-statement",
+          "original": "./stringifyComment.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/nodes/YAMLMap.js": {
+      "bytes": 4957,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/stringify/stringifyCollection.js",
+          "kind": "import-statement",
+          "original": "../stringify/stringifyCollection.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/addPairToJSMap.js",
+          "kind": "import-statement",
+          "original": "./addPairToJSMap.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Collection.js",
+          "kind": "import-statement",
+          "original": "./Collection.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "./identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Pair.js",
+          "kind": "import-statement",
+          "original": "./Pair.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Scalar.js",
+          "kind": "import-statement",
+          "original": "./Scalar.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/schema/common/map.js": {
+      "bytes": 439,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "../../nodes/identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/YAMLMap.js",
+          "kind": "import-statement",
+          "original": "../../nodes/YAMLMap.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/nodes/YAMLSeq.js": {
+      "bytes": 3573,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/doc/createNode.js",
+          "kind": "import-statement",
+          "original": "../doc/createNode.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/stringify/stringifyCollection.js",
+          "kind": "import-statement",
+          "original": "../stringify/stringifyCollection.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Collection.js",
+          "kind": "import-statement",
+          "original": "./Collection.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "./identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Scalar.js",
+          "kind": "import-statement",
+          "original": "./Scalar.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/toJS.js",
+          "kind": "import-statement",
+          "original": "./toJS.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/schema/common/seq.js": {
+      "bytes": 440,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "../../nodes/identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/YAMLSeq.js",
+          "kind": "import-statement",
+          "original": "../../nodes/YAMLSeq.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/schema/common/string.js": {
+      "bytes": 421,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/stringify/stringifyString.js",
+          "kind": "import-statement",
+          "original": "../../stringify/stringifyString.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/schema/common/null.js": {
+      "bytes": 434,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Scalar.js",
+          "kind": "import-statement",
+          "original": "../../nodes/Scalar.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/schema/core/bool.js": {
+      "bytes": 607,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Scalar.js",
+          "kind": "import-statement",
+          "original": "../../nodes/Scalar.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/stringify/stringifyNumber.js": {
+      "bytes": 718,
+      "imports": [],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/schema/core/float.js": {
+      "bytes": 1399,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Scalar.js",
+          "kind": "import-statement",
+          "original": "../../nodes/Scalar.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/stringify/stringifyNumber.js",
+          "kind": "import-statement",
+          "original": "../../stringify/stringifyNumber.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/schema/core/int.js": {
+      "bytes": 1324,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/stringify/stringifyNumber.js",
+          "kind": "import-statement",
+          "original": "../../stringify/stringifyNumber.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/schema/core/schema.js": {
+      "bytes": 480,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/common/map.js",
+          "kind": "import-statement",
+          "original": "../common/map.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/common/null.js",
+          "kind": "import-statement",
+          "original": "../common/null.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/common/seq.js",
+          "kind": "import-statement",
+          "original": "../common/seq.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/common/string.js",
+          "kind": "import-statement",
+          "original": "../common/string.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/core/bool.js",
+          "kind": "import-statement",
+          "original": "./bool.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/core/float.js",
+          "kind": "import-statement",
+          "original": "./float.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/core/int.js",
+          "kind": "import-statement",
+          "original": "./int.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/schema/json/schema.js": {
+      "bytes": 1867,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Scalar.js",
+          "kind": "import-statement",
+          "original": "../../nodes/Scalar.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/common/map.js",
+          "kind": "import-statement",
+          "original": "../common/map.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/common/seq.js",
+          "kind": "import-statement",
+          "original": "../common/seq.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/schema/yaml-1.1/binary.js": {
+      "bytes": 2315,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Scalar.js",
+          "kind": "import-statement",
+          "original": "../../nodes/Scalar.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/stringify/stringifyString.js",
+          "kind": "import-statement",
+          "original": "../../stringify/stringifyString.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/schema/yaml-1.1/pairs.js": {
+      "bytes": 2751,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "../../nodes/identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Pair.js",
+          "kind": "import-statement",
+          "original": "../../nodes/Pair.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Scalar.js",
+          "kind": "import-statement",
+          "original": "../../nodes/Scalar.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/YAMLSeq.js",
+          "kind": "import-statement",
+          "original": "../../nodes/YAMLSeq.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/schema/yaml-1.1/omap.js": {
+      "bytes": 2473,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "../../nodes/identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/toJS.js",
+          "kind": "import-statement",
+          "original": "../../nodes/toJS.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/YAMLMap.js",
+          "kind": "import-statement",
+          "original": "../../nodes/YAMLMap.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/YAMLSeq.js",
+          "kind": "import-statement",
+          "original": "../../nodes/YAMLSeq.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/yaml-1.1/pairs.js",
+          "kind": "import-statement",
+          "original": "./pairs.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/schema/yaml-1.1/bool.js": {
+      "bytes": 787,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Scalar.js",
+          "kind": "import-statement",
+          "original": "../../nodes/Scalar.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/schema/yaml-1.1/float.js": {
+      "bytes": 1515,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Scalar.js",
+          "kind": "import-statement",
+          "original": "../../nodes/Scalar.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/stringify/stringifyNumber.js",
+          "kind": "import-statement",
+          "original": "../../stringify/stringifyNumber.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/schema/yaml-1.1/int.js": {
+      "bytes": 2132,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/stringify/stringifyNumber.js",
+          "kind": "import-statement",
+          "original": "../../stringify/stringifyNumber.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/schema/yaml-1.1/set.js": {
+      "bytes": 3030,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "../../nodes/identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Pair.js",
+          "kind": "import-statement",
+          "original": "../../nodes/Pair.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/YAMLMap.js",
+          "kind": "import-statement",
+          "original": "../../nodes/YAMLMap.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/schema/yaml-1.1/timestamp.js": {
+      "bytes": 3698,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/stringify/stringifyNumber.js",
+          "kind": "import-statement",
+          "original": "../../stringify/stringifyNumber.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/schema/yaml-1.1/schema.js": {
+      "bytes": 860,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/common/map.js",
+          "kind": "import-statement",
+          "original": "../common/map.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/common/null.js",
+          "kind": "import-statement",
+          "original": "../common/null.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/common/seq.js",
+          "kind": "import-statement",
+          "original": "../common/seq.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/common/string.js",
+          "kind": "import-statement",
+          "original": "../common/string.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/yaml-1.1/binary.js",
+          "kind": "import-statement",
+          "original": "./binary.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/yaml-1.1/bool.js",
+          "kind": "import-statement",
+          "original": "./bool.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/yaml-1.1/float.js",
+          "kind": "import-statement",
+          "original": "./float.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/yaml-1.1/int.js",
+          "kind": "import-statement",
+          "original": "./int.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/yaml-1.1/merge.js",
+          "kind": "import-statement",
+          "original": "./merge.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/yaml-1.1/omap.js",
+          "kind": "import-statement",
+          "original": "./omap.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/yaml-1.1/pairs.js",
+          "kind": "import-statement",
+          "original": "./pairs.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/yaml-1.1/set.js",
+          "kind": "import-statement",
+          "original": "./set.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/yaml-1.1/timestamp.js",
+          "kind": "import-statement",
+          "original": "./timestamp.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/schema/tags.js": {
+      "bytes": 2962,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/common/map.js",
+          "kind": "import-statement",
+          "original": "./common/map.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/common/null.js",
+          "kind": "import-statement",
+          "original": "./common/null.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/common/seq.js",
+          "kind": "import-statement",
+          "original": "./common/seq.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/common/string.js",
+          "kind": "import-statement",
+          "original": "./common/string.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/core/bool.js",
+          "kind": "import-statement",
+          "original": "./core/bool.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/core/float.js",
+          "kind": "import-statement",
+          "original": "./core/float.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/core/int.js",
+          "kind": "import-statement",
+          "original": "./core/int.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/core/schema.js",
+          "kind": "import-statement",
+          "original": "./core/schema.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/json/schema.js",
+          "kind": "import-statement",
+          "original": "./json/schema.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/yaml-1.1/binary.js",
+          "kind": "import-statement",
+          "original": "./yaml-1.1/binary.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/yaml-1.1/merge.js",
+          "kind": "import-statement",
+          "original": "./yaml-1.1/merge.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/yaml-1.1/omap.js",
+          "kind": "import-statement",
+          "original": "./yaml-1.1/omap.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/yaml-1.1/pairs.js",
+          "kind": "import-statement",
+          "original": "./yaml-1.1/pairs.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/yaml-1.1/schema.js",
+          "kind": "import-statement",
+          "original": "./yaml-1.1/schema.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/yaml-1.1/set.js",
+          "kind": "import-statement",
+          "original": "./yaml-1.1/set.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/yaml-1.1/timestamp.js",
+          "kind": "import-statement",
+          "original": "./yaml-1.1/timestamp.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/schema/Schema.js": {
+      "bytes": 1495,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "../nodes/identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/common/map.js",
+          "kind": "import-statement",
+          "original": "./common/map.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/common/seq.js",
+          "kind": "import-statement",
+          "original": "./common/seq.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/common/string.js",
+          "kind": "import-statement",
+          "original": "./common/string.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/tags.js",
+          "kind": "import-statement",
+          "original": "./tags.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/stringify/stringifyDocument.js": {
+      "bytes": 2983,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "../nodes/identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/stringify/stringify.js",
+          "kind": "import-statement",
+          "original": "./stringify.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/stringify/stringifyComment.js",
+          "kind": "import-statement",
+          "original": "./stringifyComment.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/doc/Document.js": {
+      "bytes": 12903,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Alias.js",
+          "kind": "import-statement",
+          "original": "../nodes/Alias.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Collection.js",
+          "kind": "import-statement",
+          "original": "../nodes/Collection.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "../nodes/identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Pair.js",
+          "kind": "import-statement",
+          "original": "../nodes/Pair.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/toJS.js",
+          "kind": "import-statement",
+          "original": "../nodes/toJS.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/Schema.js",
+          "kind": "import-statement",
+          "original": "../schema/Schema.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/stringify/stringifyDocument.js",
+          "kind": "import-statement",
+          "original": "../stringify/stringifyDocument.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/doc/anchors.js",
+          "kind": "import-statement",
+          "original": "./anchors.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/doc/applyReviver.js",
+          "kind": "import-statement",
+          "original": "./applyReviver.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/doc/createNode.js",
+          "kind": "import-statement",
+          "original": "./createNode.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/doc/directives.js",
+          "kind": "import-statement",
+          "original": "./directives.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/errors.js": {
+      "bytes": 2029,
+      "imports": [],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/compose/resolve-props.js": {
+      "bytes": 5552,
+      "imports": [],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/compose/util-contains-newline.js": {
+      "bytes": 1051,
+      "imports": [],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/compose/util-flow-indent-check.js": {
+      "bytes": 494,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/util-contains-newline.js",
+          "kind": "import-statement",
+          "original": "./util-contains-newline.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/compose/util-map-includes.js": {
+      "bytes": 428,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "../nodes/identity.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/compose/resolve-block-map.js": {
+      "bytes": 4915,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Pair.js",
+          "kind": "import-statement",
+          "original": "../nodes/Pair.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/YAMLMap.js",
+          "kind": "import-statement",
+          "original": "../nodes/YAMLMap.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/resolve-props.js",
+          "kind": "import-statement",
+          "original": "./resolve-props.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/util-contains-newline.js",
+          "kind": "import-statement",
+          "original": "./util-contains-newline.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/util-flow-indent-check.js",
+          "kind": "import-statement",
+          "original": "./util-flow-indent-check.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/util-map-includes.js",
+          "kind": "import-statement",
+          "original": "./util-map-includes.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/compose/resolve-block-seq.js": {
+      "bytes": 1748,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/YAMLSeq.js",
+          "kind": "import-statement",
+          "original": "../nodes/YAMLSeq.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/resolve-props.js",
+          "kind": "import-statement",
+          "original": "./resolve-props.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/util-flow-indent-check.js",
+          "kind": "import-statement",
+          "original": "./util-flow-indent-check.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/compose/resolve-end.js": {
+      "bytes": 1239,
+      "imports": [],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/compose/resolve-flow-collection.js": {
+      "bytes": 8797,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "../nodes/identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Pair.js",
+          "kind": "import-statement",
+          "original": "../nodes/Pair.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/YAMLMap.js",
+          "kind": "import-statement",
+          "original": "../nodes/YAMLMap.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/YAMLSeq.js",
+          "kind": "import-statement",
+          "original": "../nodes/YAMLSeq.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/resolve-end.js",
+          "kind": "import-statement",
+          "original": "./resolve-end.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/resolve-props.js",
+          "kind": "import-statement",
+          "original": "./resolve-props.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/util-contains-newline.js",
+          "kind": "import-statement",
+          "original": "./util-contains-newline.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/util-map-includes.js",
+          "kind": "import-statement",
+          "original": "./util-map-includes.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/compose/compose-collection.js": {
+      "bytes": 3505,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "../nodes/identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Scalar.js",
+          "kind": "import-statement",
+          "original": "../nodes/Scalar.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/YAMLMap.js",
+          "kind": "import-statement",
+          "original": "../nodes/YAMLMap.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/YAMLSeq.js",
+          "kind": "import-statement",
+          "original": "../nodes/YAMLSeq.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/resolve-block-map.js",
+          "kind": "import-statement",
+          "original": "./resolve-block-map.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/resolve-block-seq.js",
+          "kind": "import-statement",
+          "original": "./resolve-block-seq.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/resolve-flow-collection.js",
+          "kind": "import-statement",
+          "original": "./resolve-flow-collection.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/compose/resolve-block-scalar.js": {
+      "bytes": 7447,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Scalar.js",
+          "kind": "import-statement",
+          "original": "../nodes/Scalar.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/compose/resolve-flow-scalar.js": {
+      "bytes": 7302,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Scalar.js",
+          "kind": "import-statement",
+          "original": "../nodes/Scalar.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/resolve-end.js",
+          "kind": "import-statement",
+          "original": "./resolve-end.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/compose/compose-scalar.js": {
+      "bytes": 3316,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "../nodes/identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Scalar.js",
+          "kind": "import-statement",
+          "original": "../nodes/Scalar.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/resolve-block-scalar.js",
+          "kind": "import-statement",
+          "original": "./resolve-block-scalar.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/resolve-flow-scalar.js",
+          "kind": "import-statement",
+          "original": "./resolve-flow-scalar.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/compose/util-empty-scalar-position.js": {
+      "bytes": 816,
+      "imports": [],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/compose/compose-node.js": {
+      "bytes": 3817,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Alias.js",
+          "kind": "import-statement",
+          "original": "../nodes/Alias.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "../nodes/identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/compose-collection.js",
+          "kind": "import-statement",
+          "original": "./compose-collection.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/compose-scalar.js",
+          "kind": "import-statement",
+          "original": "./compose-scalar.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/resolve-end.js",
+          "kind": "import-statement",
+          "original": "./resolve-end.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/util-empty-scalar-position.js",
+          "kind": "import-statement",
+          "original": "./util-empty-scalar-position.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/compose/compose-doc.js": {
+      "bytes": 1555,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/doc/Document.js",
+          "kind": "import-statement",
+          "original": "../doc/Document.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/compose-node.js",
+          "kind": "import-statement",
+          "original": "./compose-node.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/resolve-end.js",
+          "kind": "import-statement",
+          "original": "./resolve-end.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/resolve-props.js",
+          "kind": "import-statement",
+          "original": "./resolve-props.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/compose/composer.js": {
+      "bytes": 8400,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/doc/directives.js",
+          "kind": "import-statement",
+          "original": "../doc/directives.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/doc/Document.js",
+          "kind": "import-statement",
+          "original": "../doc/Document.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/errors.js",
+          "kind": "import-statement",
+          "original": "../errors.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "../nodes/identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/compose-doc.js",
+          "kind": "import-statement",
+          "original": "./compose-doc.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/resolve-end.js",
+          "kind": "import-statement",
+          "original": "./resolve-end.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/parse/cst-scalar.js": {
+      "bytes": 9235,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/resolve-block-scalar.js",
+          "kind": "import-statement",
+          "original": "../compose/resolve-block-scalar.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/resolve-flow-scalar.js",
+          "kind": "import-statement",
+          "original": "../compose/resolve-flow-scalar.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/errors.js",
+          "kind": "import-statement",
+          "original": "../errors.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/stringify/stringifyString.js",
+          "kind": "import-statement",
+          "original": "../stringify/stringifyString.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/parse/cst-stringify.js": {
+      "bytes": 1775,
+      "imports": [],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/parse/cst-visit.js": {
+      "bytes": 3966,
+      "imports": [],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/parse/cst.js": {
+      "bytes": 2886,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/parse/cst-scalar.js",
+          "kind": "import-statement",
+          "original": "./cst-scalar.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/parse/cst-stringify.js",
+          "kind": "import-statement",
+          "original": "./cst-stringify.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/parse/cst-visit.js",
+          "kind": "import-statement",
+          "original": "./cst-visit.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/parse/lexer.js": {
+      "bytes": 24062,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/parse/cst.js",
+          "kind": "import-statement",
+          "original": "./cst.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/parse/line-counter.js": {
+      "bytes": 1419,
+      "imports": [],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/parse/parser.js": {
+      "bytes": 35182,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/parse/cst.js",
+          "kind": "import-statement",
+          "original": "./cst.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/parse/lexer.js",
+          "kind": "import-statement",
+          "original": "./lexer.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/public-api.js": {
+      "bytes": 3992,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/composer.js",
+          "kind": "import-statement",
+          "original": "./compose/composer.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/doc/Document.js",
+          "kind": "import-statement",
+          "original": "./doc/Document.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/errors.js",
+          "kind": "import-statement",
+          "original": "./errors.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/log.js",
+          "kind": "import-statement",
+          "original": "./log.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "./nodes/identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/parse/line-counter.js",
+          "kind": "import-statement",
+          "original": "./parse/line-counter.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/parse/parser.js",
+          "kind": "import-statement",
+          "original": "./parse/parser.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/dist/index.js": {
+      "bytes": 879,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/compose/composer.js",
+          "kind": "import-statement",
+          "original": "./compose/composer.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/doc/Document.js",
+          "kind": "import-statement",
+          "original": "./doc/Document.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/schema/Schema.js",
+          "kind": "import-statement",
+          "original": "./schema/Schema.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/errors.js",
+          "kind": "import-statement",
+          "original": "./errors.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Alias.js",
+          "kind": "import-statement",
+          "original": "./nodes/Alias.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/identity.js",
+          "kind": "import-statement",
+          "original": "./nodes/identity.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Pair.js",
+          "kind": "import-statement",
+          "original": "./nodes/Pair.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/Scalar.js",
+          "kind": "import-statement",
+          "original": "./nodes/Scalar.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/YAMLMap.js",
+          "kind": "import-statement",
+          "original": "./nodes/YAMLMap.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/nodes/YAMLSeq.js",
+          "kind": "import-statement",
+          "original": "./nodes/YAMLSeq.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/parse/cst.js",
+          "kind": "import-statement",
+          "original": "./parse/cst.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/parse/lexer.js",
+          "kind": "import-statement",
+          "original": "./parse/lexer.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/parse/line-counter.js",
+          "kind": "import-statement",
+          "original": "./parse/line-counter.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/parse/parser.js",
+          "kind": "import-statement",
+          "original": "./parse/parser.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/public-api.js",
+          "kind": "import-statement",
+          "original": "./public-api.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/visit.js",
+          "kind": "import-statement",
+          "original": "./visit.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../node_modules/yaml/browser/index.js": {
+      "bytes": 191,
+      "imports": [
+        {
+          "path": "../node_modules/yaml/browser/dist/index.js",
+          "kind": "import-statement",
+          "original": "./dist/index.js"
+        },
+        {
+          "path": "../node_modules/yaml/browser/dist/index.js",
+          "kind": "import-statement",
+          "original": "./dist/index.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/stores/DbStore.ts": {
+      "bytes": 857,
+      "imports": [
+        {
+          "path": "../node_modules/mobx/dist/mobx.esm.js",
+          "kind": "import-statement",
+          "original": "mobx"
+        },
+        {
+          "path": "../node_modules/yaml/browser/index.js",
+          "kind": "import-statement",
+          "original": "yaml"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/stores/BookListStore.ts": {
+      "bytes": 1317,
+      "imports": [
+        {
+          "path": "../node_modules/fuzzy/lib/fuzzy.js",
+          "kind": "import-statement",
+          "original": "fuzzy"
+        },
+        {
+          "path": "../node_modules/mobx/dist/mobx.esm.js",
+          "kind": "import-statement",
+          "original": "mobx"
+        },
+        {
+          "path": "src/stores/DbStore.ts",
+          "kind": "import-statement",
+          "original": "./DbStore"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/BookList.tsx": {
+      "bytes": 1175,
+      "imports": [
+        {
+          "path": "../node_modules/mobx-react-lite/es/index.js",
+          "kind": "import-statement",
+          "original": "mobx-react-lite"
+        },
+        {
+          "path": "../node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "src/BookList.module.css",
+          "kind": "import-statement",
+          "original": "./BookList.module.css"
+        },
+        {
+          "path": "src/BookListItem.tsx",
+          "kind": "import-statement",
+          "original": "./BookListItem"
+        },
+        {
+          "path": "src/stores/BookListStore.ts",
+          "kind": "import-statement",
+          "original": "./stores/BookListStore"
+        },
+        {
+          "path": "../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/App.tsx": {
+      "bytes": 92,
+      "imports": [
+        {
+          "path": "src/BookList.tsx",
+          "kind": "import-statement",
+          "original": "./BookList"
+        },
+        {
+          "path": "../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/index.tsx": {
+      "bytes": 211,
+      "imports": [
+        {
+          "path": "../node_modules/react-dom/client.js",
+          "kind": "import-statement",
+          "original": "react-dom/client"
+        },
+        {
+          "path": "src/App.tsx",
+          "kind": "import-statement",
+          "original": "./App"
+        },
+        {
+          "path": "../node_modules/react/jsx-runtime.js",
+          "kind": "import-statement",
+          "original": "react/jsx-runtime"
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    "dist/index-3OKRYS2M.js.map": {
+      "imports": [],
+      "exports": [],
+      "inputs": {},
+      "bytes": 1745385
+    },
+    "dist/index-3OKRYS2M.js": {
+      "imports": [],
+      "exports": [],
+      "entryPoint": "src/index.tsx",
+      "cssBundle": "dist/index-UCJB6HYY.css",
+      "inputs": {
+        "../node_modules/scheduler/cjs/scheduler.production.js": {
+          "bytesInOutput": 3638
+        },
+        "../node_modules/scheduler/index.js": {
+          "bytesInOutput": 51
+        },
+        "../node_modules/react/cjs/react.production.js": {
+          "bytesInOutput": 7647
+        },
+        "../node_modules/react/index.js": {
+          "bytesInOutput": 51
+        },
+        "../node_modules/react-dom/cjs/react-dom.production.js": {
+          "bytesInOutput": 3343
+        },
+        "../node_modules/react-dom/index.js": {
+          "bytesInOutput": 253
+        },
+        "../node_modules/react-dom/cjs/react-dom-client.production.js": {
+          "bytesInOutput": 169508
+        },
+        "../node_modules/react-dom/client.js": {
+          "bytesInOutput": 253
+        },
+        "../node_modules/use-sync-external-store/cjs/use-sync-external-store-shim.production.js": {
+          "bytesInOutput": 778
+        },
+        "../node_modules/use-sync-external-store/shim/index.js": {
+          "bytesInOutput": 51
+        },
+        "../node_modules/react/cjs/react-jsx-runtime.production.js": {
+          "bytesInOutput": 364
+        },
+        "../node_modules/react/jsx-runtime.js": {
+          "bytesInOutput": 51
+        },
+        "../node_modules/fuzzy/lib/fuzzy.js": {
+          "bytesInOutput": 868
+        },
+        "src/index.tsx": {
+          "bytesInOutput": 115
+        },
+        "../node_modules/mobx/dist/mobx.esm.js": {
+          "bytesInOutput": 57501
+        },
+        "../node_modules/mobx-react-lite/es/utils/assertEnvironment.js": {
+          "bytesInOutput": 194
+        },
+        "../node_modules/mobx-react-lite/es/utils/reactBatchedUpdates.js": {
+          "bytesInOutput": 16
+        },
+        "../node_modules/mobx-react-lite/es/utils/observerBatching.js": {
+          "bytesInOutput": 70
+        },
+        "../node_modules/mobx-react-lite/es/useObserver.js": {
+          "bytesInOutput": 879
+        },
+        "../node_modules/mobx-react-lite/es/utils/printDebugValue.js": {
+          "bytesInOutput": 28
+        },
+        "../node_modules/mobx-react-lite/es/staticRendering.js": {
+          "bytesInOutput": 34
+        },
+        "../node_modules/mobx-react-lite/es/utils/UniversalFinalizationRegistry.js": {
+          "bytesInOutput": 1409
+        },
+        "../node_modules/mobx-react-lite/es/utils/observerFinalizationRegistry.js": {
+          "bytesInOutput": 97
+        },
+        "../node_modules/mobx-react-lite/es/index.js": {
+          "bytesInOutput": 112
+        },
+        "../node_modules/mobx-react-lite/es/observer.js": {
+          "bytesInOutput": 1393
+        },
+        "../node_modules/mobx-react-lite/es/ObserverComponent.js": {
+          "bytesInOutput": 219
+        },
+        "../node_modules/mobx-react-lite/es/useLocalObservable.js": {
+          "bytesInOutput": 16
+        },
+        "../node_modules/mobx-react-lite/es/useLocalStore.js": {
+          "bytesInOutput": 16
+        },
+        "../node_modules/mobx-react-lite/es/useAsObservableSource.js": {
+          "bytesInOutput": 16
+        },
+        "src/BookList.tsx": {
+          "bytesInOutput": 712
+        },
+        "src/BookList.module.css": {
+          "bytesInOutput": 20
+        },
+        "src/BookListItem.tsx": {
+          "bytesInOutput": 374
+        },
+        "src/stores/BookListStore.ts": {
+          "bytesInOutput": 751
+        },
+        "../node_modules/yaml/browser/dist/index.js": {
+          "bytesInOutput": 474
+        },
+        "../node_modules/yaml/browser/dist/nodes/identity.js": {
+          "bytesInOutput": 678
+        },
+        "../node_modules/yaml/browser/dist/visit.js": {
+          "bytesInOutput": 2120
+        },
+        "../node_modules/yaml/browser/dist/doc/directives.js": {
+          "bytesInOutput": 2330
+        },
+        "../node_modules/yaml/browser/dist/doc/anchors.js": {
+          "bytesInOutput": 690
+        },
+        "../node_modules/yaml/browser/dist/doc/applyReviver.js": {
+          "bytesInOutput": 541
+        },
+        "../node_modules/yaml/browser/dist/nodes/toJS.js": {
+          "bytesInOutput": 352
+        },
+        "../node_modules/yaml/browser/dist/nodes/Node.js": {
+          "bytesInOutput": 591
+        },
+        "../node_modules/yaml/browser/dist/nodes/Alias.js": {
+          "bytesInOutput": 1481
+        },
+        "../node_modules/yaml/browser/dist/nodes/Scalar.js": {
+          "bytesInOutput": 346
+        },
+        "../node_modules/yaml/browser/dist/doc/createNode.js": {
+          "bytesInOutput": 1140
+        },
+        "../node_modules/yaml/browser/dist/nodes/Collection.js": {
+          "bytesInOutput": 1796
+        },
+        "../node_modules/yaml/browser/dist/stringify/stringifyComment.js": {
+          "bytesInOutput": 222
+        },
+        "../node_modules/yaml/browser/dist/stringify/foldFlowLines.js": {
+          "bytesInOutput": 1227
+        },
+        "../node_modules/yaml/browser/dist/stringify/stringifyString.js": {
+          "bytesInOutput": 4223
+        },
+        "../node_modules/yaml/browser/dist/stringify/stringify.js": {
+          "bytesInOutput": 1983
+        },
+        "../node_modules/yaml/browser/dist/stringify/stringifyPair.js": {
+          "bytesInOutput": 1832
+        },
+        "../node_modules/yaml/browser/dist/log.js": {
+          "bytesInOutput": 60
+        },
+        "../node_modules/yaml/browser/dist/schema/yaml-1.1/merge.js": {
+          "bytesInOutput": 866
+        },
+        "../node_modules/yaml/browser/dist/nodes/addPairToJSMap.js": {
+          "bytesInOutput": 862
+        },
+        "../node_modules/yaml/browser/dist/nodes/Pair.js": {
+          "bytesInOutput": 401
+        },
+        "../node_modules/yaml/browser/dist/stringify/stringifyCollection.js": {
+          "bytesInOutput": 1852
+        },
+        "../node_modules/yaml/browser/dist/nodes/YAMLMap.js": {
+          "bytesInOutput": 1772
+        },
+        "../node_modules/yaml/browser/dist/schema/common/map.js": {
+          "bytesInOutput": 180
+        },
+        "../node_modules/yaml/browser/dist/nodes/YAMLSeq.js": {
+          "bytesInOutput": 1187
+        },
+        "../node_modules/yaml/browser/dist/schema/common/seq.js": {
+          "bytesInOutput": 181
+        },
+        "../node_modules/yaml/browser/dist/schema/common/string.js": {
+          "bytesInOutput": 168
+        },
+        "../node_modules/yaml/browser/dist/schema/common/null.js": {
+          "bytesInOutput": 231
+        },
+        "../node_modules/yaml/browser/dist/schema/core/bool.js": {
+          "bytesInOutput": 312
+        },
+        "../node_modules/yaml/browser/dist/stringify/stringifyNumber.js": {
+          "bytesInOutput": 376
+        },
+        "../node_modules/yaml/browser/dist/schema/core/float.js": {
+          "bytesInOutput": 775
+        },
+        "../node_modules/yaml/browser/dist/schema/core/int.js": {
+          "bytesInOutput": 632
+        },
+        "../node_modules/yaml/browser/dist/schema/core/schema.js": {
+          "bytesInOutput": 42
+        },
+        "../node_modules/yaml/browser/dist/schema/json/schema.js": {
+          "bytesInOutput": 971
+        },
+        "../node_modules/yaml/browser/dist/schema/yaml-1.1/binary.js": {
+          "bytesInOutput": 936
+        },
+        "../node_modules/yaml/browser/dist/schema/yaml-1.1/pairs.js": {
+          "bytesInOutput": 1107
+        },
+        "../node_modules/yaml/browser/dist/schema/yaml-1.1/omap.js": {
+          "bytesInOutput": 963
+        },
+        "../node_modules/yaml/browser/dist/schema/yaml-1.1/bool.js": {
+          "bytesInOutput": 412
+        },
+        "../node_modules/yaml/browser/dist/schema/yaml-1.1/float.js": {
+          "bytesInOutput": 846
+        },
+        "../node_modules/yaml/browser/dist/schema/yaml-1.1/int.js": {
+          "bytesInOutput": 1024
+        },
+        "../node_modules/yaml/browser/dist/schema/yaml-1.1/set.js": {
+          "bytesInOutput": 1301
+        },
+        "../node_modules/yaml/browser/dist/schema/yaml-1.1/timestamp.js": {
+          "bytesInOutput": 1539
+        },
+        "../node_modules/yaml/browser/dist/schema/yaml-1.1/schema.js": {
+          "bytesInOutput": 72
+        },
+        "../node_modules/yaml/browser/dist/schema/tags.js": {
+          "bytesInOutput": 1118
+        },
+        "../node_modules/yaml/browser/dist/schema/Schema.js": {
+          "bytesInOutput": 647
+        },
+        "../node_modules/yaml/browser/dist/stringify/stringifyDocument.js": {
+          "bytesInOutput": 1008
+        },
+        "../node_modules/yaml/browser/dist/doc/Document.js": {
+          "bytesInOutput": 4263
+        },
+        "../node_modules/yaml/browser/dist/errors.js": {
+          "bytesInOutput": 921
+        },
+        "../node_modules/yaml/browser/dist/compose/resolve-props.js": {
+          "bytesInOutput": 2084
+        },
+        "../node_modules/yaml/browser/dist/compose/util-contains-newline.js": {
+          "bytesInOutput": 449
+        },
+        "../node_modules/yaml/browser/dist/compose/util-flow-indent-check.js": {
+          "bytesInOutput": 200
+        },
+        "../node_modules/yaml/browser/dist/compose/util-map-includes.js": {
+          "bytesInOutput": 168
+        },
+        "../node_modules/yaml/browser/dist/compose/resolve-block-map.js": {
+          "bytesInOutput": 1958
+        },
+        "../node_modules/yaml/browser/dist/compose/resolve-block-seq.js": {
+          "bytesInOutput": 687
+        },
+        "../node_modules/yaml/browser/dist/compose/resolve-end.js": {
+          "bytesInOutput": 424
+        },
+        "../node_modules/yaml/browser/dist/compose/resolve-flow-collection.js": {
+          "bytesInOutput": 3292
+        },
+        "../node_modules/yaml/browser/dist/compose/compose-collection.js": {
+          "bytesInOutput": 1200
+        },
+        "../node_modules/yaml/browser/dist/compose/resolve-block-scalar.js": {
+          "bytesInOutput": 2841
+        },
+        "../node_modules/yaml/browser/dist/compose/resolve-flow-scalar.js": {
+          "bytesInOutput": 2716
+        },
+        "../node_modules/yaml/browser/dist/compose/compose-scalar.js": {
+          "bytesInOutput": 1342
+        },
+        "../node_modules/yaml/browser/dist/compose/util-empty-scalar-position.js": {
+          "bytesInOutput": 235
+        },
+        "../node_modules/yaml/browser/dist/compose/compose-node.js": {
+          "bytesInOutput": 1679
+        },
+        "../node_modules/yaml/browser/dist/compose/compose-doc.js": {
+          "bytesInOutput": 640
+        },
+        "../node_modules/yaml/browser/dist/compose/composer.js": {
+          "bytesInOutput": 3071
+        },
+        "../node_modules/yaml/browser/dist/parse/cst.js": {
+          "bytesInOutput": 1343
+        },
+        "../node_modules/yaml/browser/dist/parse/cst-scalar.js": {
+          "bytesInOutput": 3294
+        },
+        "../node_modules/yaml/browser/dist/parse/cst-stringify.js": {
+          "bytesInOutput": 646
+        },
+        "../node_modules/yaml/browser/dist/parse/cst-visit.js": {
+          "bytesInOutput": 892
+        },
+        "../node_modules/yaml/browser/dist/parse/lexer.js": {
+          "bytesInOutput": 9490
+        },
+        "../node_modules/yaml/browser/dist/parse/line-counter.js": {
+          "bytesInOutput": 328
+        },
+        "../node_modules/yaml/browser/dist/parse/parser.js": {
+          "bytesInOutput": 13746
+        },
+        "../node_modules/yaml/browser/dist/public-api.js": {
+          "bytesInOutput": 1412
+        },
+        "../node_modules/yaml/browser/index.js": {
+          "bytesInOutput": 10
+        },
+        "src/stores/DbStore.ts": {
+          "bytesInOutput": 434
+        },
+        "src/App.tsx": {
+          "bytesInOutput": 54
+        }
+      },
+      "bytes": 357060
+    },
+    "dist/index-UCJB6HYY.css.map": {
+      "imports": [],
+      "exports": [],
+      "inputs": {},
+      "bytes": 261
+    },
+    "dist/index-UCJB6HYY.css": {
+      "imports": [],
+      "inputs": {
+        "src/BookList.module.css": {
+          "bytesInOutput": 44
+        }
+      },
+      "bytes": 92
+    }
+  }
+}

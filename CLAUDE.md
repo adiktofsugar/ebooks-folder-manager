@@ -134,3 +134,7 @@ The configuration file supports various DRM key paths:
 
 ## Development Tips
 - Use uv efm to run any python program
+- Use uv add to add dependencies
+
+## Execution Notes
+- You have to run efm with uv run efm

@@ -1,0 +1,43 @@
+cover_image_hash: 87cc471777d6da32f8a14dee6a28b93f7ff0c8d93c77ce88f8981cf71f0a40fc
+error: false
+filename: 'books/Wong, Tao-World Unbound: Freedom for Earth or Death (The System Apocalypse
+  Book 6).epub'
+hash: 045815529d5c9f50bf282a52437f97db75f03d6e
+messages:
+- 2025-07-12 21:05:07,569 - efm.transaction - DEBUG - Processing /home/sean/dev/ebooks-folder-manager/sample-books/WorldUnbound.epub
+  in /tmp/045815529d5c9f50bf282a52437f97db75f03d6exjdg539v
+- 2025-07-12 21:05:07,569 - efm.transaction - DEBUG - Performing action <bound method
+  DownloadAcsmAction.id of <class 'efm.action.DownloadAcsmAction'>> on /tmp/045815529d5c9f50bf282a52437f97db75f03d6exjdg539v/WorldUnbound.epub
+- 2025-07-12 21:05:07,569 - efm.action - DEBUG - Skipping /tmp/045815529d5c9f50bf282a52437f97db75f03d6exjdg539v/WorldUnbound.epub
+  because it's not an ACSM file.
+- 2025-07-12 21:05:07,569 - efm.transaction - DEBUG - Performing action <bound method
+  Kfx2EpubAction.id of <class 'efm.action.Kfx2EpubAction'>> on /tmp/045815529d5c9f50bf282a52437f97db75f03d6exjdg539v/WorldUnbound.epub
+- 2025-07-12 21:05:07,569 - efm.action - DEBUG - Skipping /tmp/045815529d5c9f50bf282a52437f97db75f03d6exjdg539v/WorldUnbound.epub
+  because it's not a KFX-ZIP file (extensions kfx, kfx-zip, kpf).
+- 2025-07-12 21:05:07,569 - efm.transaction - DEBUG - Performing action <bound method
+  DeDrmAction.id of <class 'efm.action.DeDrmAction'>> on /tmp/045815529d5c9f50bf282a52437f97db75f03d6exjdg539v/WorldUnbound.epub
+- 2025-07-12 21:05:07,569 - efm.action - DEBUG - Removing DRM from epub file /tmp/045815529d5c9f50bf282a52437f97db75f03d6exjdg539v/WorldUnbound.epub...
+- 2025-07-12 21:05:07,585 - efm.dedrm - DEBUG - WorldUnbound is not DRMed.
+- 2025-07-12 21:05:07,585 - efm.transaction - DEBUG - Performing action <bound method
+  ReformatPdfAction.id of <class 'efm.action.ReformatPdfAction'>> on /tmp/045815529d5c9f50bf282a52437f97db75f03d6exjdg539v/WorldUnbound.epub
+- 2025-07-12 21:05:07,585 - efm.action - DEBUG - Skipping /tmp/045815529d5c9f50bf282a52437f97db75f03d6exjdg539v/WorldUnbound.epub
+  because it's not a PDF. Format is EPUB.
+- 2025-07-12 21:05:07,587 - efm.metadata - INFO - Saved cover image to test-site/_cache/covers/87cc471777d6da32f8a14dee6a28b93f7ff0c8d93c77ce88f8981cf71f0a40fc.png
+- '2025-07-12 21:05:07,587 - efm.transaction - DEBUG - Finished processing ''/home/sean/dev/ebooks-folder-manager/sample-books/WorldUnbound.epub''.
+  Output file is ''test-site/books/Wong, Tao-World Unbound: Freedom for Earth or Death
+  (The System Apocalypse Book 6).epub'''
+metadata:
+  author: Wong, Tao
+  cover_image_hash: 87cc471777d6da32f8a14dee6a28b93f7ff0c8d93c77ce88f8981cf71f0a40fc
+  creation_date: ''
+  creator: ''
+  encryption: ''
+  format: EPUB
+  is_k2pdfopt_version: false
+  keywords:
+  - ''
+  mod_date: ''
+  producer: ''
+  subject: ''
+  title: 'World Unbound: Freedom for Earth or Death (The System Apocalypse Book 6)'
+original_filepath: /home/sean/dev/ebooks-folder-manager/sample-books/WorldUnbound.epub

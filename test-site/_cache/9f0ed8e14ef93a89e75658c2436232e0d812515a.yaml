@@ -1,0 +1,41 @@
+cover_image_hash: 561d029d20adaed7112a30b66b44ca296bcdf2ac1ab67030ff4f792d77c20b5d
+error: false
+filename: books/Murakami, Haruki-1Q84 (Vintage International).epub
+hash: 9f0ed8e14ef93a89e75658c2436232e0d812515a
+messages:
+- 2025-07-12 21:04:54,209 - efm.transaction - DEBUG - Processing /home/sean/dev/ebooks-folder-manager/sample-books/1Q84.epub
+  in /tmp/9f0ed8e14ef93a89e75658c2436232e0d812515a2_vxy36o
+- 2025-07-12 21:04:54,209 - efm.transaction - DEBUG - Performing action <bound method
+  DownloadAcsmAction.id of <class 'efm.action.DownloadAcsmAction'>> on /tmp/9f0ed8e14ef93a89e75658c2436232e0d812515a2_vxy36o/1Q84.epub
+- 2025-07-12 21:04:54,209 - efm.action - DEBUG - Skipping /tmp/9f0ed8e14ef93a89e75658c2436232e0d812515a2_vxy36o/1Q84.epub
+  because it's not an ACSM file.
+- 2025-07-12 21:04:54,209 - efm.transaction - DEBUG - Performing action <bound method
+  Kfx2EpubAction.id of <class 'efm.action.Kfx2EpubAction'>> on /tmp/9f0ed8e14ef93a89e75658c2436232e0d812515a2_vxy36o/1Q84.epub
+- 2025-07-12 21:04:54,209 - efm.action - DEBUG - Skipping /tmp/9f0ed8e14ef93a89e75658c2436232e0d812515a2_vxy36o/1Q84.epub
+  because it's not a KFX-ZIP file (extensions kfx, kfx-zip, kpf).
+- 2025-07-12 21:04:54,209 - efm.transaction - DEBUG - Performing action <bound method
+  DeDrmAction.id of <class 'efm.action.DeDrmAction'>> on /tmp/9f0ed8e14ef93a89e75658c2436232e0d812515a2_vxy36o/1Q84.epub
+- 2025-07-12 21:04:54,209 - efm.action - DEBUG - Removing DRM from epub file /tmp/9f0ed8e14ef93a89e75658c2436232e0d812515a2_vxy36o/1Q84.epub...
+- 2025-07-12 21:04:54,271 - efm.dedrm - DEBUG - 1Q84 is not DRMed.
+- 2025-07-12 21:04:54,271 - efm.transaction - DEBUG - Performing action <bound method
+  ReformatPdfAction.id of <class 'efm.action.ReformatPdfAction'>> on /tmp/9f0ed8e14ef93a89e75658c2436232e0d812515a2_vxy36o/1Q84.epub
+- 2025-07-12 21:04:54,271 - efm.action - DEBUG - Skipping /tmp/9f0ed8e14ef93a89e75658c2436232e0d812515a2_vxy36o/1Q84.epub
+  because it's not a PDF. Format is EPUB.
+- 2025-07-12 21:04:54,275 - efm.metadata - INFO - Saved cover image to test-site/_cache/covers/561d029d20adaed7112a30b66b44ca296bcdf2ac1ab67030ff4f792d77c20b5d.png
+- 2025-07-12 21:04:54,276 - efm.transaction - DEBUG - Finished processing '/home/sean/dev/ebooks-folder-manager/sample-books/1Q84.epub'.
+  Output file is 'test-site/books/Murakami, Haruki-1Q84 (Vintage International).epub'
+metadata:
+  author: Murakami, Haruki
+  cover_image_hash: 561d029d20adaed7112a30b66b44ca296bcdf2ac1ab67030ff4f792d77c20b5d
+  creation_date: ''
+  creator: ''
+  encryption: ''
+  format: EPUB
+  is_k2pdfopt_version: false
+  keywords:
+  - ''
+  mod_date: ''
+  producer: ''
+  subject: ''
+  title: 1Q84 (Vintage International)
+original_filepath: /home/sean/dev/ebooks-folder-manager/sample-books/1Q84.epub

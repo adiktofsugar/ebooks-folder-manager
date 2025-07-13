@@ -1,0 +1,45 @@
+cover_image_hash: 2124107720268e81eb8332d86457d2836ad98f38bc023d129cdb23d7f9f91c3c
+error: false
+filename: 'books/Noelle Nelson, Selin A. Malkoc, Baba Shiv-Emotions Know Best: The
+  Advantage of Emotional versus Cognitive Responses to Failure.pdf'
+hash: 345cdc77a16001505c3de258b3d5683e319eb08b
+messages:
+- 2025-07-12 21:05:07,459 - efm.transaction - DEBUG - Processing /home/sean/dev/ebooks-folder-manager/sample-books/Emotions.pdf
+  in /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8
+- 2025-07-12 21:05:07,460 - efm.transaction - DEBUG - Performing action <bound method
+  DownloadAcsmAction.id of <class 'efm.action.DownloadAcsmAction'>> on /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8/Emotions.pdf
+- 2025-07-12 21:05:07,460 - efm.action - DEBUG - Skipping /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8/Emotions.pdf
+  because it's not an ACSM file.
+- 2025-07-12 21:05:07,460 - efm.transaction - DEBUG - Performing action <bound method
+  Kfx2EpubAction.id of <class 'efm.action.Kfx2EpubAction'>> on /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8/Emotions.pdf
+- 2025-07-12 21:05:07,460 - efm.action - DEBUG - Skipping /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8/Emotions.pdf
+  because it's not a KFX-ZIP file (extensions kfx, kfx-zip, kpf).
+- 2025-07-12 21:05:07,460 - efm.transaction - DEBUG - Performing action <bound method
+  DeDrmAction.id of <class 'efm.action.DeDrmAction'>> on /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8/Emotions.pdf
+- 2025-07-12 21:05:07,460 - efm.action - DEBUG - Removing DRM from pdf file /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8/Emotions.pdf...
+- 2025-07-12 21:05:07,460 - efm.dedrm - DEBUG - Skipping /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8/Emotions.pdf.
+  has no drm
+- 2025-07-12 21:05:07,460 - efm.transaction - DEBUG - Performing action <bound method
+  ReformatPdfAction.id of <class 'efm.action.ReformatPdfAction'>> on /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8/Emotions.pdf
+- 2025-07-12 21:05:07,461 - efm.action - DEBUG - Skipping /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8/Emotions.pdf
+  because it's not a PDF. Format is PDF 1.3.
+- 2025-07-12 21:05:07,502 - efm.metadata - INFO - Saved cover image to test-site/_cache/covers/2124107720268e81eb8332d86457d2836ad98f38bc023d129cdb23d7f9f91c3c.png
+- '2025-07-12 21:05:07,503 - efm.transaction - DEBUG - Finished processing ''/home/sean/dev/ebooks-folder-manager/sample-books/Emotions.pdf''.
+  Output file is ''test-site/books/Noelle Nelson, Selin A. Malkoc, Baba Shiv-Emotions
+  Know Best: The Advantage of Emotional versus Cognitive Responses to Failure.pdf'''
+metadata:
+  author: Noelle Nelson, Selin A. Malkoc, Baba Shiv
+  cover_image_hash: 2124107720268e81eb8332d86457d2836ad98f38bc023d129cdb23d7f9f91c3c
+  creation_date: D:20170902103500+08'00'
+  creator: ''
+  encryption: null
+  format: PDF 1.3
+  is_k2pdfopt_version: false
+  keywords:
+  - ''
+  mod_date: D:20240209095801-08'00
+  producer: K2pdfopt v2.55
+  subject: ''
+  title: 'Emotions Know Best: The Advantage of Emotional versus Cognitive Responses
+    to Failure'
+original_filepath: /home/sean/dev/ebooks-folder-manager/sample-books/Emotions.pdf

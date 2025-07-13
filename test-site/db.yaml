@@ -1,0 +1,223 @@
+- cover_image_hash: 561d029d20adaed7112a30b66b44ca296bcdf2ac1ab67030ff4f792d77c20b5d
+  error: false
+  filename: books/Murakami, Haruki-1Q84 (Vintage International).epub
+  hash: 9f0ed8e14ef93a89e75658c2436232e0d812515a
+  messages:
+  - 2025-07-12 21:05:07,445 - efm.transaction - DEBUG - Skipping /home/sean/dev/ebooks-folder-manager/sample-books/1Q84.epub
+    because metadata has already been processed.
+  - 2025-07-12 21:05:07,447 - efm.__main__ - DEBUG - Processing /home/sean/dev/ebooks-folder-manager/sample-books/Emotions.pdf
+  - 2025-07-12 21:05:07,459 - efm.transaction - DEBUG - Processing /home/sean/dev/ebooks-folder-manager/sample-books/Emotions.pdf
+    in /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8
+  - 2025-07-12 21:05:07,460 - efm.transaction - DEBUG - Performing action <bound method
+    DownloadAcsmAction.id of <class 'efm.action.DownloadAcsmAction'>> on /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8/Emotions.pdf
+  - 2025-07-12 21:05:07,460 - efm.action - DEBUG - Skipping /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8/Emotions.pdf
+    because it's not an ACSM file.
+  - 2025-07-12 21:05:07,460 - efm.transaction - DEBUG - Performing action <bound method
+    Kfx2EpubAction.id of <class 'efm.action.Kfx2EpubAction'>> on /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8/Emotions.pdf
+  - 2025-07-12 21:05:07,460 - efm.action - DEBUG - Skipping /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8/Emotions.pdf
+    because it's not a KFX-ZIP file (extensions kfx, kfx-zip, kpf).
+  - 2025-07-12 21:05:07,460 - efm.transaction - DEBUG - Performing action <bound method
+    DeDrmAction.id of <class 'efm.action.DeDrmAction'>> on /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8/Emotions.pdf
+  - 2025-07-12 21:05:07,460 - efm.action - DEBUG - Removing DRM from pdf file /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8/Emotions.pdf...
+  - 2025-07-12 21:05:07,460 - efm.dedrm - DEBUG - Skipping /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8/Emotions.pdf.
+    has no drm
+  - 2025-07-12 21:05:07,460 - efm.transaction - DEBUG - Performing action <bound method
+    ReformatPdfAction.id of <class 'efm.action.ReformatPdfAction'>> on /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8/Emotions.pdf
+  - 2025-07-12 21:05:07,461 - efm.action - DEBUG - Skipping /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8/Emotions.pdf
+    because it's not a PDF. Format is PDF 1.3.
+  - 2025-07-12 21:05:07,502 - efm.metadata - INFO - Saved cover image to test-site/_cache/covers/2124107720268e81eb8332d86457d2836ad98f38bc023d129cdb23d7f9f91c3c.png
+  - '2025-07-12 21:05:07,503 - efm.transaction - DEBUG - Finished processing ''/home/sean/dev/ebooks-folder-manager/sample-books/Emotions.pdf''.
+    Output file is ''test-site/books/Noelle Nelson, Selin A. Malkoc, Baba Shiv-Emotions
+    Know Best: The Advantage of Emotional versus Cognitive Responses to Failure.pdf'''
+  - 2025-07-12 21:05:07,505 - efm.__main__ - DEBUG - Processing /home/sean/dev/ebooks-folder-manager/sample-books/InterestingTimes.epub
+  - 2025-07-12 21:05:07,508 - efm.transaction - DEBUG - Processing /home/sean/dev/ebooks-folder-manager/sample-books/InterestingTimes.epub
+    in /tmp/e5a820971728c22c1553cb552f98b322d58bb7fat9frpqhr
+  - 2025-07-12 21:05:07,508 - efm.transaction - DEBUG - Performing action <bound method
+    DownloadAcsmAction.id of <class 'efm.action.DownloadAcsmAction'>> on /tmp/e5a820971728c22c1553cb552f98b322d58bb7fat9frpqhr/InterestingTimes.epub
+  - 2025-07-12 21:05:07,508 - efm.action - DEBUG - Skipping /tmp/e5a820971728c22c1553cb552f98b322d58bb7fat9frpqhr/InterestingTimes.epub
+    because it's not an ACSM file.
+  - 2025-07-12 21:05:07,508 - efm.transaction - DEBUG - Performing action <bound method
+    Kfx2EpubAction.id of <class 'efm.action.Kfx2EpubAction'>> on /tmp/e5a820971728c22c1553cb552f98b322d58bb7fat9frpqhr/InterestingTimes.epub
+  - 2025-07-12 21:05:07,508 - efm.action - DEBUG - Skipping /tmp/e5a820971728c22c1553cb552f98b322d58bb7fat9frpqhr/InterestingTimes.epub
+    because it's not a KFX-ZIP file (extensions kfx, kfx-zip, kpf).
+  - 2025-07-12 21:05:07,508 - efm.transaction - DEBUG - Performing action <bound method
+    DeDrmAction.id of <class 'efm.action.DeDrmAction'>> on /tmp/e5a820971728c22c1553cb552f98b322d58bb7fat9frpqhr/InterestingTimes.epub
+  - 2025-07-12 21:05:07,508 - efm.action - DEBUG - Removing DRM from epub file /tmp/e5a820971728c22c1553cb552f98b322d58bb7fat9frpqhr/InterestingTimes.epub...
+  - 2025-07-12 21:05:07,530 - efm.dedrm - DEBUG - InterestingTimes is not DRMed.
+  - 2025-07-12 21:05:07,530 - efm.transaction - DEBUG - Performing action <bound method
+    ReformatPdfAction.id of <class 'efm.action.ReformatPdfAction'>> on /tmp/e5a820971728c22c1553cb552f98b322d58bb7fat9frpqhr/InterestingTimes.epub
+  - 2025-07-12 21:05:07,530 - efm.action - DEBUG - Skipping /tmp/e5a820971728c22c1553cb552f98b322d58bb7fat9frpqhr/InterestingTimes.epub
+    because it's not a PDF. Format is EPUB.
+  - 2025-07-12 21:05:07,531 - efm.metadata - INFO - Generating cover for InterestingTimes.epub
+  - 2025-07-12 21:05:07,565 - efm.metadata - INFO - Saved cover image to test-site/_cache/covers/bf7ce35bea3741878b034dfe46e4272c59372aa5dd9720e93379b5be9fea96d6.png
+  - 2025-07-12 21:05:07,566 - efm.transaction - DEBUG - Finished processing '/home/sean/dev/ebooks-folder-manager/sample-books/InterestingTimes.epub'.
+    Output file is 'test-site/books/Terry Pratchett-Interesting Times.epub'
+  - 2025-07-12 21:05:07,567 - efm.__main__ - DEBUG - Processing /home/sean/dev/ebooks-folder-manager/sample-books/WorldUnbound.epub
+  - 2025-07-12 21:05:07,569 - efm.transaction - DEBUG - Processing /home/sean/dev/ebooks-folder-manager/sample-books/WorldUnbound.epub
+    in /tmp/045815529d5c9f50bf282a52437f97db75f03d6exjdg539v
+  - 2025-07-12 21:05:07,569 - efm.transaction - DEBUG - Performing action <bound method
+    DownloadAcsmAction.id of <class 'efm.action.DownloadAcsmAction'>> on /tmp/045815529d5c9f50bf282a52437f97db75f03d6exjdg539v/WorldUnbound.epub
+  - 2025-07-12 21:05:07,569 - efm.action - DEBUG - Skipping /tmp/045815529d5c9f50bf282a52437f97db75f03d6exjdg539v/WorldUnbound.epub
+    because it's not an ACSM file.
+  - 2025-07-12 21:05:07,569 - efm.transaction - DEBUG - Performing action <bound method
+    Kfx2EpubAction.id of <class 'efm.action.Kfx2EpubAction'>> on /tmp/045815529d5c9f50bf282a52437f97db75f03d6exjdg539v/WorldUnbound.epub
+  - 2025-07-12 21:05:07,569 - efm.action - DEBUG - Skipping /tmp/045815529d5c9f50bf282a52437f97db75f03d6exjdg539v/WorldUnbound.epub
+    because it's not a KFX-ZIP file (extensions kfx, kfx-zip, kpf).
+  - 2025-07-12 21:05:07,569 - efm.transaction - DEBUG - Performing action <bound method
+    DeDrmAction.id of <class 'efm.action.DeDrmAction'>> on /tmp/045815529d5c9f50bf282a52437f97db75f03d6exjdg539v/WorldUnbound.epub
+  - 2025-07-12 21:05:07,569 - efm.action - DEBUG - Removing DRM from epub file /tmp/045815529d5c9f50bf282a52437f97db75f03d6exjdg539v/WorldUnbound.epub...
+  - 2025-07-12 21:05:07,585 - efm.dedrm - DEBUG - WorldUnbound is not DRMed.
+  - 2025-07-12 21:05:07,585 - efm.transaction - DEBUG - Performing action <bound method
+    ReformatPdfAction.id of <class 'efm.action.ReformatPdfAction'>> on /tmp/045815529d5c9f50bf282a52437f97db75f03d6exjdg539v/WorldUnbound.epub
+  - 2025-07-12 21:05:07,585 - efm.action - DEBUG - Skipping /tmp/045815529d5c9f50bf282a52437f97db75f03d6exjdg539v/WorldUnbound.epub
+    because it's not a PDF. Format is EPUB.
+  - 2025-07-12 21:05:07,587 - efm.metadata - INFO - Saved cover image to test-site/_cache/covers/87cc471777d6da32f8a14dee6a28b93f7ff0c8d93c77ce88f8981cf71f0a40fc.png
+  - '2025-07-12 21:05:07,587 - efm.transaction - DEBUG - Finished processing ''/home/sean/dev/ebooks-folder-manager/sample-books/WorldUnbound.epub''.
+    Output file is ''test-site/books/Wong, Tao-World Unbound: Freedom for Earth or
+    Death (The System Apocalypse Book 6).epub'''
+  metadata:
+    author: Murakami, Haruki
+    cover_image_hash: 561d029d20adaed7112a30b66b44ca296bcdf2ac1ab67030ff4f792d77c20b5d
+    creation_date: ''
+    creator: ''
+    encryption: ''
+    format: EPUB
+    is_k2pdfopt_version: false
+    keywords:
+    - ''
+    mod_date: ''
+    producer: ''
+    subject: ''
+    title: 1Q84 (Vintage International)
+  original_filepath: /home/sean/dev/ebooks-folder-manager/sample-books/1Q84.epub
+- cover_image_hash: 2124107720268e81eb8332d86457d2836ad98f38bc023d129cdb23d7f9f91c3c
+  error: false
+  filename: 'books/Noelle Nelson, Selin A. Malkoc, Baba Shiv-Emotions Know Best: The
+    Advantage of Emotional versus Cognitive Responses to Failure.pdf'
+  hash: 345cdc77a16001505c3de258b3d5683e319eb08b
+  messages:
+  - 2025-07-12 21:05:07,459 - efm.transaction - DEBUG - Processing /home/sean/dev/ebooks-folder-manager/sample-books/Emotions.pdf
+    in /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8
+  - 2025-07-12 21:05:07,460 - efm.transaction - DEBUG - Performing action <bound method
+    DownloadAcsmAction.id of <class 'efm.action.DownloadAcsmAction'>> on /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8/Emotions.pdf
+  - 2025-07-12 21:05:07,460 - efm.action - DEBUG - Skipping /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8/Emotions.pdf
+    because it's not an ACSM file.
+  - 2025-07-12 21:05:07,460 - efm.transaction - DEBUG - Performing action <bound method
+    Kfx2EpubAction.id of <class 'efm.action.Kfx2EpubAction'>> on /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8/Emotions.pdf
+  - 2025-07-12 21:05:07,460 - efm.action - DEBUG - Skipping /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8/Emotions.pdf
+    because it's not a KFX-ZIP file (extensions kfx, kfx-zip, kpf).
+  - 2025-07-12 21:05:07,460 - efm.transaction - DEBUG - Performing action <bound method
+    DeDrmAction.id of <class 'efm.action.DeDrmAction'>> on /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8/Emotions.pdf
+  - 2025-07-12 21:05:07,460 - efm.action - DEBUG - Removing DRM from pdf file /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8/Emotions.pdf...
+  - 2025-07-12 21:05:07,460 - efm.dedrm - DEBUG - Skipping /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8/Emotions.pdf.
+    has no drm
+  - 2025-07-12 21:05:07,460 - efm.transaction - DEBUG - Performing action <bound method
+    ReformatPdfAction.id of <class 'efm.action.ReformatPdfAction'>> on /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8/Emotions.pdf
+  - 2025-07-12 21:05:07,461 - efm.action - DEBUG - Skipping /tmp/345cdc77a16001505c3de258b3d5683e319eb08brki0rry8/Emotions.pdf
+    because it's not a PDF. Format is PDF 1.3.
+  - 2025-07-12 21:05:07,502 - efm.metadata - INFO - Saved cover image to test-site/_cache/covers/2124107720268e81eb8332d86457d2836ad98f38bc023d129cdb23d7f9f91c3c.png
+  - '2025-07-12 21:05:07,503 - efm.transaction - DEBUG - Finished processing ''/home/sean/dev/ebooks-folder-manager/sample-books/Emotions.pdf''.
+    Output file is ''test-site/books/Noelle Nelson, Selin A. Malkoc, Baba Shiv-Emotions
+    Know Best: The Advantage of Emotional versus Cognitive Responses to Failure.pdf'''
+  metadata:
+    author: Noelle Nelson, Selin A. Malkoc, Baba Shiv
+    cover_image_hash: 2124107720268e81eb8332d86457d2836ad98f38bc023d129cdb23d7f9f91c3c
+    creation_date: D:20170902103500+08'00'
+    creator: ''
+    encryption: null
+    format: PDF 1.3
+    is_k2pdfopt_version: false
+    keywords:
+    - ''
+    mod_date: D:20240209095801-08'00
+    producer: K2pdfopt v2.55
+    subject: ''
+    title: 'Emotions Know Best: The Advantage of Emotional versus Cognitive Responses
+      to Failure'
+  original_filepath: /home/sean/dev/ebooks-folder-manager/sample-books/Emotions.pdf
+- cover_image_hash: bf7ce35bea3741878b034dfe46e4272c59372aa5dd9720e93379b5be9fea96d6
+  error: false
+  filename: books/Terry Pratchett-Interesting Times.epub
+  hash: e5a820971728c22c1553cb552f98b322d58bb7fa
+  messages:
+  - 2025-07-12 21:05:07,508 - efm.transaction - DEBUG - Processing /home/sean/dev/ebooks-folder-manager/sample-books/InterestingTimes.epub
+    in /tmp/e5a820971728c22c1553cb552f98b322d58bb7fat9frpqhr
+  - 2025-07-12 21:05:07,508 - efm.transaction - DEBUG - Performing action <bound method
+    DownloadAcsmAction.id of <class 'efm.action.DownloadAcsmAction'>> on /tmp/e5a820971728c22c1553cb552f98b322d58bb7fat9frpqhr/InterestingTimes.epub
+  - 2025-07-12 21:05:07,508 - efm.action - DEBUG - Skipping /tmp/e5a820971728c22c1553cb552f98b322d58bb7fat9frpqhr/InterestingTimes.epub
+    because it's not an ACSM file.
+  - 2025-07-12 21:05:07,508 - efm.transaction - DEBUG - Performing action <bound method
+    Kfx2EpubAction.id of <class 'efm.action.Kfx2EpubAction'>> on /tmp/e5a820971728c22c1553cb552f98b322d58bb7fat9frpqhr/InterestingTimes.epub
+  - 2025-07-12 21:05:07,508 - efm.action - DEBUG - Skipping /tmp/e5a820971728c22c1553cb552f98b322d58bb7fat9frpqhr/InterestingTimes.epub
+    because it's not a KFX-ZIP file (extensions kfx, kfx-zip, kpf).
+  - 2025-07-12 21:05:07,508 - efm.transaction - DEBUG - Performing action <bound method
+    DeDrmAction.id of <class 'efm.action.DeDrmAction'>> on /tmp/e5a820971728c22c1553cb552f98b322d58bb7fat9frpqhr/InterestingTimes.epub
+  - 2025-07-12 21:05:07,508 - efm.action - DEBUG - Removing DRM from epub file /tmp/e5a820971728c22c1553cb552f98b322d58bb7fat9frpqhr/InterestingTimes.epub...
+  - 2025-07-12 21:05:07,530 - efm.dedrm - DEBUG - InterestingTimes is not DRMed.
+  - 2025-07-12 21:05:07,530 - efm.transaction - DEBUG - Performing action <bound method
+    ReformatPdfAction.id of <class 'efm.action.ReformatPdfAction'>> on /tmp/e5a820971728c22c1553cb552f98b322d58bb7fat9frpqhr/InterestingTimes.epub
+  - 2025-07-12 21:05:07,530 - efm.action - DEBUG - Skipping /tmp/e5a820971728c22c1553cb552f98b322d58bb7fat9frpqhr/InterestingTimes.epub
+    because it's not a PDF. Format is EPUB.
+  - 2025-07-12 21:05:07,531 - efm.metadata - INFO - Generating cover for InterestingTimes.epub
+  - 2025-07-12 21:05:07,565 - efm.metadata - INFO - Saved cover image to test-site/_cache/covers/bf7ce35bea3741878b034dfe46e4272c59372aa5dd9720e93379b5be9fea96d6.png
+  - 2025-07-12 21:05:07,566 - efm.transaction - DEBUG - Finished processing '/home/sean/dev/ebooks-folder-manager/sample-books/InterestingTimes.epub'.
+    Output file is 'test-site/books/Terry Pratchett-Interesting Times.epub'
+  metadata:
+    author: Terry Pratchett
+    cover_image_hash: bf7ce35bea3741878b034dfe46e4272c59372aa5dd9720e93379b5be9fea96d6
+    creation_date: ''
+    creator: ''
+    encryption: ''
+    format: EPUB
+    is_k2pdfopt_version: false
+    keywords:
+    - ''
+    mod_date: ''
+    producer: ''
+    subject: ''
+    title: Interesting Times
+  original_filepath: /home/sean/dev/ebooks-folder-manager/sample-books/InterestingTimes.epub
+- cover_image_hash: 87cc471777d6da32f8a14dee6a28b93f7ff0c8d93c77ce88f8981cf71f0a40fc
+  error: false
+  filename: 'books/Wong, Tao-World Unbound: Freedom for Earth or Death (The System
+    Apocalypse Book 6).epub'
+  hash: 045815529d5c9f50bf282a52437f97db75f03d6e
+  messages:
+  - 2025-07-12 21:05:07,569 - efm.transaction - DEBUG - Processing /home/sean/dev/ebooks-folder-manager/sample-books/WorldUnbound.epub
+    in /tmp/045815529d5c9f50bf282a52437f97db75f03d6exjdg539v
+  - 2025-07-12 21:05:07,569 - efm.transaction - DEBUG - Performing action <bound method
+    DownloadAcsmAction.id of <class 'efm.action.DownloadAcsmAction'>> on /tmp/045815529d5c9f50bf282a52437f97db75f03d6exjdg539v/WorldUnbound.epub
+  - 2025-07-12 21:05:07,569 - efm.action - DEBUG - Skipping /tmp/045815529d5c9f50bf282a52437f97db75f03d6exjdg539v/WorldUnbound.epub
+    because it's not an ACSM file.
+  - 2025-07-12 21:05:07,569 - efm.transaction - DEBUG - Performing action <bound method
+    Kfx2EpubAction.id of <class 'efm.action.Kfx2EpubAction'>> on /tmp/045815529d5c9f50bf282a52437f97db75f03d6exjdg539v/WorldUnbound.epub
+  - 2025-07-12 21:05:07,569 - efm.action - DEBUG - Skipping /tmp/045815529d5c9f50bf282a52437f97db75f03d6exjdg539v/WorldUnbound.epub
+    because it's not a KFX-ZIP file (extensions kfx, kfx-zip, kpf).
+  - 2025-07-12 21:05:07,569 - efm.transaction - DEBUG - Performing action <bound method
+    DeDrmAction.id of <class 'efm.action.DeDrmAction'>> on /tmp/045815529d5c9f50bf282a52437f97db75f03d6exjdg539v/WorldUnbound.epub
+  - 2025-07-12 21:05:07,569 - efm.action - DEBUG - Removing DRM from epub file /tmp/045815529d5c9f50bf282a52437f97db75f03d6exjdg539v/WorldUnbound.epub...
+  - 2025-07-12 21:05:07,585 - efm.dedrm - DEBUG - WorldUnbound is not DRMed.
+  - 2025-07-12 21:05:07,585 - efm.transaction - DEBUG - Performing action <bound method
+    ReformatPdfAction.id of <class 'efm.action.ReformatPdfAction'>> on /tmp/045815529d5c9f50bf282a52437f97db75f03d6exjdg539v/WorldUnbound.epub
+  - 2025-07-12 21:05:07,585 - efm.action - DEBUG - Skipping /tmp/045815529d5c9f50bf282a52437f97db75f03d6exjdg539v/WorldUnbound.epub
+    because it's not a PDF. Format is EPUB.
+  - 2025-07-12 21:05:07,587 - efm.metadata - INFO - Saved cover image to test-site/_cache/covers/87cc471777d6da32f8a14dee6a28b93f7ff0c8d93c77ce88f8981cf71f0a40fc.png
+  - '2025-07-12 21:05:07,587 - efm.transaction - DEBUG - Finished processing ''/home/sean/dev/ebooks-folder-manager/sample-books/WorldUnbound.epub''.
+    Output file is ''test-site/books/Wong, Tao-World Unbound: Freedom for Earth or
+    Death (The System Apocalypse Book 6).epub'''
+  metadata:
+    author: Wong, Tao
+    cover_image_hash: 87cc471777d6da32f8a14dee6a28b93f7ff0c8d93c77ce88f8981cf71f0a40fc
+    creation_date: ''
+    creator: ''
+    encryption: ''
+    format: EPUB
+    is_k2pdfopt_version: false
+    keywords:
+    - ''
+    mod_date: ''
+    producer: ''
+    subject: ''
+    title: 'World Unbound: Freedom for Earth or Death (The System Apocalypse Book
+      6)'
+  original_filepath: /home/sean/dev/ebooks-folder-manager/sample-books/WorldUnbound.epub
