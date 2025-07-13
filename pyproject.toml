@@ -26,6 +26,7 @@ dependencies = [
 
 [project.scripts]
 efm = "efm.__main__:main"
+efmcovers = "generate_covers:main"
 # NOTE: can only be used directly in wine, windows, or macos
 # finds and saves default adobe encryption keys. save to given output directory (optional)
 # [<outputdir>]
