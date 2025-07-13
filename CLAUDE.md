@@ -142,3 +142,6 @@ The configuration file supports various DRM key paths:
 
 ## React Context and Store Guidelines
 - You can add MobX stores to context, but there should be no other kind of react context
+
+## Execution Warnings
+- You MUST NEVER directly invoke a python script. ALWAYS use uv

@@ -11,7 +11,14 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", "DeDRM_tools"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "kfxlib"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "adl"))
 
-from efm.transaction import Transaction, TransactionResult, TransactionSuccess, TransactionError
+from efm.transaction import (
+    Transaction,
+    TransactionResult,
+    TransactionSuccess,
+    TransactionError,
+)
+from efm.config import get_closest_config
+from efm.tasks import TasksFile, TaskStatus, process_task
 
 
 logger = logging.getLogger(__name__)
@@ -57,6 +64,38 @@ def main():
     files = args.spec
     all_files: list[Path] = []
 
+    # Process tasks.md file if it exists in any of the specified directories
+    directories_to_check = set()
+    for spec in args.spec:
+        p = Path(spec).resolve()
+        if p.is_dir():
+            directories_to_check.add(p)
+        elif p.is_file():
+            directories_to_check.add(p.parent)
+
+    for directory in directories_to_check:
+        tasks_filepath = directory / "tasks.md"
+        if tasks_filepath.exists():
+            logger.info(f"Found tasks file: {tasks_filepath}")
+            tasks_file = TasksFile(tasks_filepath)
+            tasks_file.read()
+
+            # Process pending tasks
+            pending_tasks = tasks_file.get_pending_tasks()
+            if pending_tasks:
+                logger.info(f"Processing {len(pending_tasks)} pending tasks")
+                for task in pending_tasks:
+                    # Set task to in progress
+                    tasks_file.update_task_status(task, TaskStatus.IN_PROGRESS)
+                    tasks_file.write()
+
+                    # Process the task
+                    result_status = process_task(task, directory)
+
+                    # Update task status based on result
+                    tasks_file.update_task_status(task, result_status)
+                    tasks_file.write()
+
     for original_filepath in files:
         logger.debug(f"Processing {original_filepath}")
         p = Path(original_filepath).resolve()  # Convert to absolute path
@@ -80,6 +119,9 @@ def main():
         if original_filepath.name in ["efm.toml", "efm.yaml", "efm.yml", "efm.json"]:
             logger.debug(f"Skipping {original_filepath} because it's a config file.")
             continue
+        if original_filepath.name == "tasks.md":
+            logger.debug(f"Skipping {original_filepath} because it's a tasks file.")
+            continue
 
         logger.debug(f"Processing {original_filepath}")
         result = Transaction(original_filepath, Path(args.out)).perform()
@@ -88,24 +130,26 @@ def main():
     # Count successes and failures
     successes = [r for r in results if isinstance(r, TransactionSuccess)]
     failures = [r for r in results if isinstance(r, TransactionError)]
-    
+
     # Deduplicate successful results by hash
     seen_hashes = {}
-    deduplicated_results:list[TransactionResult] = []
+    deduplicated_results: list[TransactionResult] = []
     duplicate_count = 0
-    
+
     for result in results:
         if isinstance(result, TransactionSuccess):
             if result.hash in seen_hashes:
                 duplicate_count += 1
-                logger.debug(f"Skipping duplicate: {result.original_filepath} has same content as {seen_hashes[result.hash]}")
+                logger.debug(
+                    f"Skipping duplicate: {result.original_filepath} has same content as {seen_hashes[result.hash]}"
+                )
             else:
                 seen_hashes[result.hash] = result.original_filepath
                 deduplicated_results.append(result)
         else:
             # Always include error results
             deduplicated_results.append(result)
-    
+
     # Show summary
     print(f"\nProcessed {len(all_files)} files:")
     print(f"  ✓ {len(successes)} successful")
@@ -116,11 +160,15 @@ def main():
         if loglevel == logging.DEBUG:
             print("\nFailed files:")
             for error_result in failures:
-                print(f"  - {error_result.original_filepath}: {error_result.error_message}")
+                print(
+                    f"  - {error_result.original_filepath}: {error_result.error_message}"
+                )
     site_dirpath = Path(args.out)
     db_filepath = site_dirpath / "db.yaml"
     # Include deduplicated results in the database
-    db_filepath.write_text(yaml.dump([result.to_dict() for result in deduplicated_results]))
+    db_filepath.write_text(
+        yaml.dump([result.to_dict() for result in deduplicated_results])
+    )
 
     ui_dist_dirpath = Path(__file__).parent.parent / "site-ui" / "dist"
     if not ui_dist_dirpath.exists():
