@@ -196,7 +196,7 @@ def generate_cover_image(book_hash: str, title: str | None = None,
     comp_color = tuple(int(c * 255) for c in comp_color)
     
     # Choose pattern type based on hash
-    pattern_type = int(book_hash[2:4], 16) % 3
+    pattern_type = int(book_hash[2:4], 16) % 4
     
     if pattern_type == 0:
         # Geometric triangles
@@ -251,6 +251,331 @@ def generate_cover_image(book_hash: str, title: str | None = None,
             color = random.choice(colors)
             
             draw.rectangle([(x1, y1), (x2, y2)], fill=color, outline=(0, 0, 0), width=3)
+    
+    elif pattern_type == 3:
+        # Mario-style 8-bit background
+        # Classic Mario sky blue
+        sky_blue = (92, 148, 252)
+        draw.rectangle([(0, 0), (width, height)], fill=sky_blue)
+        
+        # Block size for pixel art
+        block_size = 16
+        
+        # Draw clouds (white puffy clouds) with variety
+        cloud_white = (255, 255, 255)
+        cloud_patterns = [
+            # Small cloud
+            [
+                "  ####  ",
+                " ###### ",
+                "########",
+                " ###### "
+            ],
+            # Medium cloud
+            [
+                "    ####    ",
+                "  ########  ",
+                " ########## ",
+                "############",
+                " ########## "
+            ],
+            # Large cloud
+            [
+                "     ######     ",
+                "   ##########   ",
+                "  ############  ",
+                " ############## ",
+                "################",
+                " ############## ",
+                "  ############  "
+            ],
+            # Thin cloud
+            [
+                "   ########   ",
+                " ############ ",
+                "##############",
+                " ############ "
+            ]
+        ]
+        
+        # Draw 3-5 clouds with variety
+        num_clouds = random.randint(3, 5)
+        for i in range(num_clouds):
+            cloud_x = random.randint(0, width - 200)
+            cloud_y = 20 + random.randint(0, 150)
+            cloud_pattern = random.choice(cloud_patterns)
+            
+            for row, pattern in enumerate(cloud_pattern):
+                for col, char in enumerate(pattern):
+                    if char == '#':
+                        x = cloud_x + col * block_size
+                        y = cloud_y + row * block_size
+                        draw.rectangle([(x, y), (x + block_size, y + block_size)], 
+                                     fill=cloud_white)
+        
+        # Draw hills in background with variety
+        hill_green = (0, 184, 0)
+        hill_dark_green = (0, 124, 0)
+        
+        hill_patterns = [
+            # Large hill
+            [
+                "      ##      ",
+                "    ######    ",
+                "  ##########  ",
+                " ############ ",
+                "##############"
+            ],
+            # Medium hill
+            [
+                "    ##    ",
+                "  ######  ",
+                " ######## ",
+                "##########"
+            ],
+            # Small hill
+            [
+                "   ##   ",
+                " ###### ",
+                "########"
+            ],
+            # Wide hill
+            [
+                "     ####     ",
+                "   ########   ",
+                " ############ ",
+                "##############"
+            ]
+        ]
+        
+        # Draw 2-4 hills with random sizes and positions
+        num_hills = random.randint(2, 4)
+        for i in range(num_hills):
+            hill_pattern = random.choice(hill_patterns)
+            hill_x = random.randint(0, width - 250)
+            hill_y = height - random.randint(120, 250)
+            
+            for row, pattern in enumerate(hill_pattern):
+                for col, char in enumerate(pattern):
+                    if char == '#':
+                        x = hill_x + col * block_size
+                        y = hill_y + row * block_size
+                        # Add some shading variation
+                        color = hill_green if (row + col + i) % 3 != 0 else hill_dark_green
+                        draw.rectangle([(x, y), (x + block_size, y + block_size)], 
+                                     fill=color)
+        
+        # Draw pipes
+        pipe_green = (0, 184, 0)
+        pipe_dark_green = (0, 124, 0)
+        pipe_black = (0, 0, 0)
+        
+        # Draw 1-3 pipes
+        num_pipes = random.randint(1, 3)
+        for i in range(num_pipes):
+            pipe_x = 50 + i * 300 + random.randint(0, 100)
+            pipe_height = 80 + random.randint(0, 80)
+            pipe_y = height - pipe_height - 100
+            
+            # Pipe top (wider part)
+            draw.rectangle([(pipe_x - block_size, pipe_y), 
+                          (pipe_x + 3 * block_size, pipe_y + 2 * block_size)], 
+                         fill=pipe_green)
+            draw.rectangle([(pipe_x - block_size, pipe_y), 
+                          (pipe_x + 3 * block_size, pipe_y + block_size)], 
+                         fill=pipe_dark_green)
+            
+            # Pipe body
+            draw.rectangle([(pipe_x, pipe_y + 2 * block_size), 
+                          (pipe_x + 2 * block_size, pipe_y + pipe_height)], 
+                         fill=pipe_green)
+            # Pipe highlight
+            draw.rectangle([(pipe_x, pipe_y + 2 * block_size), 
+                          (pipe_x + block_size // 2, pipe_y + pipe_height)], 
+                         fill=pipe_dark_green)
+            # Pipe shadow
+            draw.rectangle([(pipe_x + 2 * block_size - block_size // 2, pipe_y + 2 * block_size), 
+                          (pipe_x + 2 * block_size, pipe_y + pipe_height)], 
+                         fill=pipe_black)
+        
+        # Draw ground/blocks
+        ground_brown = (200, 76, 12)
+        ground_dark = (128, 48, 0)
+        
+        ground_height = 100
+        for x in range(0, width, block_size):
+            for y in range(height - ground_height, height, block_size):
+                # Create a brick pattern
+                if (x // block_size + y // block_size) % 2 == 0:
+                    draw.rectangle([(x, y), (x + block_size, y + block_size)], 
+                                 fill=ground_brown, outline=ground_dark, width=1)
+                else:
+                    draw.rectangle([(x, y), (x + block_size, y + block_size)], 
+                                 fill=ground_dark)
+        
+        # Add some question blocks
+        block_yellow = (252, 152, 56)
+        block_orange = (200, 76, 12)
+        
+        # Draw 1-3 question blocks
+        num_blocks = random.randint(1, 3)
+        for i in range(num_blocks):
+            block_x = 150 + i * 200 + random.randint(0, 50)
+            block_y = height - 250 - random.randint(0, 100)
+            
+            # Draw question block
+            draw.rectangle([(block_x, block_y), 
+                          (block_x + 2 * block_size, block_y + 2 * block_size)], 
+                         fill=block_yellow, outline=block_orange, width=2)
+            
+            # Draw question mark
+            draw.text((block_x + block_size - 5, block_y + 2), "?", 
+                     fill=block_orange, font=ImageFont.load_default())
+        
+        # Add 8-bit animals/creatures
+        creature_patterns = [
+            # Mushroom (like Mario mushroom)
+            {
+                "pattern": [
+                    "   ####   ",
+                    " ######## ",
+                    "##########",
+                    "##  ##  ##",
+                    "##########",
+                    "  ##  ##  ",
+                    "  ######  ",
+                    "  ##  ##  "
+                ],
+                "colors": [(255, 0, 0), (255, 255, 255), (200, 76, 12)]  # red cap, white spots, brown stem
+            },
+            # Bird
+            {
+                "pattern": [
+                    "    ##    ",
+                    "   ####   ",
+                    "  ######  ",
+                    " ######## ",
+                    "##########",
+                    " ## ## ## ",
+                    "  #    #  "
+                ],
+                "colors": [(100, 149, 237), (255, 255, 0), (255, 140, 0)]  # blue body, yellow beak
+            },
+            # Butterfly
+            {
+                "pattern": [
+                    " ##    ## ",
+                    "####  ####",
+                    "##########",
+                    " ######## ",
+                    "  ######  ",
+                    "   ####   ",
+                    "    ##    "
+                ],
+                "colors": [(255, 182, 193), (255, 105, 180), (255, 20, 147)]  # pink shades
+            },
+            # Turtle
+            {
+                "pattern": [
+                    "   ####   ",
+                    " ######## ",
+                    "##########",
+                    "##########",
+                    " ######## ",
+                    "#  #  #  #"
+                ],
+                "colors": [(0, 128, 0), (34, 139, 34), (85, 107, 47)]  # green shades
+            },
+            # Fish
+            {
+                "pattern": [
+                    "  ####    ",
+                    " ######   ",
+                    "########< ",
+                    " ######   ",
+                    "  ####    "
+                ],
+                "colors": [(255, 140, 0), (255, 165, 0), (255, 69, 0)]  # orange shades
+            },
+            # Star
+            {
+                "pattern": [
+                    "    ##    ",
+                    "   ####   ",
+                    " ######## ",
+                    "##########",
+                    " ######## ",
+                    " ## ## ## ",
+                    "#   ##   #"
+                ],
+                "colors": [(255, 215, 0), (255, 255, 0), (255, 223, 0)]  # gold/yellow
+            },
+            # Flower
+            {
+                "pattern": [
+                    " ## ## ## ",
+                    "##########",
+                    "##  ##  ##",
+                    "##########",
+                    " ## ## ## ",
+                    "   ####   ",
+                    "   ####   ",
+                    "  ######  "
+                ],
+                "colors": [(255, 192, 203), (255, 255, 255), (0, 128, 0)]  # pink petals, white center, green stem
+            },
+            # Bunny
+            {
+                "pattern": [
+                    " # #  # # ",
+                    " ### ### ",
+                    " ####### ",
+                    "# ##### #",
+                    "#########",
+                    " ####### ",
+                    " # ### # "
+                ],
+                "colors": [(255, 255, 255), (255, 192, 203), (0, 0, 0)]  # white, pink nose, black eyes
+            }
+        ]
+        
+        # Add 2-4 random creatures
+        num_creatures = random.randint(2, 4)
+        used_positions = []
+        
+        for i in range(num_creatures):
+            creature = random.choice(creature_patterns)
+            
+            # Find a non-overlapping position
+            attempts = 0
+            while attempts < 10:
+                creature_x = random.randint(50, width - 200)
+                creature_y = random.randint(200, height - 300)
+                
+                # Check if position is clear
+                overlap = False
+                for pos in used_positions:
+                    if abs(creature_x - pos[0]) < 150 and abs(creature_y - pos[1]) < 150:
+                        overlap = True
+                        break
+                
+                if not overlap:
+                    used_positions.append((creature_x, creature_y))
+                    break
+                attempts += 1
+            
+            if attempts < 10:
+                # Draw the creature
+                for row, pattern_line in enumerate(creature["pattern"]):
+                    for col, char in enumerate(pattern_line):
+                        if char == '#':
+                            x = creature_x + col * block_size
+                            y = creature_y + row * block_size
+                            # Use different colors based on position in pattern
+                            color_index = (row + col) % len(creature["colors"])
+                            color = creature["colors"][color_index]
+                            draw.rectangle([(x, y), (x + block_size, y + block_size)], 
+                                         fill=color)
     
     # Add title and author text if provided
     if title or author:

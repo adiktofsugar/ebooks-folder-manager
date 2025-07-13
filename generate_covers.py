@@ -115,7 +115,7 @@ def generate_html_gallery(output_dir, covers_info, timestamp, total_covers):
         <p><strong>Generated:</strong> {timestamp}</p>
         <p><strong>Total Covers:</strong> {total_covers}</p>
         <p><strong>Cover Size:</strong> 600x800px (fixed by EFM)</p>
-        <p><strong>Patterns:</strong> Triangles, Gradient, Mondrian</p>
+        <p><strong>Patterns:</strong> Triangles, Gradient, Mondrian, Mario</p>
         <p><strong>Note:</strong> These covers use the same generation function as EFM</p>
     </div>
     
@@ -217,8 +217,8 @@ def main():
         author = random.choice(authors)
         
         # Determine pattern type from hash (same logic as in generate_cover_image)
-        pattern_type = int(book_hash[2:4], 16) % 3
-        pattern_names = ["Triangles", "Gradient", "Mondrian"]
+        pattern_type = int(book_hash[2:4], 16) % 4
+        pattern_names = ["Triangles", "Gradient", "Mondrian", "Mario"]
         pattern_name = pattern_names[pattern_type]
         
         # Extract colors from hash (same logic as in generate_cover_image)
