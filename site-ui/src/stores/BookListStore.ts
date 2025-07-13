@@ -36,7 +36,12 @@ export default class BookListStore {
 		return data.filter((d) => d.error === true);
 	}
 
-	get books(): { title: string; filename: string; author: string }[] {
+	get books(): {
+		title: string;
+		filename: string;
+		author: string;
+		hash: string;
+	}[] {
 		const { data, searchQuery } = this;
 		if (!data) {
 			return [];
@@ -45,10 +50,11 @@ export default class BookListStore {
 		//   something else at the root?
 		const books = data
 			.filter((d) => d.error === false)
-			.map(({ filename, metadata: { title, author } }) => ({
+			.map(({ filename, metadata: { title, author }, hash }) => ({
 				title: title || "(unknown)",
 				author: author || "(unknown)",
 				filename,
+				hash,
 				score: 0,
 			}));
 		if (!searchQuery) {

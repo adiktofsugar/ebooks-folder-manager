@@ -2,10 +2,20 @@
 	margin-bottom: 2rem;
 	padding-bottom: 2rem;
 	border-bottom: 1px solid var(--border-color);
+	display: flex;
+	gap: 2rem;
 }
 
 .bookItem:last-child {
 	border-bottom: none;
+}
+
+.bookContent {
+	flex: 1;
+}
+
+.bookImage {
+	flex-shrink: 0;
 }
 
 .title {
@@ -28,4 +38,9 @@
 
 .downloadLink:hover {
 	color: var(--link-hover);
+}
+
+.bookCover {
+	display: block;
+	border: 1px solid var(--border-color);
 }
