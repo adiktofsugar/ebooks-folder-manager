@@ -7,7 +7,6 @@ import io
 import zipfile
 import random
 from PIL import Image, ImageDraw, ImageFont
-from opensimplex import OpenSimplex
 import colorsys
 
 import pymupdf
@@ -197,24 +196,9 @@ def generate_cover_image(book_hash: str, title: str | None = None,
     comp_color = tuple(int(c * 255) for c in comp_color)
     
     # Choose pattern type based on hash
-    pattern_type = int(book_hash[2:4], 16) % 5
+    pattern_type = int(book_hash[2:4], 16) % 3
     
     if pattern_type == 0:
-        # Simplex noise pattern
-        noise_gen = OpenSimplex(seed=seed)
-        scale = 0.01
-        for y in range(height):
-            for x in range(width):
-                n = noise_gen.noise2(x * scale, y * scale)
-                # Normalize to 0-1
-                n = (n + 1) / 2
-                # Interpolate between colors
-                r = int(base_color[0] * n + comp_color[0] * (1-n))
-                g = int(base_color[1] * n + comp_color[1] * (1-n))
-                b = int(base_color[2] * n + comp_color[2] * (1-n))
-                img.putpixel((x, y), (r, g, b))
-                
-    elif pattern_type == 1:
         # Geometric triangles
         for i in range(20):
             x1 = random.randint(0, width)
@@ -234,7 +218,7 @@ def generate_cover_image(book_hash: str, title: str | None = None,
                                fill=(*color, alpha))
             img = Image.alpha_composite(img.convert('RGBA'), overlay).convert('RGB')
             
-    elif pattern_type == 2:
+    elif pattern_type == 1:
         # Gradient with circles
         for y in range(height):
             # Gradient background
@@ -252,7 +236,7 @@ def generate_cover_image(book_hash: str, title: str | None = None,
             draw.ellipse([x-radius, y-radius, x+radius, y+radius], 
                         outline=comp_color, width=3)
             
-    elif pattern_type == 3:
+    elif pattern_type == 2:
         # Mondrian-style blocks
         draw.rectangle([(0, 0), (width, height)], fill=base_color)
         
@@ -267,20 +251,6 @@ def generate_cover_image(book_hash: str, title: str | None = None,
             color = random.choice(colors)
             
             draw.rectangle([(x1, y1), (x2, y2)], fill=color, outline=(0, 0, 0), width=3)
-            
-    else:
-        # Wave pattern
-        draw.rectangle([(0, 0), (width, height)], fill=base_color)
-        noise_gen = OpenSimplex(seed=seed)
-        
-        for i in range(10):
-            points = []
-            for x in range(0, width + 20, 20):
-                y = height // 2 + int(100 * noise_gen.noise2(x * 0.01, i * 0.5))
-                points.append((x, y + i * 30))
-            
-            if len(points) > 1:
-                draw.line(points, fill=comp_color, width=5)
     
     # Add title and author text if provided
     if title or author:
