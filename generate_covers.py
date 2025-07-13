@@ -5,6 +5,7 @@ import random
 from datetime import datetime
 from pathlib import Path
 import shutil
+import colorsys
 
 from efm.metadata import generate_cover_image
 
@@ -82,6 +83,15 @@ def generate_html_gallery(output_dir, covers_info, timestamp, total_covers):
             font-weight: 600;
             color: #555;
         }}
+        .color-swatch {{
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin: 0 4px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            vertical-align: middle;
+        }}
         .metadata {{
             background: #f8f8f8;
             padding: 20px;
@@ -105,6 +115,7 @@ def generate_html_gallery(output_dir, covers_info, timestamp, total_covers):
         <p><strong>Generated:</strong> {timestamp}</p>
         <p><strong>Total Covers:</strong> {total_covers}</p>
         <p><strong>Cover Size:</strong> 600x800px (fixed by EFM)</p>
+        <p><strong>Patterns:</strong> Triangles, Gradient, Mondrian</p>
         <p><strong>Note:</strong> These covers use the same generation function as EFM</p>
     </div>
     
@@ -112,6 +123,11 @@ def generate_html_gallery(output_dir, covers_info, timestamp, total_covers):
 """
     
     for info in covers_info:
+        color_swatches = ''.join([
+            f'<span class="color-swatch" style="background-color: rgb{color}"></span>'
+            for color in info['colors']
+        ])
+        
         html_content += f"""
         <div class="cover-item">
             <img src="{info['filename']}" alt="Cover {info['index']}" class="cover-image">
@@ -122,6 +138,12 @@ def generate_html_gallery(output_dir, covers_info, timestamp, total_covers):
                 </div>
                 <div class="info-row">
                     <span class="info-label">Author:</span> {info['author']}
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Pattern:</span> {info['pattern']}
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Colors:</span> {color_swatches}
                 </div>
                 <div class="info-row">
                     <span class="info-label">Hash:</span> {info['hash'][:16]}...
@@ -155,9 +177,6 @@ def main():
     # Create output directory
     output_dir = Path(args.output)
     if output_dir.exists():
-        print(f"Warning: Output directory '{output_dir}' already exists. Continue? [y/N] ", end='')
-        if input().lower() != 'y':
-            return
         shutil.rmtree(output_dir)
     output_dir.mkdir(parents=True)
     
@@ -197,6 +216,24 @@ def main():
         title = random.choice(titles)
         author = random.choice(authors)
         
+        # Determine pattern type from hash (same logic as in generate_cover_image)
+        pattern_type = int(book_hash[2:4], 16) % 3
+        pattern_names = ["Triangles", "Gradient", "Mondrian"]
+        pattern_name = pattern_names[pattern_type]
+        
+        # Extract colors from hash (same logic as in generate_cover_image)
+        hue = int(book_hash[:2], 16) / 255.0
+        base_color = colorsys.hsv_to_rgb(hue, 0.7, 0.8)
+        base_color = tuple(int(c * 255) for c in base_color)
+        
+        comp_hue = (hue + 0.5) % 1.0
+        comp_color = colorsys.hsv_to_rgb(comp_hue, 0.6, 0.9)
+        comp_color = tuple(int(c * 255) for c in comp_color)
+        
+        colors = [base_color, comp_color]
+        if pattern_type == 2:  # Mondrian also uses white and black
+            colors.extend([(255, 255, 255), (0, 0, 0)])
+        
         # Generate cover using the same function as EFM
         cover_data = generate_cover_image(book_hash, title, author)
         
@@ -211,10 +248,12 @@ def main():
             'filename': filename,
             'title': title,
             'author': author,
-            'hash': book_hash
+            'hash': book_hash,
+            'pattern': pattern_name,
+            'colors': colors[:2]  # Only show the two main colors
         })
         
-        print(f"  Generated cover {i+1}/{args.number}")
+        print(f"  Generated cover {i+1}/{args.number} ({pattern_name})")
     
     # Generate HTML gallery
     html_content = generate_html_gallery(
