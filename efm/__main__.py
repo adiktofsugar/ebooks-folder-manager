@@ -18,7 +18,7 @@ from efm.transaction import (
     TransactionError,
 )
 from efm.config import get_closest_config
-from efm.tasks import TasksFile, TaskStatus, process_task
+from efm.tasks import TasksFile, process_task, TaskResult, TaskSuccess, TaskError
 
 
 logger = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ def main():
     files = args.spec
     all_files: list[Path] = []
 
-    # Process tasks.md file if it exists in any of the specified directories
+    # Process tasks.jsonl file if it exists in any of the specified directories
     directories_to_check = set()
     for spec in args.spec:
         p = Path(spec).resolve()
@@ -73,28 +73,39 @@ def main():
         elif p.is_file():
             directories_to_check.add(p.parent)
 
+    task_results: list[TaskResult] = []
     for directory in directories_to_check:
-        tasks_filepath = directory / "tasks.md"
+        tasks_filepath = directory / "tasks.jsonl"
         if tasks_filepath.exists():
             logger.info(f"Found tasks file: {tasks_filepath}")
             tasks_file = TasksFile(tasks_filepath)
-            tasks_file.read()
-
-            # Process pending tasks
-            pending_tasks = tasks_file.get_pending_tasks()
-            if pending_tasks:
-                logger.info(f"Processing {len(pending_tasks)} pending tasks")
-                for task in pending_tasks:
-                    # Set task to in progress
-                    tasks_file.update_task_status(task, TaskStatus.IN_PROGRESS)
-                    tasks_file.write()
-
-                    # Process the task
-                    result_status = process_task(task, directory)
-
-                    # Update task status based on result
-                    tasks_file.update_task_status(task, result_status)
-                    tasks_file.write()
+            
+            # Get initial task count
+            initial_count = tasks_file.get_task_count()
+            if initial_count > 0:
+                logger.info(f"Processing {initial_count} pending tasks")
+            
+            # Process all tasks by popping from the top
+            while True:
+                task = tasks_file.pop_task()
+                if task is None:
+                    break
+                    
+                # Process the task
+                result = process_task(task, directory)
+                task_results.append(result)
+                
+                # Log result
+                if isinstance(result, TaskSuccess):
+                    logger.info(f"Task '{result.description}' completed successfully")
+                    if result.messages:
+                        for msg in result.messages:
+                            logger.info(f"  - {msg}")
+                else:
+                    logger.error(f"Task '{result.description}' failed: {result.error_message}")
+                    if result.messages:
+                        for msg in result.messages:
+                            logger.info(f"  - {msg}")
 
     for original_filepath in files:
         logger.debug(f"Processing {original_filepath}")
@@ -119,7 +130,7 @@ def main():
         if original_filepath.name in ["efm.toml", "efm.yaml", "efm.yml", "efm.json"]:
             logger.debug(f"Skipping {original_filepath} because it's a config file.")
             continue
-        if original_filepath.name == "tasks.md":
+        if original_filepath.name == "tasks.jsonl":
             logger.debug(f"Skipping {original_filepath} because it's a tasks file.")
             continue
 
@@ -150,6 +161,19 @@ def main():
             # Always include error results
             deduplicated_results.append(result)
 
+    # Show summary of tasks if any were processed
+    if task_results:
+        task_successes = [r for r in task_results if isinstance(r, TaskSuccess)]
+        task_failures = [r for r in task_results if isinstance(r, TaskError)]
+        print(f"\nProcessed {len(task_results)} tasks:")
+        print(f"  ✓ {len(task_successes)} successful")
+        if task_failures:
+            print(f"  ✗ {len(task_failures)} failed")
+            if loglevel == logging.DEBUG:
+                print("\nFailed tasks:")
+                for error_result in task_failures:
+                    print(f"  - {error_result.description}: {error_result.error_message}")
+    
     # Show summary
     print(f"\nProcessed {len(all_files)} files:")
     print(f"  ✓ {len(successes)} successful")

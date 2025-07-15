@@ -14,12 +14,10 @@ def test_main_processes_tasks_file():
         sample_book = tmppath / "test.txt"
         sample_book.write_text("This is a test book")
         
-        # Create a tasks.md file
-        tasks_file = tmppath / "tasks.md"
-        tasks_file.write_text("""| description | parameters | status |
-|-------------|------------|--------|
-| generate_covers | | |
-| validate_formats | | |
+        # Create a tasks.jsonl file
+        tasks_file = tmppath / "tasks.jsonl"
+        tasks_file.write_text("""{"description": "generate_covers", "parameters": ""}
+{"description": "validate_formats", "parameters": ""}
 """)
         
         # Run efm on the directory
@@ -37,11 +35,14 @@ def test_main_processes_tasks_file():
         assert "Processing task: generate_covers" in result.stderr
         assert "Processing task: validate_formats" in result.stderr
         
-        # Check that tasks.md was updated
+        # Should see task summary in stdout
+        assert "Processed 2 tasks" in result.stdout
+        
+        # Check that tasks.jsonl was processed (should be empty now)
         updated_content = tasks_file.read_text()
-        assert "success" in updated_content
+        assert updated_content.strip() == ""  # All tasks should be consumed
         
         # Check that the sample book was processed
-        # Note: It shows "2 files" because it counts tasks.md initially, but then skips it
+        # Note: It shows "2 files" because it counts tasks.jsonl initially, but then skips it
         assert "Processed 2 files" in result.stdout
         assert "✓ 1 successful" in result.stdout

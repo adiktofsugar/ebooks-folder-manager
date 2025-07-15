@@ -1,0 +1,6 @@
+{"description": "generate_covers", "parameters": ""}
+{"description": "update_metadata", "parameters": ""}
+{"description": "set_cover", "parameters": "cover.png,book1.pdf"}
+{"description": "set_cover", "parameters": "https://example.com/cover.jpg,book2.epub"}
+{"description": "check_duplicates", "parameters": ""}
+{"description": "validate_formats", "parameters": ""}

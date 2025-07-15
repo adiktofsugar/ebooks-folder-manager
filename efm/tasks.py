@@ -1,6 +1,8 @@
+import json
 import logging
 from pathlib import Path
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict, field
+from typing import List, Optional
 from enum import Enum
 
 
@@ -8,102 +10,109 @@ logger = logging.getLogger(__name__)
 
 
 class TaskStatus(Enum):
-    PENDING = ""
-    IN_PROGRESS = "in progress"
+    PENDING = "pending"
+    IN_PROGRESS = "in_progress"
     SUCCESS = "success"
     ERROR = "error"
 
 
 @dataclass
-class Task:
+class TaskResult:
+    """Base class for task results"""
     description: str
-    parameters: str  # Additional parameters for the task
-    status: TaskStatus
+    parameters: str
+    
+    def to_dict(self):
+        return asdict(self)
+    
+    @classmethod
+    def from_dict(cls, data: dict):
+        if data.get("error", False):
+            return TaskError(**data)
+        else:
+            return TaskSuccess(**data)
 
-    def to_table_row(self) -> str:
-        status_str = self.status.value if self.status != TaskStatus.PENDING else ""
-        return f"| {self.description} | {self.parameters} | {status_str} |"
+
+@dataclass
+class TaskSuccess(TaskResult):
+    """Successful task execution"""
+    error: bool = False
+    messages: List[str] = field(default_factory=list)
+
+
+@dataclass 
+class TaskError(TaskResult):
+    """Failed task execution"""
+    error: bool = True
+    error_message: str = ""
+    messages: List[str] = field(default_factory=list)
+
+
+@dataclass
+class Task:
+    """A task to be processed"""
+    description: str
+    parameters: str = ""
+    
+    def to_dict(self):
+        return asdict(self)
+    
+    @classmethod
+    def from_dict(cls, data: dict):
+        return cls(**data)
 
 
 class TasksFile:
+    """Manages a JSONL file of tasks"""
+    
     def __init__(self, filepath: Path):
         self.filepath = filepath
-        self.tasks: list[Task] = []
-
-    def read(self) -> None:
-        """Read tasks from the markdown file."""
-        if not self.filepath.exists():
-            logger.debug(f"Tasks file {self.filepath} does not exist")
-            return
-
-        content = self.filepath.read_text()
-        lines = content.strip().split("\n")
-
-        # Find the table start (header row)
-        table_start = -1
-        for i, line in enumerate(lines):
-            if (
-                "|" in line
-                and "description" in line.lower()
-                and "status" in line.lower()
-            ):
-                table_start = i
-                break
-
-        if table_start == -1:
-            logger.warning(f"No valid table header found in {self.filepath}")
-            return
-
-        # Skip the header and separator rows
-        for i in range(table_start + 2, len(lines)):
-            line = lines[i].strip()
-            if not line or not line.startswith("|"):
-                continue
-
-            # Parse the table row
-            parts = [
-                p.strip() for p in line.split("|")[1:-1]
-            ]  # Skip empty first/last elements
+        
+    def add_task(self, task: Task) -> None:
+        """Append a new task to the end of the file."""
+        with open(self.filepath, 'a') as f:
+            f.write(json.dumps(task.to_dict()) + '\n')
             
-            # Expect exactly 3 columns: description | parameters | status
-            if len(parts) >= 3:
-                description = parts[0]
-                parameters = parts[1]
-                status_str = parts[2].lower()
+    def pop_task(self) -> Optional[Task]:
+        """Remove and return the first task from the file."""
+        if not self.filepath.exists():
+            return None
+            
+        lines = self.filepath.read_text().strip().split('\n')
+        if not lines or not lines[0]:
+            return None
+            
+        # Parse first line as task
+        try:
+            task_data = json.loads(lines[0])
+            task = Task.from_dict(task_data)
+        except (json.JSONDecodeError, TypeError) as e:
+            logger.error(f"Failed to parse task from line: {lines[0]}")
+            # Remove the corrupted line
+            self.filepath.write_text('\n'.join(lines[1:]) + '\n' if lines[1:] else '')
+            return None
+            
+        # Write back remaining lines
+        if len(lines) > 1:
+            self.filepath.write_text('\n'.join(lines[1:]) + '\n')
+        else:
+            self.filepath.write_text('')
+            
+        return task
+        
+    def get_task_count(self) -> int:
+        """Get the number of pending tasks."""
+        if not self.filepath.exists():
+            return 0
+        lines = self.filepath.read_text().strip().split('\n')
+        return len([line for line in lines if line.strip()])
 
-                # Map status string to enum
-                if status_str == "in progress":
-                    status = TaskStatus.IN_PROGRESS
-                elif status_str == "success":
-                    status = TaskStatus.SUCCESS
-                elif status_str == "error":
-                    status = TaskStatus.ERROR
-                else:
-                    status = TaskStatus.PENDING
 
-                self.tasks.append(Task(description, parameters, status))
-
-    def write(self) -> None:
-        """Write tasks back to the markdown file."""
-        lines = ["| description | parameters | status |", "|-------------|------------|--------|"]
-        for task in self.tasks:
-            lines.append(task.to_table_row())
-
-        self.filepath.write_text("\n".join(lines) + "\n")
-
-    def get_pending_tasks(self) -> list[Task]:
-        """Get all tasks with empty status."""
-        return [t for t in self.tasks if t.status == TaskStatus.PENDING]
-
-    def update_task_status(self, task: Task, status: TaskStatus) -> None:
-        """Update the status of a task."""
-        task.status = status
-
-
-def process_task(task: Task, directory: Path) -> TaskStatus:
-    """Process a single task based on its description."""
+def process_task(task: Task, directory: Path) -> TaskResult:
+    """Process a single task and return result."""
     logger.info(f"Processing task: {task.description}")
-
+    messages = []
+    
     # Map of task descriptions to processing functions
     task_handlers = {
         "generate_covers": handle_generate_covers,
@@ -112,52 +121,73 @@ def process_task(task: Task, directory: Path) -> TaskStatus:
         "validate_formats": handle_validate_formats,
         "set_cover": handle_set_cover,
     }
-
+    
     # Find a matching handler
     for key, handler in task_handlers.items():
         if key in task.description.lower():
             try:
                 # Pass task parameters for handlers that need them
                 if key == "set_cover":
-                    handler(directory, task.parameters)
+                    messages = handler(directory, task.parameters)
                 else:
-                    handler(directory)
-                return TaskStatus.SUCCESS
+                    messages = handler(directory)
+                    
+                return TaskSuccess(
+                    description=task.description,
+                    parameters=task.parameters,
+                    messages=messages
+                )
             except Exception as e:
-                logger.error(f"Error processing task '{task.description}': {e}")
-                return TaskStatus.ERROR
+                error_msg = f"Error processing task '{task.description}': {e}"
+                logger.error(error_msg)
+                return TaskError(
+                    description=task.description,
+                    parameters=task.parameters,
+                    error_message=str(e),
+                    messages=messages
+                )
+    
+    # No handler found
+    error_msg = f"No handler found for task: {task.description}"
+    logger.warning(error_msg)
+    return TaskError(
+        description=task.description,
+        parameters=task.parameters,
+        error_message=error_msg,
+        messages=[]
+    )
 
-    logger.warning(f"No handler found for task: {task.description}")
-    return TaskStatus.ERROR
 
-
-def handle_generate_covers(directory: Path) -> None:
+def handle_generate_covers(directory: Path) -> List[str]:
     """Generate covers for books without them."""
     logger.info("Generating covers...")
     # TODO: Implement actual cover generation for books in the directory
     # For now, this is a placeholder that succeeds
-    logger.info(f"Would generate covers for books in {directory}")
+    return [f"Would generate covers for books in {directory}"]
 
 
-def handle_update_metadata(directory: Path) -> None:
+def handle_update_metadata(directory: Path) -> List[str]:
     """Update metadata for all books."""
     logger.info("Updating metadata...")
     # Placeholder for metadata update logic
+    return ["Metadata update placeholder"]
 
 
-def handle_check_duplicates(directory: Path) -> None:
+def handle_check_duplicates(directory: Path) -> List[str]:
     """Check for duplicate books."""
     logger.info("Checking for duplicates...")
     # Placeholder for duplicate checking logic
+    return ["Duplicate check placeholder"]
 
 
-def handle_validate_formats(directory: Path) -> None:
+def handle_validate_formats(directory: Path) -> List[str]:
     """Validate ebook formats."""
     logger.info("Validating formats...")
     # Placeholder for format validation logic
+    return ["Format validation placeholder"]
 
 
-def handle_set_cover(directory: Path, parameters: str) -> None:
+def handle_set_cover(directory: Path, parameters: str) -> List[str]:
     """Set cover image for a specific book file.
     
     Parameters format: "cover_path,book_path"
@@ -165,7 +195,8 @@ def handle_set_cover(directory: Path, parameters: str) -> None:
     - cover_path can be a relative path, absolute path, or URL
     - book_path is the path to the book file relative to the directory
     """
-    logger.info(f"Setting cover with parameters: {parameters}")
+    messages = []
+    messages.append(f"Setting cover with parameters: {parameters}")
     
     if not parameters or "," not in parameters:
         raise ValueError("Parameters must be in format: cover_path,book_path")
@@ -193,4 +224,6 @@ def handle_set_cover(directory: Path, parameters: str) -> None:
     
     # Set the cover
     set_cover_image(book_path, cover_source)
-    logger.info(f"Successfully set cover for {book_path}")
+    messages.append(f"Successfully set cover for {book_path}")
+    
+    return messages
