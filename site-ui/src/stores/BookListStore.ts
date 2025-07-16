@@ -1,12 +1,13 @@
 import fuzzy from "fuzzy";
 import { makeAutoObservable } from "mobx";
-import DbStore from "./DbStore";
+import type DbStore from "./DbStore";
 
 export default class BookListStore {
-	private dbStore = new DbStore();
+	private dbStore;
 	searchQuery = "";
 
-	constructor() {
+	constructor(dbStore: DbStore) {
+		this.dbStore = dbStore;
 		makeAutoObservable(this);
 	}
 	setSearchQuery(query: string) {
@@ -19,17 +20,17 @@ export default class BookListStore {
 		return this.dbStore.error;
 	}
 	get data() {
-		return this.dbStore.data ? this.dbStore.data : null;
-	}
-	get count() {
-		return this.dbStore.count;
+		return this.dbStore.books;
 	}
 	get dbLoaded() {
-		return this.dbStore.data !== null;
+		return !this.dbStore.pending && this.dbStore.data !== null;
+	}
+	get editApi() {
+		return this.dbStore.meta?.edit_api;
 	}
 
 	get errors() {
-		const { data } = this;
+		const data = this.dbStore.books;
 		if (!data) {
 			return [];
 		}
@@ -43,7 +44,8 @@ export default class BookListStore {
 		hash: string;
 		messages: string[];
 	}[] {
-		const { data, searchQuery } = this;
+		const { searchQuery } = this;
+		const data = this.dbStore.books;
 		if (!data) {
 			return [];
 		}

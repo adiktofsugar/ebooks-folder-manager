@@ -1,17 +1,16 @@
+import { observer } from "mobx-react-lite";
 import styles from "./ThemeToggle.module.css";
-import { useTheme } from "./contexts/ThemeContext";
+import type ThemeStore from "./stores/ThemeStore";
 
-export default function ThemeToggle() {
-	const { isDark, toggleTheme } = useTheme();
-
+export default observer(function ThemeToggle({ store }: { store: ThemeStore }) {
 	return (
 		<button
 			type="button"
-			onClick={toggleTheme}
+			onClick={() => store.toggleTheme()}
 			className={styles.toggle}
-			aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
+			aria-label={`Switch to ${store.dark ? "light" : "dark"} mode`}
 		>
-			{isDark ? "☀️" : "🌙"}
+			{store.dark ? "☀️" : "🌙"}
 		</button>
 	);
-}
+});

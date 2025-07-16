@@ -20,4 +20,11 @@ export interface BookResult {
 }
 export type Result = ErrorResult | BookResult;
 
-export type DbResponse = Result[];
+export interface DbMeta {
+	edit_api?: string;
+}
+
+export interface DbResponse {
+	meta: DbMeta;
+	books: Result[];
+}

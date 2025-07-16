@@ -1,6 +1,7 @@
 import { makeAutoObservable, runInAction } from "mobx";
 import yaml from "yaml";
 import type { DbResponse } from "../interfaces";
+import BookListStore from "./BookListStore";
 
 export default class DbStore {
 	data: DbResponse | null = null;
@@ -9,10 +10,19 @@ export default class DbStore {
 	constructor() {
 		makeAutoObservable(this);
 	}
-	get count() {
-		return this.data ? this.data.length : null;
+	get bookStore() {
+		return this.data ? new BookListStore(this) : null;
+	}
+	get books() {
+		return this.data?.books || null;
+	}
+	get meta() {
+		return this.data?.meta || null;
 	}
 	async load() {
+		if (this.data) {
+			return;
+		}
 		this.pending = true;
 		try {
 			const response = await fetch(new URL("db.yaml", window.location.href));

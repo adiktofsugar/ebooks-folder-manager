@@ -14,8 +14,10 @@
 			"persistent": true
 		},
 		"lint": {
-			"dependsOn": ["^lint"]
+			"dependsOn": ["lint:biome", "lint:ts"]
 		},
+		"lint:biome": {},
+		"lint:ts": {},
 		"fix": {
 			"dependsOn": ["^fix"]
 		}

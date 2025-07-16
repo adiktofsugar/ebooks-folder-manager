@@ -4,7 +4,9 @@
 	"description": "The ui for the generated site",
 	"scripts": {
 		"build": "tsx ./scripts/build.mts",
-		"lint": "biome check",
+		"lint": "echo Linting complete",
+		"lint:biome": "biome check",
+		"lint:ts": "tsc --noEmit",
 		"fix": "biome check --fix --unsafe",
 		"dev": "rsync --info=progress2 -a dist/ ~/ebooks-site/ && python -m http.server -d ~/ebooks-site"
 	},
