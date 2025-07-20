@@ -46,14 +46,14 @@ def get_metadata(filepath: Path) -> Metadata | None:
     ]
     ext = filepath.suffix[1:].upper()
     if ext not in supported_formats:
-        logger.info(
+        logger.warning(
             f"{filepath} is not a supported format for pymupdf. Format is {ext}."
         )
         return None
     try:
         f: pymupdf.Document = pymupdf.open(filepath)
         if f.metadata is None:
-            logger.info(f"{filepath} has no metadata.")
+            logger.debug(f"{filepath} has no metadata.")
             return None
         format = f.metadata.get("format")
         keywords_raw = f.metadata.get("keywords")
@@ -80,13 +80,6 @@ def get_metadata(filepath: Path) -> Metadata | None:
         raise GetMetadataError(filepath, original_error=e)
 
 
-
-
-
-
-
-
-
 def extract_cover_image(
     filepath: Path, metadata: Metadata | None, cache_dir: Path
 ) -> str | None:
@@ -101,10 +94,10 @@ def extract_cover_image(
         Hash string of the cover image, or None if failed
     """
     cache_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Try to extract cover
     cover = extract_cover(filepath)
-    
+
     # If no cover found, generate one
     if not cover:
         # Use file hash as seed
@@ -118,13 +111,13 @@ def extract_cover_image(
         if not title:
             title = filepath.stem
 
-        logger.info(f"Generating cover for {filepath.name}")
+        logger.debug(f"Generating cover for {filepath.name}")
         cover = generate_cover(file_hash, title, author)
 
     # Save cover if not already cached
     cover_path = cache_dir / f"{cover.hash}.png"
     if not cover_path.exists():
         cover.save(cover_path)
-        logger.info(f"Saved cover image to {cover_path}")
+        logger.debug(f"Saved cover image to {cover_path}")
 
     return cover.hash

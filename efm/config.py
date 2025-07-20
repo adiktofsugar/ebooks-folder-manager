@@ -1,9 +1,12 @@
 from pathlib import Path
 from schema import Schema, Optional, Use
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def _path_exists(s: str) -> Path:
-    p = Path(s)
+    p = Path(s).expanduser()
     if not p.exists():
         raise ValueError(f"Path {p} does not exist.")
     return p
@@ -11,11 +14,11 @@ def _path_exists(s: str) -> Path:
 
 schema = Schema(
     {
+        Optional("adobe_user"): str,
+        Optional("adobe_password"): str,
         Optional("adobe_key_files"): [Use(_path_exists)],
         Optional("b_and_n_key_files"): [Use(_path_exists)],
         Optional("ereader_social_drm_file"): Use(_path_exists),
-        Optional("adobe_user"): str,
-        Optional("adobe_password"): str,
         Optional("pdf_passwords"): list[str],
         Optional("kindle_pidnums"): list[str],
         Optional("kindle_serialnums"): list[str],
@@ -23,11 +26,12 @@ schema = Schema(
         Optional("kindle_database_files"): [Use(_path_exists)],
         Optional("kindle_android_files"): [Use(_path_exists)],
     },
-    ignore_extra_keys=True,
 )
 
 
 class Config(object):
+    adobe_user: str | None
+    adobe_password: str | None
     adobe_key_files: list[Path] | None
     b_and_n_key_files: list[Path] | None
     ereader_social_drm_file: Path | None
@@ -35,12 +39,12 @@ class Config(object):
     kindle_serialnums: list[str] | None
     kindle_database_files: list[Path] | None
     kindle_android_files: list[Path] | None
-    adobe_user: str | None
-    adobe_password: str | None
     pdf_passwords: list[str] | None
 
     def __init__(self, filepath: Path):
         data = schema.validate(load_config(filepath))
+        self.adobe_user = data.get("adobe_user")
+        self.adobe_password = data.get("adobe_password")
         self.adobe_key_files = data.get("adobe_key_files")
         self.b_and_n_key_files = data.get("b_and_n_key_files")
         self.ereader_social_drm_file = data.get("ereader_social_drm_file")
@@ -48,8 +52,6 @@ class Config(object):
         self.kindle_serialnums = data.get("kindle_serialnums")
         self.kindle_database_files = data.get("kindle_database_files")
         self.kindle_android_files = data.get("kindle_android_files")
-        self.adobe_user = data.get("adobe_user")
-        self.adobe_password = data.get("adobe_password")
         self.pdf_passwords = data.get("pdf_passwords")
 
 

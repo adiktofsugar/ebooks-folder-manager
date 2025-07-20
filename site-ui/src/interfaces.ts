@@ -12,7 +12,7 @@ export interface ErrorResult {
 }
 export interface BookResult {
 	error: false;
-	metadata: Metadata;
+	metadata: Metadata | null;
 	filename: string;
 	hash: string;
 	messages: string[];

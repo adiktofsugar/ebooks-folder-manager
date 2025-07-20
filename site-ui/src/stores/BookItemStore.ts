@@ -10,8 +10,8 @@ export default class BookItemStore {
 	original_filepath: string;
 
 	constructor(book: BookResult) {
-		this.title = book.metadata.title || "(unknown)";
-		this.author = book.metadata.author || "(unknown)";
+		this.title = book.metadata?.title || "(unknown)";
+		this.author = book.metadata?.author || "(unknown)";
 		this.filename = book.filename;
 		this.hash = book.hash;
 		this.messages = book.messages || [];

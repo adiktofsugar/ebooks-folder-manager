@@ -7,7 +7,14 @@ from pathlib import Path
 
 import yaml
 from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, TimeRemainingColumn
+from rich.progress import (
+    Progress,
+    SpinnerColumn,
+    TextColumn,
+    BarColumn,
+    TaskProgressColumn,
+    TimeRemainingColumn,
+)
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "DeDRM_tools"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "kfxlib"))
@@ -40,7 +47,10 @@ def main():
       are resolved relative to each file, and must be in a file named "efm.toml", "efm.yaml", "efm.yml", or "efm.json".
       
       can have the following keys:
-        - adobe_key_file: path to Adobe key file
+        - adobe_user: email for adobe account, used to download ASCM
+        - adobe_password: password for adobe account, used to download ASCM and to remove adobe DRM
+        - adobe_key_files: list of keyfile paths extracted from from digital editions
+            used in order to remove adobe DRM
         """,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -73,7 +83,7 @@ def main():
 
     # Set up console for progress bar
     console = Console()
-    
+
     # Keep standard logging setup to avoid interfering with transaction logging
     logging.basicConfig(level=loglevel)
 
@@ -170,7 +180,7 @@ def main():
             logger.debug(f"Skipping {original_filepath} because it's a tasks file.")
             continue
         files_to_process.append(original_filepath)
-    
+
     # Process files with progress bar
     if files_to_process:
         with Progress(
@@ -180,12 +190,16 @@ def main():
             TaskProgressColumn(),
             TimeRemainingColumn(),
             console=console,
-            transient=False
         ) as progress:
-            file_progress = progress.add_task("[green]Processing files...", total=len(files_to_process))
-            
+            file_progress = progress.add_task(
+                "[green]Processing files...", total=len(files_to_process)
+            )
+
             for original_filepath in files_to_process:
-                progress.update(file_progress, description=f"[green]Processing {original_filepath.name}...")
+                progress.update(
+                    file_progress,
+                    description=f"[green]Processing {original_filepath.name}...",
+                )
                 logger.debug(f"Processing {original_filepath}")
                 result = Transaction(original_filepath, Path(args.out)).perform()
                 results.append(result)
@@ -222,10 +236,9 @@ def main():
         print(f"  ✓ {len(task_successes)} successful")
         if task_failures:
             print(f"  ✗ {len(task_failures)} failed")
-            if loglevel == logging.DEBUG:
-                print("\nFailed tasks:")
-                for error_result in task_failures:
-                    print(f"  - {error_result.key}: {error_result.error_message}")
+            print("\nFailed tasks:")
+            for error_result in task_failures:
+                print(f"  - {error_result.key}: {error_result.error_message}")
 
     # Show summary
     print(f"\nProcessed {len(all_files)} files:")
@@ -234,12 +247,9 @@ def main():
         print(f"  ≡ {duplicate_count} duplicates")
     if failures:
         print(f"  ✗ {len(failures)} failed")
-        if loglevel == logging.DEBUG:
-            print("\nFailed files:")
-            for error_result in failures:
-                print(
-                    f"  - {error_result.original_filepath}: {error_result.error_message}"
-                )
+        print("\nFailed files:")
+        for error_result in failures:
+            print(f"  - {error_result.original_filepath}: {error_result.error_message}")
     site_dirpath = Path(args.out)
     site_dirpath.mkdir(parents=True, exist_ok=True)
     db_filepath = site_dirpath / "db.yaml"

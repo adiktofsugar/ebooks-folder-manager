@@ -34,13 +34,17 @@ def decryptepub(infile: Path, outdir: Path, key_files: list[Path]) -> Path:
     outfile = outdir / f"{filename}_nodrm.epub"
     try:
         if ineptepub.adeptBook(str(zippath)):
+            if (len(key_files)) == 0:
+                raise RemoveDrmError(infile, message="No key files to try")
             for key_file in key_files:
+                logger.debug(f"Trying to decrypt {infile} with {key_file}...")
                 userkey = open(key_file, "rb").read()
                 try:
                     rv = ineptepub.decryptBook(userkey, str(zippath), str(outfile))
                     if rv == 0:
                         logger.debug(f"Decrypted {infile} with key file {key_file}")
                         return outfile
+                    logger.debug(f"Got return value {rv}")
                 except Exception as e:
                     raise RemoveDrmError(infile, original_error=e)
             raise RemoveDrmError(infile, message="No valid key file found")
@@ -70,7 +74,9 @@ def decryptpdf(
         keys: list[tuple[str, bytearray | bytes]] | None = None
         if pdf_encryption == "EBX_HANDLER":
             # Adobe eBook / ADEPT (normal or B&N)
-            keys = [(key_file.name, open(key_file, "rb").read()) for key_file in key_files]
+            keys = [
+                (key_file.name, open(key_file, "rb").read()) for key_file in key_files
+            ]
         elif pdf_encryption == "Standard" or pdf_encryption == "Adobe.APS":
             keys = [
                 (password, bytearray(password, "utf-8"))
@@ -182,7 +188,9 @@ def decryptk4mobi(
 ) -> Path:
     starttime = time.time()
 
-    kindle_dbs, errors = k4mobidedrm.collectKDatabases([str(f) for f in kindle_db_files])
+    kindle_dbs, errors = k4mobidedrm.collectKDatabases(
+        [str(f) for f in kindle_db_files]
+    )
     if len(errors) > 0:
         message = "Error collecting database files:"
         for dbfile, e in errors:
@@ -200,7 +208,10 @@ def decryptk4mobi(
         )
 
         logger.debug(f"Decrypted {infile}")
-        outfile = outdir / f"{k4mobidedrm.inferReasonableName(str(infile), book.getBookTitle())}_nodrm{book.getBookExtension()}"
+        outfile = (
+            outdir
+            / f"{k4mobidedrm.inferReasonableName(str(infile), book.getBookTitle())}_nodrm{book.getBookExtension()}"
+        )
 
         book.getFile(str(outfile))
 
