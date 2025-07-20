@@ -6,6 +6,8 @@ import sys
 from pathlib import Path
 
 import yaml
+from rich.console import Console
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, TimeRemainingColumn
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "DeDRM_tools"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "kfxlib"))
@@ -69,6 +71,10 @@ def main():
             case _:
                 raise ValueError(f"Unknown log level {args.loglevel}")
 
+    # Set up console for progress bar
+    console = Console()
+    
+    # Keep standard logging setup to avoid interfering with transaction logging
     logging.basicConfig(level=loglevel)
 
     if not args.spec:
@@ -151,6 +157,8 @@ def main():
 
     results: list[TransactionResult] = []
 
+    # Filter out files to skip
+    files_to_process = []
     for original_filepath in all_files:
         if str(original_filepath).endswith(".bak"):
             logger.debug(f"Skipping {original_filepath} because it's a backup file.")
@@ -161,10 +169,27 @@ def main():
         if original_filepath.name == "tasks.jsonl":
             logger.debug(f"Skipping {original_filepath} because it's a tasks file.")
             continue
-
-        logger.debug(f"Processing {original_filepath}")
-        result = Transaction(original_filepath, Path(args.out)).perform()
-        results.append(result)
+        files_to_process.append(original_filepath)
+    
+    # Process files with progress bar
+    if files_to_process:
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+            TimeRemainingColumn(),
+            console=console,
+            transient=False
+        ) as progress:
+            file_progress = progress.add_task("[green]Processing files...", total=len(files_to_process))
+            
+            for original_filepath in files_to_process:
+                progress.update(file_progress, description=f"[green]Processing {original_filepath.name}...")
+                logger.debug(f"Processing {original_filepath}")
+                result = Transaction(original_filepath, Path(args.out)).perform()
+                results.append(result)
+                progress.update(file_progress, advance=1)
 
     # Count successes and failures
     successes = [r for r in results if isinstance(r, TransactionSuccess)]

@@ -25,6 +25,7 @@ dependencies = [
     "flask>=3.1.1",
     "flask-cors>=6.0.1",
     "ebooklib>=0.19",
+    "rich>=14.0.0",
 ]
 
 [project.scripts]

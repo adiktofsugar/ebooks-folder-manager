@@ -24,6 +24,10 @@
 	margin: 0 0 0.5rem 0;
 	color: var(--text-primary);
 }
+.title b,
+.author b {
+	color: var(--text-accent);
+}
 
 .author {
 	font-size: 1rem;

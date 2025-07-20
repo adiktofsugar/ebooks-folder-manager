@@ -22,9 +22,10 @@ export default observer(function EditModeInfo({
 		return <p>No data</p>;
 	}
 	return (
-		<>
-			<h3 className={styles.infoTitle}>Edit Server Info</h3>
-			<pre className={styles.infoPre}>{JSON.stringify(data, null, 2)}</pre>
-		</>
+		<ul>
+			<li>
+				<b>Site Directory:</b> {data.site_directory}
+			</li>
+		</ul>
 	);
 });

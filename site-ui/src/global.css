@@ -4,6 +4,8 @@
 	--bg-hover: #f0f0f0;
 	--text-primary: #000000;
 	--text-secondary: #333333;
+	/* https://icolorpalette.com/color/dark-pink */
+	--text-accent: #cb416b;
 	--text-muted: #666666;
 	--border-color: #cccccc;
 	--link-color: #0000ee;
@@ -16,6 +18,8 @@
 	--bg-hover: #2a2a2a;
 	--text-primary: #dddddd;
 	--text-secondary: #bbbbbb;
+	/* https://icolorpalette.com/color/hot-pink */
+	--text-accent: #ff69b4;
 	--text-muted: #888888;
 	--border-color: #333333;
 	--link-color: #8888ff;
