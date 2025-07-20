@@ -1,8 +1,8 @@
 import { observer } from "mobx-react-lite";
 import { useEffect, useState } from "react";
 import styles from "./EditModeButton.module.css";
-import type EditDbStore from "./stores/EditDbStore";
 import EditModeInfo from "./EditModeInfo";
+import type EditDbStore from "./stores/EditDbStore";
 
 export default observer(function EditModeButton({
 	store,
@@ -16,29 +16,55 @@ export default observer(function EditModeButton({
 		store.load();
 	}, [store]);
 
-	const { error, pending, api } = store;
+	const { error, pending, data, api } = store;
 	if (error) {
 		return <pre>{error}</pre>;
 	}
 
+	if (pending) {
+		// it only loads once
+		return null;
+	}
+
+	if (!api) {
+		return null;
+	}
+
 	return (
-		<>
-			<button
-				type="button"
-				onClick={handleClick}
-				className={styles.toggle}
-				disabled={pending}
-			>
-				{pending ? "..." : "edit server active"}
+		<div className={styles.container}>
+			<button type="button" onClick={handleClick} className={styles.toggle}>
+				edit server active
 			</button>
-			{showInfo && api && (
-				<EditModeInfo
-					store={api.info}
+			{showInfo && (
+				<EditModeInfoContainer
 					onClose={() => {
 						setShowInfo(false);
 					}}
-				/>
+				>
+					<EditModeInfo store={api.info} />
+				</EditModeInfoContainer>
 			)}
-		</>
+		</div>
 	);
 });
+
+function EditModeInfoContainer({
+	children,
+	onClose,
+}: {
+	children: React.ReactNode;
+	onClose: () => unknown;
+}) {
+	return (
+		<div className={styles.infoPanel}>
+			{children}
+			<button
+				type="button"
+				onClick={() => onClose()}
+				className={styles.infoCloseButton}
+			>
+				Close
+			</button>
+		</div>
+	);
+}

@@ -19,9 +19,6 @@ export default class EditDbStore {
 		};
 	}
 	async load() {
-		if (this.data !== undefined) {
-			return;
-		}
 		this.pending = true;
 		try {
 			const response = await fetch(

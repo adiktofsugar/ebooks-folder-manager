@@ -1,5 +1,9 @@
+.container {
+	position: relative;
+}
 .toggle {
 	background: var(--bg-primary);
+	color: var(--text-primary);
 	border: 1px solid var(--text-primary);
 	padding: 0.5rem;
 	font-size: 1rem;
@@ -9,4 +13,31 @@
 .toggle:hover {
 	background: var(--text-primary);
 	color: var(--bg-primary);
+}
+
+.infoPanel {
+	position: absolute;
+	top: 100%;
+	right: 0;
+	background: var(--bg-secondary);
+	border: 1px solid var(--border);
+	padding: 1rem;
+	border-radius: 8px;
+	min-width: 300px;
+	z-index: 1000;
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.infoCloseButton {
+	margin-top: 0.5rem;
+	padding: 0.25rem 0.5rem;
+	background: var(--primary);
+	color: white;
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+}
+
+.infoCloseButton:hover {
+	opacity: 0.9;
 }

@@ -5,8 +5,7 @@ import type EditApiInfoStore from "./stores/EditApiInfoStore";
 
 export default observer(function EditModeInfo({
 	store,
-	onClose,
-}: { store: EditApiInfoStore; onClose: () => unknown }) {
+}: { store: EditApiInfoStore }) {
 	useEffect(() => {
 		store.load();
 	}, [store]);
@@ -14,7 +13,7 @@ export default observer(function EditModeInfo({
 	const { error, pending, data } = store;
 
 	if (error) {
-		return <pre>{error}</pre>;
+		return <p>{error}</p>;
 	}
 	if (pending) {
 		return <p>Loading...</p>;
@@ -23,16 +22,9 @@ export default observer(function EditModeInfo({
 		return <p>No data</p>;
 	}
 	return (
-		<div className={styles.infoPanel}>
+		<>
 			<h3 className={styles.infoTitle}>Edit Server Info</h3>
 			<pre className={styles.infoPre}>{JSON.stringify(data, null, 2)}</pre>
-			<button
-				type="button"
-				onClick={() => onClose()}
-				className={styles.closeButton}
-			>
-				Close
-			</button>
-		</div>
+		</>
 	);
 });
