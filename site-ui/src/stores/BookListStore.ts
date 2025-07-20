@@ -1,7 +1,21 @@
 import fuzzy from "fuzzy";
 import { makeAutoObservable } from "mobx";
+import { createContext, useContext } from "react";
+import type { BookMatchData } from "../interfaces";
+import BookItemStore from "./BookItemStore";
 import type DbStore from "./DbStore";
 
+interface BookWithMatch {
+	book: BookItemStore;
+	matchData: BookMatchData;
+}
+
+export const BookListStoreContext = createContext<BookListStore | null>(null);
+export function useBookListStore() {
+	const store = useContext(BookListStoreContext);
+	if (!store) throw new Error("No BookListStore in context");
+	return store;
+}
 export default class BookListStore {
 	private dbStore;
 	searchQuery = "";
@@ -37,46 +51,61 @@ export default class BookListStore {
 		return data.filter((d) => d.error === true);
 	}
 
-	get books(): {
-		title: string;
-		filename: string;
-		author: string;
-		hash: string;
-		messages: string[];
-	}[] {
-		const { searchQuery } = this;
+	get books(): BookItemStore[] {
 		const data = this.dbStore.books;
 		if (!data) {
 			return [];
 		}
 		// TODO: handle errors - probably that means
 		//   something else at the root?
-		const books = data
+		return data
 			.filter((d) => d.error === false)
-			.map(({ filename, metadata: { title, author }, hash, messages }) => ({
-				title: title || "(unknown)",
-				author: author || "(unknown)",
-				filename,
-				hash,
-				messages: messages || [],
-				score: 0,
-			}));
-		if (!searchQuery) {
-			return books;
-		}
-		for (const book of books) {
-			for (const key of ["title", "author"] as const) {
-				const match = fuzzy.match(searchQuery, book[key], {
+			.map((book) => new BookItemStore(book));
+	}
+
+	get booksSorted(): BookWithMatch[] {
+		const { searchQuery, books } = this;
+
+		const booksWithMatch = books.map((book) => {
+			let score = 0;
+			let titleHtml = book.title;
+			let authorHtml = book.author;
+
+			if (searchQuery) {
+				const titleMatch = fuzzy.match(searchQuery, book.title, {
 					pre: "<b>",
 					post: "</b>",
 				});
-				if (match) {
-					book.score = match.score;
-					book[key] = match.rendered;
+				if (titleMatch) {
+					score = Math.max(score, titleMatch.score);
+					titleHtml = titleMatch.rendered;
+				}
+
+				const authorMatch = fuzzy.match(searchQuery, book.author, {
+					pre: "<b>",
+					post: "</b>",
+				});
+				if (authorMatch) {
+					score = Math.max(score, authorMatch.score);
+					authorHtml = authorMatch.rendered;
 				}
 			}
+
+			return {
+				book,
+				matchData: {
+					score,
+					titleHtml,
+					authorHtml,
+				},
+			};
+		});
+
+		if (!searchQuery) {
+			return booksWithMatch;
 		}
-		return books.sort((a, b) => b.score - a.score);
+
+		return booksWithMatch.sort((a, b) => b.matchData.score - a.matchData.score);
 	}
 	async load() {
 		this.dbStore.load();

@@ -28,3 +28,17 @@ export interface DbResponse {
 	meta: DbMeta;
 	books: Result[];
 }
+
+export interface EditDbResponse {
+	url: string;
+}
+
+export interface EditServerInfoResponse {
+	site_directory: string;
+}
+
+export interface BookMatchData {
+	score: number;
+	titleHtml: string;
+	authorHtml: string;
+}

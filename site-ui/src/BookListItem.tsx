@@ -2,19 +2,15 @@ import { observer } from "mobx-react-lite";
 import { useState } from "react";
 import BookCover from "./BookCover";
 import styles from "./BookListItem.module.css";
+import type { BookMatchData } from "./interfaces";
+import type BookItemStore from "./stores/BookItemStore";
 
 export default observer(function BookListItem({
-	title,
-	author,
-	filename,
-	hash,
-	messages,
+	book,
+	matchData,
 }: {
-	title: string;
-	author: string;
-	filename: string;
-	hash: string;
-	messages: string[];
+	book: BookItemStore;
+	matchData: BookMatchData;
 }) {
 	const [showMessages, setShowMessages] = useState(false);
 	return (
@@ -22,30 +18,30 @@ export default observer(function BookListItem({
 			<div className={styles.bookContent}>
 				<h3 className={styles.title}>
 					{/* biome-ignore lint/security/noDangerouslySetInnerHtml: fuzzy changes html */}
-					<span dangerouslySetInnerHTML={{ __html: title }} />
+					<span dangerouslySetInnerHTML={{ __html: matchData.titleHtml }} />
 				</h3>
 				<p className={styles.author}>
 					{/* biome-ignore lint/security/noDangerouslySetInnerHtml: fuzzy changes html */}
-					<span dangerouslySetInnerHTML={{ __html: author }} />
+					<span dangerouslySetInnerHTML={{ __html: matchData.authorHtml }} />
 				</p>
 				<a
-					href={new URL(filename, location.href).href}
+					href={new URL(book.filename, location.href).href}
 					className={styles.downloadLink}
 				>
 					Download
 				</a>
-				{messages.length > 0 && (
+				{book.messages.length > 0 && (
 					<div className={styles.messagesSection}>
 						<button
 							type="button"
 							onClick={() => setShowMessages(!showMessages)}
 							className={styles.messagesToggle}
 						>
-							{showMessages ? "Hide" : "Show"} Messages ({messages.length})
+							{showMessages ? "Hide" : "Show"} Messages ({book.messages.length})
 						</button>
 						{showMessages && (
 							<div className={styles.messagesList}>
-								{messages.map((message, index) => (
+								{book.messages.map((message, index) => (
 									// biome-ignore lint/suspicious/noArrayIndexKey: messages are unique log entries
 									<div key={index} className={styles.message}>
 										{message}
@@ -58,7 +54,7 @@ export default observer(function BookListItem({
 			</div>
 			<div className={styles.bookImage}>
 				<BookCover
-					hash={hash}
+					book={book}
 					width={120}
 					height={160}
 					className={styles.bookCover}

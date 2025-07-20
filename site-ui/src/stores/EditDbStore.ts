@@ -1,34 +1,39 @@
 import { makeAutoObservable, runInAction } from "mobx";
 import yaml from "yaml";
-import type { DbResponse } from "../interfaces";
-import BookListStore from "./BookListStore";
+import type { EditDbResponse } from "../interfaces";
+import EditApiInfoStore from "./EditApiInfoStore";
 
-export default class DbStore {
-	data: DbResponse | null = null;
+export default class EditDbStore {
+	data: EditDbResponse | null = null;
 	error: string | null = null;
 	pending = false;
 	constructor() {
 		makeAutoObservable(this);
 	}
-	get bookStore() {
-		return this.data ? new BookListStore(this) : null;
-	}
-	get books() {
-		return this.data?.books || null;
-	}
-	get meta() {
-		return this.data?.meta || null;
-	}
-	get editUrl() {
-		return this.meta?.edit_api;
+	get api() {
+		if (!this.data) {
+			return null;
+		}
+		return {
+			info: new EditApiInfoStore(this.data.url),
+		};
 	}
 	async load() {
-		if (this.data) {
+		if (this.data !== undefined) {
 			return;
 		}
 		this.pending = true;
 		try {
-			const response = await fetch(new URL("db.yaml", window.location.href));
+			const response = await fetch(
+				new URL("edit-db.yaml", window.location.href),
+			);
+			if (response.status === 404) {
+				runInAction(() => {
+					this.data = null;
+					this.pending = false;
+				});
+				return;
+			}
 			if (!response.ok) {
 				throw new Error(`HTTP error! status: ${response.status}`);
 			}

@@ -1,0 +1,36 @@
+.infoPanel {
+	position: fixed;
+	top: 60px;
+	right: 20px;
+	background: var(--bg-secondary);
+	border: 1px solid var(--border);
+	padding: 1rem;
+	border-radius: 8px;
+	max-width: 300px;
+	z-index: 1000;
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.infoTitle {
+	margin: 0 0 0.5rem 0;
+}
+
+.infoPre {
+	margin: 0;
+	font-size: 0.875rem;
+	overflow: auto;
+}
+
+.closeButton {
+	margin-top: 0.5rem;
+	padding: 0.25rem 0.5rem;
+	background: var(--primary);
+	color: white;
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+}
+
+.closeButton:hover {
+	opacity: 0.9;
+}

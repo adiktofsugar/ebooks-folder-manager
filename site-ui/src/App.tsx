@@ -3,16 +3,19 @@ import { useEffect, useState } from "react";
 import styles from "./App.module.css";
 import BookList from "./BookList";
 import ErrorList from "./ErrorList";
-import ThemeToggle from "./ThemeToggle";
+import TopControls from "./TopControls";
 import DbStore from "./stores/DbStore";
+import EditDbStore from "./stores/EditDbStore";
 import ThemeStore from "./stores/ThemeStore";
 
 export default observer(function App() {
 	const [store] = useState(() => new DbStore());
+	const [editStore] = useState(() => new EditDbStore());
 	const [theme] = useState(() => new ThemeStore());
 	useEffect(() => {
 		store.load();
-	}, [store]);
+		editStore.load();
+	}, [store, editStore]);
 	const { error, pending, bookStore } = store;
 
 	useEffect(() => {
@@ -39,7 +42,7 @@ export default observer(function App() {
 	}
 	return (
 		<>
-			<ThemeToggle store={theme} />
+			<TopControls themeStore={theme} editStore={editStore} />
 			<div>
 				<h1 className={styles.title}>Ebook Library</h1>
 				<ErrorList store={bookStore} />

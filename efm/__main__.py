@@ -4,8 +4,6 @@ import logging
 import os
 import sys
 from pathlib import Path
-from http.server import HTTPServer, BaseHTTPRequestHandler
-import json
 
 import yaml
 
@@ -13,13 +11,14 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", "DeDRM_tools"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "kfxlib"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "adl"))
 
+from efm.edit_server import start_edit_server
 from efm.transaction import (
     Transaction,
     TransactionResult,
     TransactionSuccess,
     TransactionError,
 )
-from efm.tasks import TasksFile, Task, process_task, TaskResult, TaskSuccess, TaskError
+from efm.tasks import TasksFile, process_task, TaskResult, TaskSuccess, TaskError
 
 
 logger = logging.getLogger(__name__)
@@ -50,7 +49,10 @@ def main():
         "--loglevel", choices=["debug", "info", "error"], help="log level"
     )
     argparser.add_argument(
-        "-e", "--edit", action="store_true", help="start a local server with add_task endpoint"
+        "-e",
+        "--edit",
+        action="store_true",
+        help="start a local server with add_task endpoint",
     )
     argparser.add_argument("spec", nargs="*", help="file, folder, or glob to process")
 
@@ -69,70 +71,69 @@ def main():
 
     logging.basicConfig(level=loglevel)
 
-    # If edit mode is enabled, start the server
-    if args.edit:
-        if not args.spec:
-            print("Error: You must specify at least one directory when using -e/--edit mode")
-            return 1
-        
-        # Use the first specified directory for tasks.jsonl
-        task_directory = Path(args.spec[0]).resolve()
-        if not task_directory.is_dir():
-            task_directory = task_directory.parent
-            
-        site_dirpath = Path(args.out)
-        return start_edit_server(task_directory, site_dirpath)
-
-    # Normal processing mode requires spec arguments
     if not args.spec:
-        argparser.print_help()
-        return 1
+        logger.info("Nothing to do, as no source files specified")
+        return 0
 
-    files = args.spec
-    all_files: list[Path] = []
-
-    # Process tasks.jsonl file if it exists in any of the specified directories
-    directories_to_check = set()
+    tasks_filepaths: list[Path] = []
     for spec in args.spec:
         p = Path(spec).resolve()
         if p.is_dir():
-            directories_to_check.add(p)
-        elif p.is_file():
-            directories_to_check.add(p.parent)
+            tasks_filepaths.append(p / "tasks.jsonl")
+
+    # If edit mode is enabled, start the server
+    if args.edit:
+        site_dirpath = Path(args.out)
+        # the task filepath we send to this function is the one we want it to write to
+        if len(tasks_filepaths) == 0:
+            logger.critical(
+                "No task filepath candidates. There must be at least one source directory specified to write the tasks to."
+            )
+            return 1
+
+        tasks_filepath = tasks_filepaths[0]
+        # choose the smallest one, since we have to reduce it somehow
+        for f in tasks_filepaths:
+            if len(f.as_uri()) < len(tasks_filepath.as_uri()):
+                tasks_filepath = f
+        return start_edit_server(tasks_filepath, site_dirpath)
+
+    files: list[str] = args.spec
+    all_files: list[Path] = []
 
     task_results: list[TaskResult] = []
-    for directory in directories_to_check:
-        tasks_filepath = directory / "tasks.jsonl"
-        if tasks_filepath.exists():
-            logger.info(f"Found tasks file: {tasks_filepath}")
-            tasks_file = TasksFile(tasks_filepath)
-            
-            # Get initial task count
-            initial_count = tasks_file.get_task_count()
-            if initial_count > 0:
-                logger.info(f"Processing {initial_count} pending tasks")
-            
-            # Process all tasks by popping from the top
-            while True:
-                task = tasks_file.pop_task()
-                if task is None:
-                    break
-                    
-                # Process the task
-                result = process_task(task, directory)
-                task_results.append(result)
-                
-                # Log result
-                if isinstance(result, TaskSuccess):
-                    logger.info(f"Task '{result.description}' completed successfully")
-                    if result.messages:
-                        for msg in result.messages:
-                            logger.info(f"  - {msg}")
-                else:
-                    logger.error(f"Task '{result.description}' failed: {result.error_message}")
-                    if result.messages:
-                        for msg in result.messages:
-                            logger.info(f"  - {msg}")
+    for tasks_filepath in tasks_filepaths:
+        if not tasks_filepath.exists():
+            continue
+        logger.info(f"Found tasks file: {tasks_filepath}")
+        tasks_file = TasksFile(tasks_filepath)
+
+        # Get initial task count
+        initial_count = tasks_file.get_task_count()
+        if initial_count > 0:
+            logger.info(f"Processing {initial_count} pending tasks")
+
+        # Process all tasks by popping from the top
+        while True:
+            task = tasks_file.pop_task()
+            if task is None:
+                break
+
+            # Process the task
+            result = process_task(task)
+            task_results.append(result)
+
+            # Log result
+            if isinstance(result, TaskSuccess):
+                logger.info(f"Task '{result.key}' completed successfully")
+                if result.messages:
+                    for msg in result.messages:
+                        logger.info(f"  - {msg}")
+            elif isinstance(result, TaskError):
+                logger.error(f"Task '{result.key}' failed: {result.error_message}")
+                if result.messages:
+                    for msg in result.messages:
+                        logger.info(f"  - {msg}")
 
     for original_filepath in files:
         logger.debug(f"Processing {original_filepath}")
@@ -199,8 +200,8 @@ def main():
             if loglevel == logging.DEBUG:
                 print("\nFailed tasks:")
                 for error_result in task_failures:
-                    print(f"  - {error_result.description}: {error_result.error_message}")
-    
+                    print(f"  - {error_result.key}: {error_result.error_message}")
+
     # Show summary
     print(f"\nProcessed {len(all_files)} files:")
     print(f"  ✓ {len(successes)} successful")
@@ -217,20 +218,13 @@ def main():
     site_dirpath = Path(args.out)
     site_dirpath.mkdir(parents=True, exist_ok=True)
     db_filepath = site_dirpath / "db.yaml"
-    
+
     # Create database with meta section
     db_content = {
         "meta": {},
-        "books": [result.to_dict() for result in deduplicated_results]
+        "books": [result.to_dict() for result in deduplicated_results],
     }
-    
-    # Check if edit_api_url file exists (written by server)
-    edit_api_file = site_dirpath / ".edit_api_url"
-    if edit_api_file.exists():
-        edit_api_url = edit_api_file.read_text().strip()
-        if edit_api_url:
-            db_content["meta"]["edit_api"] = edit_api_url
-    
+
     # Write the database
     db_filepath.write_text(yaml.dump(db_content))
 
@@ -257,99 +251,6 @@ def get_files_from_dirpath(dirpath: Path) -> list[Path]:
         for file in files:
             all_files.append((Path(root) / file).resolve())
     return all_files
-
-
-def start_edit_server(task_directory: Path, site_dirpath: Path, port: int = 8080):
-    """Start HTTP server for edit mode with add_task endpoint."""
-    
-    # Write the API URL to a file so it can be included in db.yaml
-    site_dirpath.mkdir(parents=True, exist_ok=True)
-    edit_api_file = site_dirpath / ".edit_api_url"
-    edit_api_url = f"http://localhost:{port}"
-    edit_api_file.write_text(edit_api_url)
-    
-    class TaskRequestHandler(BaseHTTPRequestHandler):
-        def do_POST(self):
-            if self.path == "/add_task":
-                content_length = int(self.headers['Content-Length'])
-                post_data = self.rfile.read(content_length)
-                
-                try:
-                    # Parse JSON data
-                    data = json.loads(post_data.decode('utf-8'))
-                    
-                    # Validate required fields
-                    if 'description' not in data:
-                        self.send_error(400, "Missing required field: description")
-                        return
-                    
-                    # Create task
-                    task = Task(
-                        description=data['description'],
-                        parameters=data.get('parameters', '')
-                    )
-                    
-                    # Add task to tasks.jsonl
-                    tasks_filepath = task_directory / "tasks.jsonl"
-                    tasks_file = TasksFile(tasks_filepath)
-                    tasks_file.add_task(task)
-                    
-                    # Send success response
-                    self.send_response(200)
-                    self.send_header('Content-Type', 'application/json')
-                    self.end_headers()
-                    response = {
-                        'status': 'success',
-                        'message': f'Task added: {task.description}',
-                        'task': task.to_dict()
-                    }
-                    self.wfile.write(json.dumps(response).encode('utf-8'))
-                    
-                except json.JSONDecodeError:
-                    self.send_error(400, "Invalid JSON")
-                except Exception as e:
-                    self.send_error(500, f"Server error: {str(e)}")
-            else:
-                self.send_error(404, "Not found")
-        
-        def do_GET(self):
-            if self.path == "/info":
-                self.send_response(200)
-                self.send_header('Content-Type', 'application/json')
-                self.end_headers()
-                response = {
-                    'directory': str(task_directory),
-                    'site_directory': str(site_dirpath)
-                }
-                self.wfile.write(json.dumps(response).encode('utf-8'))
-            else:
-                self.send_error(404, "Not found")
-        
-        def log_message(self, format, *args):
-            # Override to customize logging
-            logger.info(f"{self.address_string()} - {format % args}")
-    
-    # Create and start server
-    server_address = ('', port)
-    httpd = HTTPServer(server_address, TaskRequestHandler)
-    
-    print(f"\nStarting EFM API server on port {port}")
-    print(f"Task directory: {task_directory}")
-    print(f"Tasks will be saved to: {task_directory / 'tasks.jsonl'}")
-    print("\nAPI endpoints:")
-    print(f"  GET  http://localhost:{port}/info      - Get server info")
-    print(f"  POST http://localhost:{port}/add_task  - Add a new task")
-    print("\nPress Ctrl+C to stop the server\n")
-    
-    try:
-        httpd.serve_forever()
-    except KeyboardInterrupt:
-        print("\nShutting down server...")
-        httpd.shutdown()
-        # Clean up the API URL file
-        if edit_api_file.exists():
-            edit_api_file.unlink()
-        return 0
 
 
 if __name__ == "__main__":
