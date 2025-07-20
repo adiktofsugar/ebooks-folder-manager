@@ -323,7 +323,7 @@ class Kfx2EpubAction(BaseAction):
 
 ALL_ACTIONS: Sequence[type[BaseAction]] = [
     DownloadAcsmAction,
-    Kfx2EpubAction,
     DeDrmAction,
+    Kfx2EpubAction,
     ReformatPdfAction,
 ]
