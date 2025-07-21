@@ -1,7 +1,7 @@
 import argparse
-import glob
 import logging
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -16,18 +16,20 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
+from efm.batch import BatchSummary, Duplicated, Failed, Success
+
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "DeDRM_tools"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "kfxlib"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "adl"))
 
+from efm.config import Config, get_config
 from efm.edit_server import start_edit_server
 from efm.transaction import (
     Transaction,
-    TransactionResult,
     TransactionSuccess,
     TransactionError,
 )
-from efm.tasks import TasksFile, process_task, TaskResult, TaskSuccess, TaskError
+from efm.tasks import TasksFile, process_task, TaskSuccess, TaskError
 
 
 logger = logging.getLogger(__name__)
@@ -37,15 +39,20 @@ def main():
     argparser = argparse.ArgumentParser(
         add_help=True,
         usage="""
-      Generate site from ebook files, specified by file, folder, or glob.
+      Generate site from ebook files in a directory, with optional regex filter.
       
       Usage:
-        efm [options] <file/folder/glob>...
+        efm [options] <directory> [regex_filter]
+
+      Examples:
+        efm my-site                     # Process all books in my-site directory
+        efm my-site problem.+epub       # Only process books matching the given regex
 
       ### Config files
       are resolved relative to each file, and must be in a file named "efm.toml", "efm.yaml", "efm.yml", or "efm.json".
       
       can have the following keys:
+        - output_dir: output directory for the generated site (required if -o not specified)
         - adobe_user: email for adobe account, used to download ASCM
         - adobe_password: password for adobe account, used to download ASCM and to remove adobe DRM
         - adobe_key_files: list of keyfile paths extracted from from digital editions
@@ -54,7 +61,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     argparser.add_argument(
-        "-o", "--out", help="specify output directory", default="site"
+        "-o", "--out", help="specify output directory (overrides config file)"
     )
     argparser.add_argument(
         "--loglevel", choices=["debug", "info", "error"], help="log level"
@@ -65,7 +72,10 @@ def main():
         action="store_true",
         help="generate site in edit mode, and start a local server to power it",
     )
-    argparser.add_argument("spec", nargs="*", help="file, folder, or glob to process")
+    argparser.add_argument("directory", help="directory containing ebooks to process")
+    argparser.add_argument(
+        "regex_filter", nargs="?", help="optional regex pattern to filter files"
+    )
 
     args = argparser.parse_args()
     loglevel = logging.INFO
@@ -86,90 +96,78 @@ def main():
     # Keep standard logging setup to avoid interfering with transaction logging
     logging.basicConfig(level=loglevel)
 
-    if not args.spec:
-        logger.info("Nothing to do, as no source files specified")
-        return 0
+    # Validate directory argument
+    directory_path = Path(args.directory).resolve()
+    if not directory_path.exists():
+        logger.error(f"Directory does not exist: {args.directory}")
+        return 1
+    if not directory_path.is_dir():
+        logger.error(f"Argument must be a directory, not a file: {args.directory}")
+        return 1
 
-    tasks_filepaths: list[Path] = []
-    for spec in args.spec:
-        p = Path(spec).resolve()
-        if p.is_dir():
-            tasks_filepaths.append(p / "tasks.jsonl")
+    # Compile regex filter if provided
+    regex_filter = None
+    if args.regex_filter:
+        try:
+            regex_filter = re.compile(args.regex_filter)
+            logger.debug(f"Using regex filter: {args.regex_filter}")
+        except re.error as e:
+            logger.error(f"Invalid regex pattern: {args.regex_filter} - {e}")
+            return 1
 
-    # Fail early if incompatible with edit mode
-    if args.edit and len(tasks_filepaths) == 0:
-        logger.critical(
-            "No task filepath candidates. There must be at least one source directory specified to write the tasks to."
+    config = get_config(directory_path)
+
+    output_dirpath = get_output_dirpath(args.out, config)
+    if not output_dirpath:
+        logger.error(
+            "No output directory specified. Use -o option or set output_dir in config file."
         )
         return 1
 
-    edit_api_port = 8000
-    files: list[str] = args.spec
-    all_files: list[Path] = []
+    edit_api_port = 12000  # choose a port that's unlikely to conflict
 
-    task_results: list[TaskResult] = []
-    for tasks_filepath in tasks_filepaths:
-        if not tasks_filepath.exists():
-            continue
-        logger.info(f"Found tasks file: {tasks_filepath}")
+    tasks_filepath: Path = directory_path / "tasks.jsonl"
+    tasks_summary = BatchSummary[TaskSuccess | TaskError]([Success, Failed])
+    if tasks_filepath.exists():
+        logger.info(f"Processing tasks file: {tasks_filepath}")
         tasks_file = TasksFile(tasks_filepath)
-
-        # Get initial task count
-        initial_count = tasks_file.get_task_count()
-        if initial_count > 0:
-            logger.info(f"Processing {initial_count} pending tasks")
-
-        # Process all tasks by popping from the top
-        while True:
-            task = tasks_file.pop_task()
-            if task is None:
-                break
-
-            # Process the task
+        while task := tasks_file.pop_task():
             result = process_task(task)
-            task_results.append(result)
+            if isinstance(result, TaskError):
+                tasks_summary.add_result(
+                    task.key, Failed, result=result, error=result.error_message
+                )
+            elif isinstance(result, TaskSuccess):
+                tasks_summary.add_result(task.key, Success, result=result)
+        tasks_summary.print(console=console)
 
-            # Log result
-            if isinstance(result, TaskSuccess):
-                logger.info(f"Task '{result.key}' completed successfully")
-                if result.messages:
-                    for msg in result.messages:
-                        logger.info(f"  - {msg}")
-            elif isinstance(result, TaskError):
-                logger.error(f"Task '{result.key}' failed: {result.error_message}")
-                if result.messages:
-                    for msg in result.messages:
-                        logger.info(f"  - {msg}")
+    # Get all files from the directory
+    logger.debug(f"Processing directory: {directory_path}")
+    all_files = get_files_from_dirpath(directory_path)
 
-    for original_filepath in files:
-        logger.debug(f"Processing {original_filepath}")
-        p = Path(original_filepath).resolve()  # Convert to absolute path
-        if p.is_dir():
-            logger.debug(f"{original_filepath} is directory")
-            all_files.extend(get_files_from_dirpath(p))
-        elif p.is_file():
-            logger.debug(f"{original_filepath} is file")
-            all_files.append(p)
-        else:
-            expanded = [Path(f).resolve() for f in glob.glob(original_filepath)]
-            logger.debug(f"{original_filepath} is glob, expanded to {expanded}")
-            all_files.extend(expanded)
-
-    results: list[TransactionResult] = []
-
-    # Filter out files to skip
     files_to_process = []
-    for original_filepath in all_files:
-        if str(original_filepath).endswith(".bak"):
-            logger.debug(f"Skipping {original_filepath} because it's a backup file.")
+    for file_path in all_files:
+        if str(file_path).endswith(".bak"):
+            logger.debug(f"Skipping {file_path} because it's a backup file.")
             continue
-        if original_filepath.name in ["efm.toml", "efm.yaml", "efm.yml", "efm.json"]:
-            logger.debug(f"Skipping {original_filepath} because it's a config file.")
+        if file_path.name in ["efm.toml", "efm.yaml", "efm.yml", "efm.json"]:
+            logger.debug(f"Skipping {file_path} because it's a config file.")
             continue
-        if original_filepath.name == "tasks.jsonl":
-            logger.debug(f"Skipping {original_filepath} because it's a tasks file.")
+        if file_path.name == "tasks.jsonl":
+            logger.debug(f"Skipping {file_path} because it's a tasks file.")
             continue
-        files_to_process.append(original_filepath)
+        if regex_filter:
+            if regex_filter.search(file_path.name):
+                files_to_process.append(file_path)
+                logger.debug(f"File matches filter: {file_path.name}")
+            else:
+                logger.debug(f"File excluded by filter: {file_path.name}")
+        else:
+            files_to_process.append(file_path)
+
+    summary = BatchSummary[TransactionSuccess | TransactionError](
+        [Success, Failed, Duplicated]
+    )
 
     # Process files with progress bar
     if files_to_process:
@@ -191,63 +189,34 @@ def main():
                     description=f"[green]Processing {original_filepath.name}...",
                 )
                 logger.debug(f"Processing {original_filepath}")
-                result = Transaction(original_filepath, Path(args.out)).perform()
-                results.append(result)
+                result = Transaction(
+                    original_filepath, Path(output_dirpath), config
+                ).perform()
+                if isinstance(result, TransactionSuccess):
+                    is_duplicate = result.hash in [
+                        r.name for r in summary.results if r.has_category(Success)
+                    ]
+                    if is_duplicate:
+                        summary.add_result(result.hash, Duplicated, result)
+                    else:
+                        summary.add_result(result.hash, Success, result)
+                elif isinstance(result, TransactionError):
+                    summary.add_result(
+                        original_filepath, Failed, result, error=result.error_message
+                    )
                 progress.update(file_progress, advance=1)
 
-    # Count successes and failures
-    successes = [r for r in results if isinstance(r, TransactionSuccess)]
-    failures = [r for r in results if isinstance(r, TransactionError)]
+    did_fail = any([r for r in summary.results if r.has_category(Failed)])
+    summary.print()
 
-    # Deduplicate successful results by hash
-    seen_hashes = {}
-    deduplicated_results: list[TransactionResult] = []
-    duplicate_count = 0
-
-    for result in results:
-        if isinstance(result, TransactionSuccess):
-            if result.hash in seen_hashes:
-                duplicate_count += 1
-                logger.debug(
-                    f"Skipping duplicate: {result.original_filepath} has same content as {seen_hashes[result.hash]}"
-                )
-            else:
-                seen_hashes[result.hash] = result.original_filepath
-                deduplicated_results.append(result)
-        else:
-            # Always include error results
-            deduplicated_results.append(result)
-
-    # Show summary of tasks if any were processed
-    if task_results:
-        task_successes = [r for r in task_results if isinstance(r, TaskSuccess)]
-        task_failures = [r for r in task_results if isinstance(r, TaskError)]
-        print(f"\nProcessed {len(task_results)} tasks:")
-        print(f"  ✓ {len(task_successes)} successful")
-        if task_failures:
-            print(f"  ✗ {len(task_failures)} failed")
-            print("\nFailed tasks:")
-            for error_result in task_failures:
-                print(f"  - {error_result.key}: {error_result.error_message}")
-
-    # Show summary
-    print(f"\nProcessed {len(all_files)} files:")
-    print(f"  ✓ {len(successes)} successful")
-    if duplicate_count > 0:
-        print(f"  ≡ {duplicate_count} duplicates")
-    if failures:
-        print(f"  ✗ {len(failures)} failed")
-        print("\nFailed files:")
-        for error_result in failures:
-            print(f"  - {error_result.original_filepath}: {error_result.error_message}")
-    site_dirpath = Path(args.out)
+    site_dirpath = Path(output_dirpath)
     site_dirpath.mkdir(parents=True, exist_ok=True)
     db_filepath = site_dirpath / "db.yaml"
 
     # Create database with meta section
     db_content = {
         "meta": {"site_dirpath": site_dirpath},
-        "books": [result.to_dict() for result in deduplicated_results],
+        "books": [r.result.to_dict() for r in summary.results],
     }
 
     if args.edit:
@@ -272,16 +241,10 @@ def main():
 
     # If edit mode is enabled, start the server
     if args.edit:
-        # the task filepath we send to this function is the one we want it to write to
-        # choose the smallest one, since we have to reduce it somehow
-        tasks_filepath = tasks_filepaths[0]
-        for f in tasks_filepaths:
-            if len(f.as_uri()) < len(tasks_filepath.as_uri()):
-                tasks_filepath = f
         return start_edit_server(tasks_filepath, edit_api_port)
 
     # Return non-zero if there were any failures
-    return 1 if failures else 0
+    return 1 if did_fail else 0
 
 
 def get_files_from_dirpath(dirpath: Path) -> list[Path]:
@@ -290,6 +253,14 @@ def get_files_from_dirpath(dirpath: Path) -> list[Path]:
         for file in files:
             all_files.append((Path(root) / file).resolve())
     return all_files
+
+
+def get_output_dirpath(arg_out: str | None, config: Config | None) -> Path | None:
+    if arg_out:
+        return Path(arg_out)
+    if config and config.output_dir:
+        return Path(config.output_dir)
+    return None
 
 
 if __name__ == "__main__":

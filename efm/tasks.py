@@ -133,7 +133,7 @@ class TasksFile:
         return len([line for line in lines if line.strip()])
 
 
-def process_task(task: Task) -> TaskResult:
+def process_task(task: Task) -> TaskSuccess | TaskError:
     """Process a single task and return result."""
     logger.info(f"Processing task: {task.key}")
 
@@ -150,7 +150,7 @@ def process_task(task: Task) -> TaskResult:
     )
 
 
-def handle_set_cover(task: TaskSetCover) -> TaskResult:
+def handle_set_cover(task: TaskSetCover) -> TaskSuccess | TaskError:
     """Set cover image for a specific book file."""
 
     book_filepath = task.book_filepath

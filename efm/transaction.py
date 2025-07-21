@@ -7,7 +7,7 @@ import tempfile
 from typing import List
 import yaml
 from efm.action import ALL_ACTIONS
-from efm.config import Config, get_closest_config
+from efm.config import Config
 from efm.metadata import Metadata, get_metadata, extract_cover_image
 
 logger = logging.getLogger(__name__)
@@ -89,8 +89,9 @@ class Transaction:
         self,
         original_filepath: Path,
         site_dir: Path,
+        config: Config | None = None,
     ):
-        self.config = get_closest_config(original_filepath.parent)
+        self.config = config
         self.original_filepath = original_filepath
         self.site_dirpath = site_dir
         self.messages = []

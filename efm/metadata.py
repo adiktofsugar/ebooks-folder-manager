@@ -5,10 +5,9 @@ from dataclasses import dataclass
 import hashlib
 
 import pymupdf
-from ebooklib import epub
 
 from efm.exceptions import GetMetadataError
-from efm.cover import CoverImage, extract_cover, generate_cover
+from efm.cover import extract_cover, generate_cover
 
 
 logger = logging.getLogger(__name__)

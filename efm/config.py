@@ -14,6 +14,7 @@ def _path_exists(s: str) -> Path:
 
 schema = Schema(
     {
+        Optional("output_dir"): str,
         Optional("adobe_user"): str,
         Optional("adobe_password"): str,
         Optional("adobe_key_files"): [Use(_path_exists)],
@@ -30,6 +31,7 @@ schema = Schema(
 
 
 class Config(object):
+    output_dir: str | None
     adobe_user: str | None
     adobe_password: str | None
     adobe_key_files: list[Path] | None
@@ -43,6 +45,7 @@ class Config(object):
 
     def __init__(self, filepath: Path):
         data = schema.validate(load_config(filepath))
+        self.output_dir = data.get("output_dir")
         self.adobe_user = data.get("adobe_user")
         self.adobe_password = data.get("adobe_password")
         self.adobe_key_files = data.get("adobe_key_files")
@@ -76,23 +79,12 @@ def load_config(filepath: Path):
     raise ValueError(f"Unknown config file extension: {ext}")
 
 
-def get_closest_config(dirpath: Path) -> Config | None:
-    filepath = get_closest_config_filepath(dirpath)
-    if filepath is None:
-        return None
-    return Config(filepath)
-
-
-def get_closest_config_filepath(dirpath: Path) -> Path | None:
+def get_config(dirpath: Path) -> Config | None:
     """
-    Get the closest config file to the given directory.
+    Get the config file in the given directory.
     """
-    path = Path(dirpath)
-    while True:
-        for ext in ["toml", "yaml", "yml", "json"]:
-            config_file = path / f"efm.{ext}"
-            if config_file.exists():
-                return config_file
-        if path == path.parent:
-            return None
-        path = path.parent
+    for ext in ["toml", "yaml", "yml", "json"]:
+        config_file = dirpath / f"efm.{ext}"
+        if config_file.exists():
+            return Config(config_file)
+    return None
