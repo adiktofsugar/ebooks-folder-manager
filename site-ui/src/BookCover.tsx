@@ -30,7 +30,7 @@ export default function BookCover({
 				className={className}
 				style={{ objectFit: "cover" }}
 			/>
-			{store.editApi ? <BookCoverEditForm book={book} /> : null}
+			{store.isEditMode ? <BookCoverEditForm book={book} /> : null}
 		</div>
 	);
 }
@@ -50,7 +50,7 @@ function BookCoverEditForm({ book }: { book: BookItemStore }) {
 		formData.append("image", selectedFile);
 		formData.append("book_filepath", book.original_filepath);
 
-		fetch(new URL("/upload-cover-image", store.editApi), {
+		fetch(new URL("/upload-cover-image", store.editApiUrl), {
 			method: "POST",
 			body: formData,
 		});

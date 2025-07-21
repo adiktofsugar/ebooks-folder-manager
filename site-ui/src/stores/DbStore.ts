@@ -19,9 +19,6 @@ export default class DbStore {
 	get meta() {
 		return this.data?.meta || null;
 	}
-	get editUrl() {
-		return this.meta?.edit_api;
-	}
 	async load() {
 		if (this.data) {
 			return;

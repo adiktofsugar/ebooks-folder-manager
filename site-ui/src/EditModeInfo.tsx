@@ -1,30 +1,12 @@
 import { observer } from "mobx-react-lite";
 import { useEffect } from "react";
-import styles from "./EditModeInfo.module.css";
-import type EditApiInfoStore from "./stores/EditApiInfoStore";
+import type { DbMeta } from "./interfaces";
 
-export default observer(function EditModeInfo({
-	store,
-}: { store: EditApiInfoStore }) {
-	useEffect(() => {
-		store.load();
-	}, [store]);
-
-	const { error, pending, data } = store;
-
-	if (error) {
-		return <p>{error}</p>;
-	}
-	if (pending) {
-		return <p>Loading...</p>;
-	}
-	if (!data) {
-		return <p>No data</p>;
-	}
+export default observer(function EditModeInfo({ meta }: { meta: DbMeta }) {
 	return (
 		<ul>
 			<li>
-				<b>Site Directory:</b> {data.site_directory}
+				<b>Site Directory:</b> {meta.site_dirpath}
 			</li>
 		</ul>
 	);

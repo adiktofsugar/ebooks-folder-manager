@@ -40,8 +40,7 @@ def main():
       Generate site from ebook files, specified by file, folder, or glob.
       
       Usage:
-        efm [options] <file/folder/glob>...  # Process ebooks
-        efm -e <directory>                    # Start edit server
+        efm [options] <file/folder/glob>...
 
       ### Config files
       are resolved relative to each file, and must be in a file named "efm.toml", "efm.yaml", "efm.yml", or "efm.json".
@@ -64,7 +63,7 @@ def main():
         "-e",
         "--edit",
         action="store_true",
-        help="start a local server with add_task endpoint",
+        help="generate site in edit mode, and start a local server to power it",
     )
     argparser.add_argument("spec", nargs="*", help="file, folder, or glob to process")
 
@@ -97,23 +96,14 @@ def main():
         if p.is_dir():
             tasks_filepaths.append(p / "tasks.jsonl")
 
-    # If edit mode is enabled, start the server
-    if args.edit:
-        site_dirpath = Path(args.out)
-        # the task filepath we send to this function is the one we want it to write to
-        if len(tasks_filepaths) == 0:
-            logger.critical(
-                "No task filepath candidates. There must be at least one source directory specified to write the tasks to."
-            )
-            return 1
+    # Fail early if incompatible with edit mode
+    if args.edit and len(tasks_filepaths) == 0:
+        logger.critical(
+            "No task filepath candidates. There must be at least one source directory specified to write the tasks to."
+        )
+        return 1
 
-        tasks_filepath = tasks_filepaths[0]
-        # choose the smallest one, since we have to reduce it somehow
-        for f in tasks_filepaths:
-            if len(f.as_uri()) < len(tasks_filepath.as_uri()):
-                tasks_filepath = f
-        return start_edit_server(tasks_filepath, site_dirpath)
-
+    edit_api_port = 8000
     files: list[str] = args.spec
     all_files: list[Path] = []
 
@@ -256,9 +246,12 @@ def main():
 
     # Create database with meta section
     db_content = {
-        "meta": {},
+        "meta": {"site_dirpath": site_dirpath},
         "books": [result.to_dict() for result in deduplicated_results],
     }
+
+    if args.edit:
+        db_content["meta"]["edit_api_url"] = f"http://localhost:{edit_api_port}"
 
     # Write the database
     db_filepath.write_text(yaml.dump(db_content))
@@ -276,6 +269,17 @@ def main():
             if not dest_file.exists():
                 dest_file.parent.mkdir(parents=True, exist_ok=True)
                 dest_file.write_bytes(src_file.read_bytes())
+
+    # If edit mode is enabled, start the server
+    if args.edit:
+        # the task filepath we send to this function is the one we want it to write to
+        # choose the smallest one, since we have to reduce it somehow
+        tasks_filepath = tasks_filepaths[0]
+        for f in tasks_filepaths:
+            if len(f.as_uri()) < len(tasks_filepath.as_uri()):
+                tasks_filepath = f
+        return start_edit_server(tasks_filepath, edit_api_port)
+
     # Return non-zero if there were any failures
     return 1 if failures else 0
 

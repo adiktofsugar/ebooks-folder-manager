@@ -2,31 +2,17 @@ import { observer } from "mobx-react-lite";
 import { useEffect, useState } from "react";
 import styles from "./EditModeButton.module.css";
 import EditModeInfo from "./EditModeInfo";
-import type EditDbStore from "./stores/EditDbStore";
+import type DbStore from "./stores/DbStore";
 
-export default observer(function EditModeButton({
-	store,
-}: { store: EditDbStore }) {
+export default observer(function EditModeButton({ store }: { store: DbStore }) {
 	const [showInfo, setShowInfo] = useState(false);
 	const handleClick = () => {
 		setShowInfo(!showInfo);
 	};
 
-	useEffect(() => {
-		store.load();
-	}, [store]);
-
-	const { error, pending, data, api } = store;
-	if (error) {
-		return <pre>{error}</pre>;
-	}
-
-	if (pending) {
-		// it only loads once
-		return null;
-	}
-
-	if (!api) {
+	const { meta } = store;
+	if (!meta?.edit_api_url) {
+		// we're not in edit mode
 		return null;
 	}
 
@@ -41,7 +27,7 @@ export default observer(function EditModeButton({
 						setShowInfo(false);
 					}}
 				>
-					<EditModeInfo store={api.info} />
+					<EditModeInfo meta={meta} />
 				</EditModeInfoContainer>
 			)}
 		</div>

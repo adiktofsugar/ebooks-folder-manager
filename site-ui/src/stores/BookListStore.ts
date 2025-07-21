@@ -39,8 +39,12 @@ export default class BookListStore {
 	get dbLoaded() {
 		return !this.dbStore.pending && this.dbStore.data !== null;
 	}
-	get editApi() {
-		return this.dbStore.meta?.edit_api;
+
+	get editApiUrl() {
+		return this.dbStore.meta?.edit_api_url;
+	}
+	get isEditMode() {
+		return !!this.editApiUrl;
 	}
 
 	get errors() {

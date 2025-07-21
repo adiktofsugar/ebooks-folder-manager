@@ -5,17 +5,14 @@ import BookList from "./BookList";
 import ErrorList from "./ErrorList";
 import TopControls from "./TopControls";
 import DbStore from "./stores/DbStore";
-import EditDbStore from "./stores/EditDbStore";
 import ThemeStore from "./stores/ThemeStore";
 
 export default observer(function App() {
 	const [store] = useState(() => new DbStore());
-	const [editStore] = useState(() => new EditDbStore());
 	const [theme] = useState(() => new ThemeStore());
 	useEffect(() => {
 		store.load();
-		editStore.load();
-	}, [store, editStore]);
+	}, [store]);
 	const { error, pending, bookStore } = store;
 
 	useEffect(() => {
@@ -42,7 +39,7 @@ export default observer(function App() {
 	}
 	return (
 		<>
-			<TopControls themeStore={theme} editStore={editStore} />
+			<TopControls themeStore={theme} dbStore={store} />
 			<div>
 				<h1 className={styles.title}>Ebook Library</h1>
 				<ErrorList store={bookStore} />

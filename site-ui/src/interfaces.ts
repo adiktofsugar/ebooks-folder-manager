@@ -21,7 +21,8 @@ export interface BookResult {
 export type Result = ErrorResult | BookResult;
 
 export interface DbMeta {
-	edit_api?: string;
+	site_dirpath: string;
+	edit_api_url?: string;
 }
 
 export interface DbResponse {

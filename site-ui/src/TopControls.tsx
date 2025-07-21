@@ -2,21 +2,21 @@ import { observer } from "mobx-react-lite";
 import EditModeButton from "./EditModeButton";
 import ThemeToggle from "./ThemeToggle";
 import styles from "./TopControls.module.css";
-import type EditDbStore from "./stores/EditDbStore";
+import type DbStore from "./stores/DbStore";
 import type ThemeStore from "./stores/ThemeStore";
 
 interface TopControlsProps {
 	themeStore: ThemeStore;
-	editStore: EditDbStore;
+	dbStore: DbStore;
 }
 
 export default observer(function TopControls({
 	themeStore,
-	editStore,
+	dbStore,
 }: TopControlsProps) {
 	return (
 		<div className={styles.container}>
-			<EditModeButton store={editStore} />
+			<EditModeButton store={dbStore} />
 			<ThemeToggle store={themeStore} />
 		</div>
 	);
