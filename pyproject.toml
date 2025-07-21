@@ -30,7 +30,6 @@ dependencies = [
 
 [project.scripts]
 efm = "efm.__main__:main"
-efmcovers = "generate_covers:main"
 # NOTE: can only be used directly in wine, windows, or macos
 # finds and saves default adobe encryption keys. save to given output directory (optional)
 # [<outputdir>]
@@ -61,6 +60,7 @@ dev = [
     "debugpy>=1.8.14",
     "hatchling>=1.27.0",
     "mock>=5.2.0",
+    "pymupdf-stubs>=1.26.1.post1",
     "pyright>=1.1.401",
     "pytest>=8.4.0",
     "pytest-snapshot>=0.9.0",

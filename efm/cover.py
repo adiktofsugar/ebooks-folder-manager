@@ -19,26 +19,26 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CoverImage:
     """Represents a book cover image."""
-    
+
     data: bytes
     hash: str
-    
+
     @classmethod
     def from_bytes(cls, data: bytes) -> "CoverImage":
         """Create a CoverImage from raw bytes."""
         cover_hash = hashlib.sha256(data).hexdigest()
         return cls(data=data, hash=cover_hash)
-    
+
     @classmethod
     def from_file(cls, filepath: Path) -> "CoverImage":
         """Create a CoverImage from a file."""
         data = filepath.read_bytes()
         return cls.from_bytes(data)
-    
+
     def save(self, filepath: Path) -> None:
         """Save the cover image to a file."""
         filepath.write_bytes(self.data)
-    
+
     def validate(self) -> None:
         """Validate that this is a valid image."""
         try:
@@ -48,38 +48,36 @@ class CoverImage:
             raise ValueError(f"Invalid image data: {e}")
 
 
-
-
 def extract_epub_cover(filepath: Path) -> Optional[CoverImage]:
     """Extract cover image from EPUB using ebooklib."""
     try:
         book = epub.read_epub(filepath)
-        
+
         # Get cover image
         cover_items = []
-        
+
         # Try to get items marked as cover
         for item in book.get_items():
             if item.get_type() == ebooklib.ITEM_COVER:
                 cover_items.append(item)
-        
+
         # If no cover items, look for items with cover in properties
         if not cover_items:
             for item in book.get_items():
                 if item.get_type() == ebooklib.ITEM_IMAGE:
                     # Check if it has cover-image property
                     props = item.get_properties()
-                    if props and 'cover-image' in props:
+                    if props and "cover-image" in props:
                         cover_items.append(item)
-        
+
         # Get the first cover item
         if cover_items:
             cover_data = cover_items[0].get_content()
             return CoverImage.from_bytes(cover_data)
-            
+
     except Exception as e:
         logger.debug(f"Failed to extract EPUB cover: {e}")
-    
+
     return None
 
 
@@ -126,7 +124,7 @@ def extract_cover(filepath: Path) -> Optional[CoverImage]:
     """Extract cover image from any supported format."""
     # Detect actual format
     format = detect_format(filepath)
-    
+
     if format == "epub":
         cover = extract_epub_cover(filepath)
         if cover:
@@ -156,7 +154,7 @@ def extract_cover(filepath: Path) -> Optional[CoverImage]:
             doc.close()
         except Exception as e:
             logger.debug(f"Failed to extract cover with PyMuPDF: {e}")
-    
+
     return None
 
 
@@ -578,6 +576,8 @@ def generate_cover(
 
             # Find a non-overlapping position
             attempts = 0
+            creature_x = 0
+            creature_y = 0
             while attempts < 10:
                 creature_x = random.randint(50, width - 200)
                 creature_y = random.randint(200, height - 300)
@@ -680,17 +680,17 @@ def generate_cover(
 def embed_pdf_cover(filepath: Path, cover: CoverImage) -> None:
     """Embed cover image as first page of a PDF."""
     doc = pymupdf.open(filepath)
-    
+
     # Load the image as a PyMuPDF pixmap
     img_doc = pymupdf.open(stream=cover.data, filetype="png")
     img_rect = img_doc[0].rect
-    
+
     # Create a new page at the beginning with the cover image
     cover_page = doc.new_page(0, width=img_rect.width, height=img_rect.height)
     cover_page.insert_image(cover_page.rect, stream=cover.data)
-    
+
     img_doc.close()
-    
+
     # Save the modified document
     doc.save(filepath, incremental=True, encryption=0)
     doc.close()
@@ -700,7 +700,7 @@ def embed_pdf_cover(filepath: Path, cover: CoverImage) -> None:
 def embed_epub_cover(filepath: Path, cover: CoverImage) -> None:
     """Embed cover image in an EPUB file using ebooklib."""
     book = epub.read_epub(filepath)
-    
+
     # Remove existing cover items
     items_to_remove = []
     for item in book.get_items():
@@ -708,12 +708,12 @@ def embed_epub_cover(filepath: Path, cover: CoverImage) -> None:
             items_to_remove.append(item)
         elif item.get_type() == ebooklib.ITEM_IMAGE:
             props = item.get_properties()
-            if props and 'cover-image' in props:
+            if props and "cover-image" in props:
                 items_to_remove.append(item)
-    
+
     # Set new cover
     book.set_cover("cover.jpg", cover.data)
-    
+
     # Write the updated EPUB
     epub.write_epub(filepath, book)
     logger.info(f"Set EPUB cover using ebooklib: {filepath}")
@@ -721,13 +721,13 @@ def embed_epub_cover(filepath: Path, cover: CoverImage) -> None:
 
 def embed_cover(filepath: Path, cover: CoverImage) -> None:
     """Embed cover image in an ebook file.
-    
+
     Raises:
         ValueError: If format is not supported
     """
     # Detect actual format
     format = detect_format(filepath)
-    
+
     if format == "pdf":
         embed_pdf_cover(filepath, cover)
     elif format == "epub":
