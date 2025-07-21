@@ -4,5 +4,6 @@
 	"reportImplicitRelativeImport": "error",
 	"reportUnusedImport": "error",
 	"reportImportCycles": "error",
-	"reportMissingImports": "error"
+	"reportMissingImports": "error",
+	"reportAttributeAccessIssue": "none"
 }

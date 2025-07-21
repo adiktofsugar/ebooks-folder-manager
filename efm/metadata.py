@@ -27,6 +27,7 @@ class Metadata:
     mod_date: str | None
     is_k2pdfopt_version: bool
     cover_image_hash: str | None = None
+    is_pdf: bool = False
 
     def __post_init__(self):
         self.is_pdf = self.format is not None and self.format.lower() == "pdf"

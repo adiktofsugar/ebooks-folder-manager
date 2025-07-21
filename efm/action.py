@@ -231,7 +231,7 @@ class ReformatPdfAction(BaseAction):
             f"Reformated {self.filepath} with k2pdfopt to {temp_filepath_k2pdfopt}"
         )
 
-        f = pymupdf.open(temp_filepath_k2pdfopt)
+        f: pymupdf.Document = pymupdf.open(temp_filepath_k2pdfopt)
         f.embfile_add("__ebooks-folder-manager.json", b'{"k2pdfopt_version": true}')
 
         temp_filepath_metadata = self.temp_dirpath / "post_reformat_pdf_metadata.pdf"

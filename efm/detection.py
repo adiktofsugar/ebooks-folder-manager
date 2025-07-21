@@ -3,7 +3,6 @@
 import logging
 from pathlib import Path
 import pymupdf
-from ebooklib import epub
 
 logger = logging.getLogger(__name__)
 
