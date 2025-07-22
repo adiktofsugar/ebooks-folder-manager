@@ -1,10 +1,10 @@
 import logging
 from pathlib import Path
 from dataclasses import dataclass
-from typing import Optional
 import hashlib
 import io
 import random
+from typing import cast
 from PIL import Image, ImageDraw, ImageFont
 import colorsys
 import pymupdf
@@ -48,23 +48,25 @@ class CoverImage:
             raise ValueError(f"Invalid image data: {e}")
 
 
-def extract_epub_cover(filepath: Path) -> Optional[CoverImage]:
+def extract_epub_cover(filepath: Path) -> CoverImage | None:
     """Extract cover image from EPUB using ebooklib."""
     try:
         book = epub.read_epub(filepath)
-
         # Get cover image
-        cover_items = []
+        cover_items: list[epub.EpubCover | epub.EpubImage] = []
+        items = cast(list[epub.EpubItem], book.get_items())  # pyright: ignore[reportInvalidCast]
 
         # Try to get items marked as cover
-        for item in book.get_items():
+        for item in items:
             if item.get_type() == ebooklib.ITEM_COVER:
+                item = cast(epub.EpubCover, item)
                 cover_items.append(item)
 
         # If no cover items, look for items with cover in properties
         if not cover_items:
-            for item in book.get_items():
+            for item in items:
                 if item.get_type() == ebooklib.ITEM_IMAGE:
+                    item = cast(epub.EpubImage, item)
                     # Check if it has cover-image property
                     props = item.get_properties()
                     if props and "cover-image" in props:
@@ -72,7 +74,7 @@ def extract_epub_cover(filepath: Path) -> Optional[CoverImage]:
 
         # Get the first cover item
         if cover_items:
-            cover_data = cover_items[0].get_content()
+            cover_data = cast(bytes, cover_items[0].get_content())
             return CoverImage.from_bytes(cover_data)
 
     except Exception as e:
@@ -81,7 +83,7 @@ def extract_epub_cover(filepath: Path) -> Optional[CoverImage]:
     return None
 
 
-def extract_pdf_cover(filepath: Path) -> Optional[CoverImage]:
+def extract_pdf_cover(filepath: Path) -> CoverImage | None:
     """Extract cover image from PDF by looking for embedded images."""
     try:
         doc = pymupdf.open(filepath)
@@ -120,7 +122,7 @@ def extract_pdf_cover(filepath: Path) -> Optional[CoverImage]:
     return None
 
 
-def extract_cover(filepath: Path) -> Optional[CoverImage]:
+def extract_cover(filepath: Path) -> CoverImage | None:
     """Extract cover image from any supported format."""
     # Detect actual format
     format = detect_format(filepath)
@@ -702,11 +704,14 @@ def embed_epub_cover(filepath: Path, cover: CoverImage) -> None:
     book = epub.read_epub(filepath)
 
     # Remove existing cover items
-    items_to_remove = []
+    items_to_remove: list[epub.EpubItem] = []
     for item in book.get_items():
+        item = cast(epub.EpubItem, item)
         if item.get_type() == ebooklib.ITEM_COVER:
+            item = cast(epub.EpubCover, item)
             items_to_remove.append(item)
         elif item.get_type() == ebooklib.ITEM_IMAGE:
+            item = cast(epub.EpubImage, item)
             props = item.get_properties()
             if props and "cover-image" in props:
                 items_to_remove.append(item)

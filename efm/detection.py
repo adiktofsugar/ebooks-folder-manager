@@ -32,7 +32,7 @@ def detect_format(filepath: Path) -> str | None:
     # Try EPUB detection using ebooklib (content-based)
     try:
         import ebooklib.epub as epub
-        book = epub.read_epub(filepath)
+        book = epub.read_epub(filepath)  # pyright: ignore[reportUnknownMemberType]
         return "epub"
     except:
         pass

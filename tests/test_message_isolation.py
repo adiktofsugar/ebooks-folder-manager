@@ -122,7 +122,7 @@ def test_detect_shared_messages():
     assert len(errors_found) == 12, f"Expected 12 errors, found {len(errors_found)}"
 
 
-def check_db_yaml_for_shared_messages(db_path):
+def check_db_yaml_for_shared_messages(db_path: str) -> list[str]:
     """
     Utility function to check an actual db.yaml file for shared messages.
     Returns a list of error messages if issues are found.
@@ -130,7 +130,7 @@ def check_db_yaml_for_shared_messages(db_path):
     with open(db_path) as f:
         db = yaml.safe_load(f)
     
-    errors = []
+    errors: list[str] = []
     
     # Get all unique filenames
     all_filenames = [entry.get("originalFilename", "") for entry in db]

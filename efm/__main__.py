@@ -77,9 +77,9 @@ def main():
         "regex_filter", nargs="?", help="optional regex pattern to filter files"
     )
 
-    args = argparser.parse_args()
+    args: argparse.Namespace = argparser.parse_args()
     loglevel = logging.INFO
-    if args.loglevel:
+    if args.loglevel is not None:
         match args.loglevel.lower():
             case "debug":
                 loglevel = logging.DEBUG
@@ -87,8 +87,8 @@ def main():
                 loglevel = logging.INFO
             case "error":
                 loglevel = logging.ERROR
-            case _:
-                raise ValueError(f"Unknown log level {args.loglevel}")
+            case level:
+                raise ValueError(f"Unknown log level {level}")
 
     # Set up console for progress bar
     console = Console()

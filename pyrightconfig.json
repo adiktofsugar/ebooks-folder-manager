@@ -5,5 +5,7 @@
 	"reportUnusedImport": "error",
 	"reportImportCycles": "error",
 	"reportMissingImports": "error",
-	"reportAttributeAccessIssue": "none"
+	"reportAttributeAccessIssue": "none",
+	"reportUnusedCallResult": "none",
+	"reportUnknownVariableType": "none"
 }

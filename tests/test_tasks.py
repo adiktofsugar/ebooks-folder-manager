@@ -1,6 +1,7 @@
 from pathlib import Path
 import tempfile
 import json
+from typing import Any
 from efm.tasks import TasksFile, Task, process_task, TaskSuccess, TaskError
 
 
@@ -10,7 +11,7 @@ def test_add_task():
         tasks_file = TasksFile(Path(f.name))
         
         # Add some tasks - TaskSetCover task
-        task_data = {
+        task_data: dict[str, str] = {
             "key": "set_cover",
             "book_filepath": "/path/to/book.pdf",
             "cover_tmp_filepath": "/tmp/cover.png"
@@ -96,7 +97,7 @@ def test_get_task_count():
         assert tasks_file.get_task_count() == 0
         
         # Add tasks
-        task_data = {
+        task_data: dict[str, str] = {
             "key": "set_cover",
             "book_filepath": "/path/to/book.pdf",  
             "cover_tmp_filepath": "/tmp/cover.png"
@@ -120,7 +121,7 @@ def test_process_task_success():
             book_file.flush()
             cover_file.flush()
             
-            task_data = {
+            task_data: dict[str, str] = {
                 "key": "set_cover",
                 "book_filepath": book_file.name,
                 "cover_tmp_filepath": cover_file.name
@@ -139,7 +140,7 @@ def test_process_task_success():
 def test_process_task_error():
     """Test processing a task with error."""
     # Use non-existent files
-    task_data = {
+    task_data: dict[str, str] = {
         "key": "set_cover",
         "book_filepath": "/non/existent/book.pdf",
         "cover_tmp_filepath": "/non/existent/cover.png"
@@ -174,7 +175,7 @@ def test_task_result_serialization():
 def test_task_result_from_dict():
     """Test TaskResult deserialization."""
     # Success result
-    success_data = {
+    success_data: dict[str, Any] = {
         "key": "set_cover",
         "error": False,
         "messages": ["Success"]
@@ -184,7 +185,7 @@ def test_task_result_from_dict():
     assert result.key == "set_cover"
     
     # Error result
-    error_data = {
+    error_data: dict[str, Any] = {
         "key": "set_cover", 
         "error": True,
         "error_message": "Failed",

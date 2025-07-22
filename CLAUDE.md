@@ -148,3 +148,9 @@ The configuration file supports various DRM key paths:
 
 ## Testing Memories
 - run pytest with uv run pytest
+
+## Linting Memories
+- to run python lint, use `uv run scripts/lint.py`
+
+## Python Test Running Memories
+- to run python tests, use `uv run scripts/test.py`

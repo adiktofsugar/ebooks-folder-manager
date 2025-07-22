@@ -2,7 +2,7 @@ import json
 import logging
 from pathlib import Path
 from dataclasses import dataclass, asdict, field
-from typing import List, Optional
+from typing import Optional, Type, Any, ClassVar
 from enum import Enum
 import hashlib
 
@@ -24,11 +24,11 @@ class TaskResult:
 
     key: str
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict):
+    def from_dict(cls, data: dict[str, Any]) -> "TaskResult":  # type: ignore[misc]
         if data.get("error", False):
             return TaskError(**data)
         else:
@@ -37,51 +37,66 @@ class TaskResult:
 
 @dataclass
 class TaskSuccess(TaskResult):
-    """Successful task execution"""
-
     error: bool = False
-    messages: List[str] = field(default_factory=list)
+    messages: list[str] = field(default_factory=list)
 
 
 @dataclass
 class TaskError(TaskResult):
-    """Failed task execution"""
-
     error: bool = True
     error_message: str = ""
-    messages: List[str] = field(default_factory=list)
+    messages: list[str] = field(default_factory=list)
 
 
 @dataclass
 class Task:
-    """A task to be processed"""
+    """Base task class with automatic registry"""
 
-    key: str
+    key: ClassVar[str] = "unknown"
+    _registry: ClassVar[dict[str, Type["Task"]]] = {}
 
-    def to_dict(self):
-        return asdict(self)
+    def __init_subclass__(cls, **kwargs) -> None:
+        """Automatically register subclasses that have a key"""
+        super().__init_subclass__(**kwargs)
+        if hasattr(cls, "key") and cls.key is not None:
+            Task._registry[cls.key] = cls
+
+    def to_dict(self) -> dict[str, Any]:
+        data = asdict(self)
+        data["key"] = self.__class__.key
+        return data
 
     @classmethod
-    def from_dict(cls, data: dict):
+    def from_dict(cls, data: dict[str, Any]) -> "Task":  # type: ignore[misc]
+        """Deserialize a task from a dictionary (JSON data)"""
         key = data.get("key")
-        if key == "set_cover":
-            return TaskSetCover.from_dict(**data)
-        raise Exception(f'no task with key "{key}"')
+        if key not in cls._registry:
+            raise ValueError(f"Unknown task type: {key}")
+
+        task_class = cls._registry[key]
+        return task_class._from_dict(data)
+
+    @classmethod
+    def _from_dict(cls, data: dict[str, Any]) -> "Task":  # type: ignore[misc]
+        """Override in subclasses for custom deserialization"""
+        return cls(**data)
 
 
 @dataclass
 class TaskSetCover(Task):
-    key = "set_cover"
+    key: ClassVar[str] = "set_cover"
     book_filepath: Path
     cover_tmp_filepath: Path
 
-    def to_dict(self):
-        return asdict(self)
+    def to_dict(self) -> dict[str, Any]:
+        data = super().to_dict()
+        data["book_filepath"] = str(self.book_filepath)
+        data["cover_tmp_filepath"] = str(self.cover_tmp_filepath)
+        return data
 
     @classmethod
-    def from_dict(cls, data: dict):
-        return TaskSetCover(
-            **data,
+    def _from_dict(cls, data: dict[str, Any]) -> "TaskSetCover":  # type: ignore[misc]
+        return cls(
             book_filepath=Path(data["book_filepath"]),
             cover_tmp_filepath=Path(data["cover_tmp_filepath"]),
         )
@@ -135,16 +150,16 @@ class TasksFile:
 
 def process_task(task: Task) -> TaskSuccess | TaskError:
     """Process a single task and return result."""
-    logger.info(f"Processing task: {task.key}")
+    logger.info(f"Processing task: {task.__class__.key}")
 
     if isinstance(task, TaskSetCover):
         return handle_set_cover(task)
 
     # No handler found
-    error_msg = f"No handler found for task: {task.key}"
+    error_msg = f"No handler found for task: {task.__class__.key}"
     logger.warning(error_msg)
     return TaskError(
-        key=task.key,
+        key=task.__class__.key or "unknown",
         error_message=error_msg,
         messages=[],
     )
@@ -155,12 +170,12 @@ def handle_set_cover(task: TaskSetCover) -> TaskSuccess | TaskError:
 
     book_filepath = task.book_filepath
     cover_tmp_filepath = task.cover_tmp_filepath
-    messages = []
+    messages: list[str] = []
     messages.append(f"Setting cover of {book_filepath} to {cover_tmp_filepath}")
 
     if not book_filepath.exists():
         return TaskError(
-            task.key,
+            key=TaskSetCover.key,
             error_message=f"No book file at {book_filepath}",
             messages=messages,
         )
@@ -193,6 +208,6 @@ def handle_set_cover(task: TaskSetCover) -> TaskSuccess | TaskError:
             metadata_cache_path.unlink()
             messages.append("Cleared metadata cache")
 
-        return TaskSuccess(task.key, messages=messages)
+        return TaskSuccess(key=TaskSetCover.key, messages=messages)
     except Exception as e:
-        return TaskError("set_cover", error_message=str(e), messages=messages)
+        return TaskError(key=TaskSetCover.key, error_message=str(e), messages=messages)
