@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 """Test that messages in db.yaml are properly isolated to their respective books."""
 
-import tempfile
-import shutil
 from pathlib import Path
+from typing import Any
 import yaml
 
 
@@ -98,7 +97,7 @@ def test_detect_shared_messages():
     ]
     
     # This should fail validation
-    errors_found = []
+    errors_found: list[str] = []
     
     for book_entry in buggy_db:
         filename = book_entry["originalFilename"]
@@ -108,7 +107,7 @@ def test_detect_shared_messages():
         other_filenames = [b["originalFilename"] for b in buggy_db if b["originalFilename"] != filename]
         for other_filename in other_filenames:
             for message in messages:
-                if other_filename in message:
+                if isinstance(message, str) and other_filename in message:
                     errors_found.append(
                         f"Book '{filename}' has message from another book '{other_filename}': '{message}'"
                     )
@@ -128,7 +127,7 @@ def check_db_yaml_for_shared_messages(db_path: str) -> list[str]:
     Returns a list of error messages if issues are found.
     """
     with open(db_path) as f:
-        db = yaml.safe_load(f)
+        db: list[dict[str, Any]] = yaml.safe_load(f)
     
     errors: list[str] = []
     
@@ -144,7 +143,7 @@ def check_db_yaml_for_shared_messages(db_path: str) -> list[str]:
         
         for other_filename in other_filenames:
             for message in messages:
-                if other_filename in message:
+                if isinstance(message, str) and other_filename in message:
                     errors.append(
                         f"Book '{filename}' has message from another book '{other_filename}': '{message}'"
                     )
@@ -158,7 +157,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         db_path = Path(sys.argv[1])
         if db_path.exists():
-            errors = check_db_yaml_for_shared_messages(db_path)
+            errors = check_db_yaml_for_shared_messages(str(db_path))
             if errors:
                 print(f"Found {len(errors)} message isolation issues:")
                 for error in errors[:10]:  # Show first 10 errors

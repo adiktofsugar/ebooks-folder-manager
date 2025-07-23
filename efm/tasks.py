@@ -126,7 +126,7 @@ class TasksFile:
         try:
             task_data = json.loads(lines[0])
             task = Task.from_dict(task_data)
-        except (json.JSONDecodeError, TypeError) as e:
+        except (json.JSONDecodeError, TypeError):
             logger.error(f"Failed to parse task from line: {lines[0]}")
             # Remove the corrupted line
             self.filepath.write_text("\n".join(lines[1:]) + "\n" if lines[1:] else "")

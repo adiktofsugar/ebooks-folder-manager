@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import override
 
 
 class BookError(Exception):
@@ -13,6 +14,7 @@ class BookError(Exception):
 class GetMetadataError(BookError):
     """Error related to book metadata operations."""
 
+    @override
     def __init__(self, filepath:Path, message=None, original_error=None):
         super().__init__(
             filepath,
@@ -23,6 +25,7 @@ class GetMetadataError(BookError):
 class RemoveDrmError(BookError):
     """Error related to DRM operations."""
 
+    @override
     def __init__(self, filepath:Path, message=None, original_error=None):
         super().__init__(
             filepath,
@@ -33,6 +36,7 @@ class RemoveDrmError(BookError):
 class ZipFixError(RemoveDrmError):
     """Error related to fixing a zip file."""
 
+    @override
     def __init__(self, filepath:Path):
         super().__init__(
             filepath,
@@ -43,6 +47,7 @@ class ZipFixError(RemoveDrmError):
 class DetectEncryptionError(RemoveDrmError):
     """Error related to encryption/decryption operations."""
 
+    @override
     def __init__(self, filepath:Path, message=None):
         super().__init__(
             filepath,
@@ -53,6 +58,7 @@ class DetectEncryptionError(RemoveDrmError):
 class MissingDrmKeyFileError(RemoveDrmError):
     """Error when a required key file is missing."""
 
+    @override
     def __init__(self, filepath:Path, encryption_type: str, message=None):
         super().__init__(
             filepath,
@@ -63,6 +69,7 @@ class MissingDrmKeyFileError(RemoveDrmError):
 class UnsupportedEncryptionError(RemoveDrmError):
     """Error when the encryption type is not supported."""
 
+    @override
     def __init__(self, filepath:Path, encryption_type: str, message=None):
         super().__init__(
             filepath,

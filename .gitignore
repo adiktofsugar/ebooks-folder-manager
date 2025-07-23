@@ -318,3 +318,6 @@ dist
 .task
 generated_covers
 test-site
+
+# custom
+.meta.json

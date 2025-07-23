@@ -3,7 +3,7 @@
 	"version": "1.0.0",
 	"description": "The ui for the generated site",
 	"scripts": {
-		"build": "tsx ./scripts/build.mts",
+		"build": "esbuild src/index.* --outdir=dist --bundle --metafile=.meta.json --loader:.html=copy --entry-names=[dir]/[name].[hash] && esbuild-html-link",
 		"lint": "echo Linting complete",
 		"lint:biome": "biome check",
 		"lint:ts": "tsc --noEmit",

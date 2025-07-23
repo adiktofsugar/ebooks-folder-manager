@@ -1,7 +1,5 @@
-import pytest
 from pathlib import Path
 import tempfile
-import os
 from efm.file_selection import matches_filter, get_files_from_dirpath
 
 

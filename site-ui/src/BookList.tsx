@@ -23,7 +23,7 @@ export default observer(function BookList({ store }: { store: BookListStore }) {
 				</div>
 				<ul className={styles.bookList}>
 					{booksSorted.map(({ book, matchData }) => (
-						<li key={book.filename}>
+						<li key={book.hash}>
 							<BookListItem book={book} matchData={matchData} />
 						</li>
 					))}

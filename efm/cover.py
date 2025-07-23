@@ -108,7 +108,7 @@ def extract_pdf_cover(filepath: Path) -> CoverImage | None:
                     if size > largest_size:
                         largest_size = size
                         largest_img = img_dict
-                except:
+                except Exception:
                     continue
 
             if largest_img:
@@ -150,7 +150,7 @@ def extract_cover(filepath: Path) -> CoverImage | None:
                         img_dict = doc.extract_image(xref)
                         doc.close()
                         return CoverImage.from_bytes(img_dict["image"])
-                    except:
+                    except Exception:
                         pass
 
             doc.close()
@@ -632,7 +632,7 @@ def generate_cover(
             author_font = ImageFont.truetype(
                 "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf", 24
             )
-        except:
+        except Exception:
             title_font = ImageFont.load_default()
             author_font = ImageFont.load_default()
 

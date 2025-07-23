@@ -109,7 +109,7 @@ def decryptpdf(
             infile,
             message=f"Unsupported encryption type '{pdf_encryption}'",
         )
-    except ineptpdf.PDFNoValidXRef as e:
+    except ineptpdf.PDFNoValidXRef:
         logger.debug(
             f"{infile} is invalid according to dedrm, but we ignore since it doesn't matter if it's not encrypted"
         )

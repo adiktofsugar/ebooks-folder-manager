@@ -1,8 +1,6 @@
-import pytest
 from pathlib import Path
 import tempfile
 import subprocess
-import sys
 
 
 def test_main_processes_tasks_file():

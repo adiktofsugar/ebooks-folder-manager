@@ -1,4 +1,4 @@
-from typing import Dict, List, Iterator
+from typing import Iterator
 from dataclasses import dataclass, field
 from rich.console import Console
 
@@ -28,7 +28,7 @@ class BatchSummaryResult[Result]:
 
     name: str
     result: Result
-    categories: Dict[SummaryCategory, bool] = field(default_factory=dict)
+    categories: dict[SummaryCategory, bool] = field(default_factory=dict)
     error: str | None = None
 
     def has_category(self, category: SummaryCategory) -> bool:
@@ -39,10 +39,10 @@ class BatchSummaryResult[Result]:
 class BatchSummary[Result]:
     """Tracks results and statistics for batch processing operations."""
 
-    def __init__(self, categories: List[SummaryCategory]):
+    def __init__(self, categories: list[SummaryCategory]):
         self.categories = categories
-        self.results: List[BatchSummaryResult[Result]] = []
-        self._category_counts: Dict[SummaryCategory, int] = {
+        self.results: list[BatchSummaryResult[Result]] = []
+        self._category_counts: dict[SummaryCategory, int] = {
             cat: 0 for cat in categories
         }
 
@@ -92,7 +92,7 @@ class BatchSummary[Result]:
         """Iterate over all results."""
         return iter(self.results)
 
-    def filter_by_category(self, category: SummaryCategory) -> List[BatchSummaryResult]:
+    def filter_by_category(self, category: SummaryCategory) -> list[BatchSummaryResult]:
         """Get all results that belong to a specific category."""
         return [r for r in self.results if r.has_category(category)]
 

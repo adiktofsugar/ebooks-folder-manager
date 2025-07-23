@@ -26,7 +26,7 @@ def test_add_task():
         lines = content.strip().split('\n')
         
         assert len(lines) == 1
-        saved_data = json.loads(lines[0])
+        saved_data: dict[str, Any] = json.loads(lines[0])
         assert saved_data["key"] == "set_cover"
         assert saved_data["book_filepath"] == "/path/to/book.pdf"
         assert saved_data["cover_tmp_filepath"] == "/tmp/cover.png"

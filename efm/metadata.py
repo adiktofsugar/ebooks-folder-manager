@@ -45,6 +45,9 @@ def get_metadata(filepath: Path) -> Metadata | None:
         "TXT",
     ]
     ext = filepath.suffix[1:].upper()
+    if ext == "acsm":
+        # No reason to print a warning for this one since we know how to handle it
+        return None
     if ext not in supported_formats:
         logger.warning(
             f"{filepath} is not a supported format for pymupdf. Format is {ext}."

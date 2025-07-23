@@ -26,15 +26,15 @@ def detect_format(filepath: Path) -> str | None:
                 if format.lower().startswith("pdf"):
                     return "pdf"
         doc.close()
-    except:
+    except Exception:
         pass
     
     # Try EPUB detection using ebooklib (content-based)
     try:
         import ebooklib.epub as epub
-        book = epub.read_epub(filepath)  # pyright: ignore[reportUnknownMemberType]
+        epub.read_epub(filepath)  # pyright: ignore[reportUnknownMemberType]
         return "epub"
-    except:
+    except Exception:
         pass
     
     # Fall back to extension only for known formats

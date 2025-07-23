@@ -60,8 +60,6 @@ export default class BookListStore {
 		if (!data) {
 			return [];
 		}
-		// TODO: handle errors - probably that means
-		//   something else at the root?
 		return data
 			.filter((d) => d.error === false)
 			.map((book) => new BookItemStore(book));
@@ -109,7 +107,9 @@ export default class BookListStore {
 			return booksWithMatch;
 		}
 
-		return booksWithMatch.sort((a, b) => b.matchData.score - a.matchData.score);
+		return booksWithMatch
+			.filter((b) => b.matchData.score)
+			.sort((a, b) => b.matchData.score - a.matchData.score);
 	}
 	async load() {
 		this.dbStore.load();

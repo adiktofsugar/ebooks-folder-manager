@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 import subprocess
-from typing import Sequence
+from typing import Sequence, override
 import pymupdf
 
 from efm import dedrm, kfxconvert
@@ -12,9 +12,10 @@ from adl import account, data
 
 from efm.config import Config
 from efm.env import ensure_k2pdfopt
-from efm.metadata import Metadata
+from efm.metadata import Metadata, get_metadata
 from efm.exceptions import (
     BookError,
+    GetMetadataError,
     RemoveDrmError,
 )
 
@@ -52,16 +53,29 @@ class BaseAction(object):
 
 
 class DeDrmAction(BaseAction):
+    @override
     @classmethod
     def description(cls) -> str:
         return "remove DRM from files"
 
+    @override
     @classmethod
     def id(cls) -> str:
         return "drm"
 
+    @override
     def perform(self) -> Path:
         booktype = self.filepath.suffix.lower()[1:]
+        new_filepath = self._perform_for_type(booktype)
+        if new_filepath is None:
+            logger.info(f"No DeDRM support for format {booktype} files.")
+            return self.filepath
+        # it's almost guaranteed I'll need to change the metadata now because it's impossible to do
+        #  before removing the DRM
+        self.metadata = get_metadata(new_filepath)
+        return new_filepath
+
+    def _perform_for_type(self, booktype: str):
         if booktype in [
             "prc",
             "mobi",
@@ -80,9 +94,7 @@ class DeDrmAction(BaseAction):
             return self._perform_pdf()
         elif booktype == "epub":
             return self._perform_epub()
-
-        logger.info(f"No DeDRM support for format {booktype} files.")
-        return self.filepath
+        return None
 
     def _perform_k4mobi(self) -> Path:
         if not self.config:
@@ -183,14 +195,17 @@ class DeDrmAction(BaseAction):
 
 
 class ReformatPdfAction(BaseAction):
+    @override
     @classmethod
     def description(cls) -> str:
         return "reformat a PDF via k2pdfopt"
 
+    @override
     @classmethod
     def id(cls) -> str:
         return "pdf"
 
+    @override
     def perform(self) -> Path:
         metadata = self.metadata
         if not metadata:
@@ -247,14 +262,17 @@ class ReformatPdfAction(BaseAction):
 
 
 class DownloadAcsmAction(BaseAction):
+    @override
     @classmethod
     def description(cls) -> str:
         return "download an ACSM file"
 
+    @override
     @classmethod
     def id(cls) -> str:
         return "download_acsm"
 
+    @override
     def perform(self) -> Path:
         if self.filepath.suffix.lower() == ".acsm":
             if not self.config:
@@ -288,7 +306,17 @@ class DownloadAcsmAction(BaseAction):
                 if new_filepath is None:
                     raise GetEbookException(str(self.filepath), "No file downloaded")
                 logger.info(f"Downloaded {self.filepath}")
-                return Path(new_filepath)
+                new_filepath = Path(new_filepath)
+                # acsm files have no metadata, so we need to try again here...however, it's
+                #  pretty likely that they'll still have drm, so we need to be ok with errors
+                try:
+                    self.metadata = get_metadata(new_filepath)
+                except GetMetadataError as e:
+                    logger.debug(
+                        f"Mildly expected metadata error because ACSM is likely still protected with DRM - {e}"
+                    )
+                    self.metadata = None
+                return new_filepath
             except Exception as e:
                 if isinstance(e, GetEbookException):
                     raise BookError(self.filepath, message=str(e))
@@ -298,14 +326,17 @@ class DownloadAcsmAction(BaseAction):
 
 
 class Kfx2EpubAction(BaseAction):
+    @override
     @classmethod
     def description(cls) -> str:
         return "convert kfx to epub"
 
+    @override
     @classmethod
     def id(cls) -> str:
         return "kfx2epub"
 
+    @override
     def perform(self) -> Path:
         valid_extensions = ["kfx", "kfx-zip", "kpf"]
         ext = self.filepath.suffix.lower()[1:]

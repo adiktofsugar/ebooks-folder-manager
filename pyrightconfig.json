@@ -7,5 +7,6 @@
 	"reportMissingImports": "error",
 	"reportAttributeAccessIssue": "none",
 	"reportUnusedCallResult": "none",
-	"reportUnknownVariableType": "none"
+	"reportUnknownVariableType": "none",
+	"reportExplicitAny": "none"
 }

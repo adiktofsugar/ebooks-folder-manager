@@ -99,8 +99,10 @@ def main():
     # Configure rich logging handler with custom format for narrow screens
     from rich.text import Text
     from datetime import datetime
+    from typing import override
 
     class NarrowScreenRichHandler(RichHandler):
+        @override
         def render_message(self, record, message):
             """Render message with timestamp/level on first line, message on second."""
             # Format time
@@ -228,7 +230,10 @@ def main():
         site_dirpath=site_dirpath,
         edit_api_url=f"http://localhost:{edit_api_port}" if args.edit else None,
     )
-    db = Db(meta=db_meta, books=[r.result for r in summary.results])
+    db = Db(
+        meta=db_meta,
+        books=[r.result for r in summary.results if not r.has_category(Duplicated)],
+    )
     db.save(site_dirpath / "db.yaml")
 
     ui_dist_dirpath = Path(__file__).parent.parent / "site-ui" / "dist"

@@ -229,7 +229,7 @@ class TestCoverDetection:
 
         # Set cover
         task = TaskSetCover(
-            key="set_cover", book_filepath=new_pdf_path, cover_tmp_filepath=cover_path
+            book_filepath=new_pdf_path, cover_tmp_filepath=cover_path
         )
         result = handle_set_cover(task)
         assert isinstance(result, TaskSuccess)

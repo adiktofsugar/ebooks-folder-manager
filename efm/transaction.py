@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 import shutil
 import tempfile
-from typing import List
+from typing import Any
 import yaml
 from pydantic import BaseModel, ConfigDict
 from efm.action import ALL_ACTIONS
@@ -24,7 +24,7 @@ class TransactionResult(BaseModel):
         return cls.from_dict(yaml.safe_load(filepath.read_text()))
 
     @classmethod
-    def from_dict(cls, d: dict):
+    def from_dict(cls, d: dict[str, Any]):
         # Determine which subclass to use based on presence of error field
         if d.get("error", False):
             return TransactionError(**d)
@@ -42,7 +42,7 @@ class TransactionSuccess(TransactionResult):
     hash: str
     original_filepath: Path
     error: bool = False
-    messages: List[str] = []
+    messages: list[str] = []
     cover_image_hash: str | None = None
 
 
@@ -51,14 +51,14 @@ class TransactionError(TransactionResult):
     original_filepath: Path
     temp_directory: Path | None = None
     error: bool = True
-    messages: List[str] = []
+    messages: list[str] = []
 
 
 class Transaction:
     config: Config | None
     original_filepath: Path
     site_dirpath: Path
-    messages: List[str]
+    messages: list[str]
 
     def __init__(
         self,
