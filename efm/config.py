@@ -1,6 +1,7 @@
 from pathlib import Path
 from schema import Schema, Optional, Use
 import logging
+from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +15,7 @@ def _path_exists(s: str) -> Path:
 
 schema = Schema(
     {
-        Optional("output_dir"): str,
+        Optional("output_dir"): Use(_path_exists),
         Optional("adobe_user"): str,
         Optional("adobe_password"): str,
         Optional("adobe_key_files"): [Use(_path_exists)],
@@ -30,32 +31,19 @@ schema = Schema(
 )
 
 
-class Config(object):
-    output_dir: str | None
-    adobe_user: str | None
-    adobe_password: str | None
-    adobe_key_files: list[Path] | None
-    b_and_n_key_files: list[Path] | None
-    ereader_social_drm_file: Path | None
-    kindle_pidnums: list[str] | None
-    kindle_serialnums: list[str] | None
-    kindle_database_files: list[Path] | None
-    kindle_android_files: list[Path] | None
-    pdf_passwords: list[str] | None
-
-    def __init__(self, filepath: Path):
-        data = schema.validate(load_config(filepath))
-        self.output_dir = data.get("output_dir")
-        self.adobe_user = data.get("adobe_user")
-        self.adobe_password = data.get("adobe_password")
-        self.adobe_key_files = data.get("adobe_key_files")
-        self.b_and_n_key_files = data.get("b_and_n_key_files")
-        self.ereader_social_drm_file = data.get("ereader_social_drm_file")
-        self.kindle_pidnums = data.get("kindle_pidnums")
-        self.kindle_serialnums = data.get("kindle_serialnums")
-        self.kindle_database_files = data.get("kindle_database_files")
-        self.kindle_android_files = data.get("kindle_android_files")
-        self.pdf_passwords = data.get("pdf_passwords")
+@dataclass
+class Config:
+    output_dir: Path | None = None
+    adobe_user: str | None = None
+    adobe_password: str | None = None
+    adobe_key_files: list[Path] | None = None
+    b_and_n_key_files: list[Path] | None = None
+    ereader_social_drm_file: Path | None = None
+    kindle_pidnums: list[str] | None = None
+    kindle_serialnums: list[str] | None = None
+    kindle_database_files: list[Path] | None = None
+    kindle_android_files: list[Path] | None = None
+    pdf_passwords: list[str] | None = None
 
 
 def load_config(filepath: Path):
@@ -79,12 +67,40 @@ def load_config(filepath: Path):
     raise ValueError(f"Unknown config file extension: {ext}")
 
 
-def get_config(dirpath: Path) -> Config | None:
+def get_config_filepath(dirpath: Path) -> Path | None:
     """
-    Get the config file in the given directory.
+    Get the config filepath in the given directory if it exists.
     """
     for ext in ["toml", "yaml", "yml", "json"]:
         config_file = dirpath / f"efm.{ext}"
         if config_file.exists():
-            return Config(config_file)
+            return config_file
     return None
+
+
+def get_config(dirpath: Path) -> Config | None:
+    """
+    Get the config by searching up the directory tree and merging parent configs.
+    Parent values are only added if not present in child configs.
+    """
+    # Find config in the given directory first
+    config_file = get_config_filepath(dirpath)
+    if not config_file:
+        return None
+    
+    # Start with the primary config data
+    raw_data = load_config(config_file)
+    
+    # Search up the directory tree for parent configs
+    current = dirpath.parent.resolve()
+    while current != current.parent:
+        parent_config = get_config_filepath(current)
+        if parent_config:
+            parent_data = load_config(parent_config)
+            # Only add parent values if not present in child
+            for key, value in parent_data.items():
+                if key not in raw_data:
+                    raw_data[key] = value
+        current = current.parent
+    
+    return Config(**schema.validate(raw_data))

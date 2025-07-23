@@ -5,8 +5,11 @@ import re
 import sys
 from pathlib import Path
 
+from rich.color import Color
+from rich.style import Style
 import yaml
 from rich.console import Console
+from rich.logging import RichHandler
 from rich.progress import (
     Progress,
     SpinnerColumn,
@@ -90,11 +93,37 @@ def main():
             case level:
                 raise ValueError(f"Unknown log level {level}")
 
-    # Set up console for progress bar
+    # Set up console for progress bar and logging
     console = Console()
 
-    # Keep standard logging setup to avoid interfering with transaction logging
-    logging.basicConfig(level=loglevel)
+    # Configure rich logging handler with custom format for narrow screens
+    from rich.text import Text
+    from datetime import datetime
+
+    class NarrowScreenRichHandler(RichHandler):
+        def render_message(self, record, message):
+            """Render message with timestamp/level on first line, message on second."""
+            # Format time
+            time_format = "[%X]"
+            log_time = datetime.fromtimestamp(record.created).strftime(time_format)
+
+            level_text = Text(
+                record.levelname, style=f"logging.level.{record.levelname.lower()}"
+            )
+            time_text = Text(log_time, style="log.time")
+            first_line = Text.assemble(level_text, " ", time_text)
+            return Text.assemble(first_line, "\n", message)
+
+    rich_handler = NarrowScreenRichHandler(
+        console=console,
+        rich_tracebacks=True,
+        show_time=False,  # We handle time ourselves
+        show_level=False,
+        show_path=False,
+        markup=True,
+    )
+
+    logging.basicConfig(level=loglevel, handlers=[rich_handler])
 
     # Validate directory argument
     directory_path = Path(args.directory).resolve()
@@ -116,6 +145,7 @@ def main():
             return 1
 
     config = get_config(directory_path)
+    logger.info(f"Using config ${config}" if config else "No config found")
 
     output_dirpath = get_output_dirpath(args.out, config)
     if not output_dirpath:
@@ -123,6 +153,7 @@ def main():
             "No output directory specified. Use -o option or set output_dir in config file."
         )
         return 1
+    logger.info(f"Writing to {output_dirpath}")
 
     edit_api_port = 12000  # choose a port that's unlikely to conflict
 
@@ -162,8 +193,8 @@ def main():
                 logger.debug(f"File matches filter: {file_path.name}")
             else:
                 logger.debug(f"File excluded by filter: {file_path.name}")
-        else:
-            files_to_process.append(file_path)
+            continue
+        files_to_process.append(file_path)
 
     summary = BatchSummary[TransactionSuccess | TransactionError](
         [Success, Failed, Duplicated]
