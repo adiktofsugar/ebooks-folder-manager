@@ -154,3 +154,9 @@ The configuration file supports various DRM key paths:
 
 ## Python Test Running Memories
 - to run python tests, use `uv run scripts/test.py`
+
+## Execution Guideline Memories
+- You MUST NEVER run python or python3 directly. ALWAYS run with uv.
+
+## Python Development Memories
+- don't use List from typing. it's deprecated

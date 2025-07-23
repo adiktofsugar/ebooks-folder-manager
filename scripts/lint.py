@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 
 # Add script directory to Python path for imports
 sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))  # For efm imports
 
 from rich.text import Text
 
@@ -25,13 +26,14 @@ from rich.console import Console
 from rich.panel import Panel
 from rich import box
 
-from interfaces import PyrightOutput, Diagnostic  # type: ignore[import]
+from scripts.interfaces import PyrightOutput, Diagnostic
+from efm.file_selection import matches_filter
 
 # Get project root based on script location
 script_dir = Path(__file__).parent
 project_root = script_dir.parent
 
-usage = """Usage: uv run lint.py [options]
+usage = """Usage: uv run lint.py [options] [filters...]
 
 Run linting tools (ruff and basedpyright) on the project.
 
@@ -39,6 +41,19 @@ Options:
   -w, --watch   Watch for file changes and re-run linting
   --fix         Auto-fix linting issues where possible
   -h, --help    Show this help message
+
+Filters:
+  Patterns to filter files (processed in order):
+  - Substring match by default: 'metadata' matches any file containing 'metadata'
+  - Glob patterns: '*.py', 'test_*.py' (if glob magic chars detected)
+  - Regex patterns: '^test_.*.py$' (if not glob and valid regex)
+  - Negation: prefix with ! or - to exclude: '!test_', '-old'
+
+Examples:
+  uv run lint.py                    # Lint entire project
+  uv run lint.py metadata           # Files containing 'metadata'
+  uv run lint.py test_ !test_old    # Test files except old tests
+  uv run lint.py --fix action       # Auto-fix files containing 'action'
 """
 
 console = Console(force_terminal=True)
@@ -47,8 +62,9 @@ console = Console(force_terminal=True)
 class LintHandler(FileSystemEventHandler):
     """Handle file system events for linting."""
 
-    def __init__(self, fix: bool):
+    def __init__(self, fix: bool, filters: list[str] | None = None):
         self.fix: bool = fix
+        self.filters: list[str] | None = filters
         self.last_run: float = 0
         self.pending: bool = False
 
@@ -63,12 +79,40 @@ class LintHandler(FileSystemEventHandler):
                     self.pending = True
 
 
-def run_ruff(fix: bool = False) -> tuple[int, str]:
-    """Run ruff linter."""
-    cmd = ["ruff", "check", str(project_root / "efm"), str(project_root / "tests")]
+def get_python_files(filters: list[str] | None = None) -> list[str]:
+    """Get all Python files, optionally filtered by patterns."""
+    all_files: list[Path] = []
+
+    # Collect Python files from efm/ and tests/
+    for dir_name in ["efm", "tests"]:
+        dir_path = project_root / dir_name
+        if dir_path.exists():
+            for root, _, files in dir_path.walk():
+                for file in files:
+                    if file.endswith(".py"):
+                        all_files.append(root / file)
+
     # Add any .py files in root directory
-    root_py_files = list(project_root.glob("*.py"))
-    cmd.extend(str(f) for f in root_py_files)
+    all_files.extend(f for f in project_root.glob("*.py") if f.is_file())
+
+    # Apply filters if provided
+    if filters:
+        filtered_files = []
+        for filepath in all_files:
+            # Check if all filters match
+            if all(matches_filter(filepath, f) for f in filters):
+                filtered_files.append(filepath)
+        return sorted(str(f) for f in filtered_files)
+
+    return sorted(str(f) for f in all_files)
+
+
+def run_ruff(files: list[str], fix: bool = False) -> tuple[int, str]:
+    """Run ruff linter."""
+    if not files:
+        return 0, "No files to lint"
+
+    cmd = ["ruff", "check"] + files
 
     if fix:
         cmd.append("--fix")
@@ -78,12 +122,12 @@ def run_ruff(fix: bool = False) -> tuple[int, str]:
     return result.returncode, output
 
 
-def run_ruff_format(fix: bool = False) -> tuple[int, str]:
+def run_ruff_format(files: list[str], fix: bool = False) -> tuple[int, str]:
     """Run ruff formatter."""
-    cmd = ["ruff", "format", str(project_root / "efm"), str(project_root / "tests")]
-    # Add any .py files in root directory
-    root_py_files = list(project_root.glob("*.py"))
-    cmd.extend(str(f) for f in root_py_files)
+    if not files:
+        return 0, "No files to format"
+
+    cmd = ["ruff", "format"] + files
 
     if not fix:
         cmd.append("--check")
@@ -93,14 +137,12 @@ def run_ruff_format(fix: bool = False) -> tuple[int, str]:
     return result.returncode, output
 
 
-def run_basedpyright() -> tuple[int, str]:
+def run_basedpyright(files: list[str]) -> tuple[int, str]:
     """Run basedpyright type checker."""
-    cmd = [
-        "basedpyright",
-        "--outputjson",
-        str(project_root / "efm"),
-        str(project_root / "tests"),
-    ]
+    if not files:
+        return 0, "No files to type check"
+
+    cmd = ["basedpyright", "--outputjson"] + files
 
     result = subprocess.run(cmd, capture_output=True, text=True)
     output = result.stdout + result.stderr
@@ -274,20 +316,36 @@ def display_results(
     return max(ruff_result[0], format_result[0], pyright_result[0])
 
 
-def run_lint(fix: bool = False) -> int:
+def run_lint(fix: bool = False, filters: list[str] | None = None) -> int:
     """Run all linting tools."""
     console.clear()
+
+    # Get the list of files to lint
+    files = get_python_files(filters)
+
+    # Show which files will be linted if filters are provided
+    if filters:
+        if files:
+            console.print(
+                f"[dim]Linting {len(files)} files matching filters: {', '.join(filters)}[/dim]\n"
+            )
+        else:
+            console.print(
+                f"[yellow]No files found matching filters: {', '.join(filters)}[/yellow]"
+            )
+            return 0
+
     with console.status("[bold green]Running linters...", spinner="dots"):
-        ruff_result = run_ruff(fix)
-        format_result = run_ruff_format(fix)
-        pyright_result = run_basedpyright()
+        ruff_result = run_ruff(files, fix)
+        format_result = run_ruff_format(files, fix)
+        pyright_result = run_basedpyright(files)
 
     return display_results(ruff_result, format_result, pyright_result, fix)
 
 
-def watch_mode(fix: bool):
+def watch_mode(fix: bool, filters: list[str] | None = None):
     """Run linting in watch mode."""
-    handler = LintHandler(fix)
+    handler = LintHandler(fix, filters)
     observer = Observer()
 
     # Watch Python files
@@ -307,7 +365,7 @@ def watch_mode(fix: bool):
 
     try:
         # Initial run
-        run_lint(fix)
+        run_lint(fix, filters)
 
         while True:
             time.sleep(0.5)
@@ -321,7 +379,7 @@ def watch_mode(fix: bool):
                         style="bold blue",
                     )
                 )
-                run_lint(fix)
+                run_lint(fix, filters)
     except KeyboardInterrupt:
         observer.stop()
         console.print("\n[bold red]Stopped watching.[/bold red]")
@@ -336,6 +394,7 @@ def main() -> int:
     )
     parser.add_argument("--fix", action="store_true", help="Auto-fix linting issues")
     parser.add_argument("-h", "--help", action="store_true", help="Show help message")
+    parser.add_argument("filters", nargs="*", help="Patterns to filter files")
 
     args: Namespace = parser.parse_args()
 
@@ -346,12 +405,13 @@ def main() -> int:
 
     watch_flag: bool = args.watch  # type: ignore[assignment]
     fix_flag: bool = args.fix  # type: ignore[assignment]
-    
+    filters: list[str] = args.filters  # type: ignore[assignment]
+
     if watch_flag:
-        watch_mode(fix_flag)
+        watch_mode(fix_flag, filters if filters else None)
         return 0
     else:
-        return run_lint(fix_flag)
+        return run_lint(fix_flag, filters if filters else None)
 
 
 if __name__ == "__main__":

@@ -1,48 +1,49 @@
 from pathlib import Path
-from schema import Schema, Optional, Use
 import logging
-from dataclasses import dataclass, field
+from typing import Annotated
+from pydantic import BaseModel, BeforeValidator
 
 logger = logging.getLogger(__name__)
 
 
-def _path_exists(s: str) -> Path:
-    p = Path(s).expanduser()
-    if not p.exists():
-        raise ValueError(f"Path {p} does not exist.")
-    return p
+def expand_path(v: Path | str | None):
+    if v:
+        return Path(v).expanduser()
 
 
-schema = Schema(
-    {
-        Optional("output_dir"): Use(_path_exists),
-        Optional("adobe_user"): str,
-        Optional("adobe_password"): str,
-        Optional("adobe_key_files"): [Use(_path_exists)],
-        Optional("b_and_n_key_files"): [Use(_path_exists)],
-        Optional("ereader_social_drm_file"): Use(_path_exists),
-        Optional("pdf_passwords"): list[str],
-        Optional("kindle_pidnums"): list[str],
-        Optional("kindle_serialnums"): list[str],
-        # kindle_database_files is a list of files created by kindlekey
-        Optional("kindle_database_files"): [Use(_path_exists)],
-        Optional("kindle_android_files"): [Use(_path_exists)],
-    },
-)
+def expand_and_validate_path(v: Path | None):
+    """Expand user paths and validate they exist"""
+    v = expand_path(v)
+    if v and not v.exists():
+        raise ValueError(f"Path {v} does not exist")
+    return v
 
 
-@dataclass
-class Config:
-    output_dir: Path | None = None
+def expand_and_validate_path_list(v: list[Path] | None):
+    """Expand user paths in a list and validate they exist"""
+    if v is None:
+        return None
+    return [expand_and_validate_path(p) for p in v]
+
+
+ExpandedPath = Annotated[Path | None, BeforeValidator(expand_path)]
+ExistingPath = Annotated[Path | None, BeforeValidator(expand_and_validate_path)]
+ExistingPathList = Annotated[
+    list[Path] | None, BeforeValidator(expand_and_validate_path_list)
+]
+
+
+class Config(BaseModel):
+    output_dir: ExpandedPath | None = None
     adobe_user: str | None = None
     adobe_password: str | None = None
-    adobe_key_files: list[Path] | None = None
-    b_and_n_key_files: list[Path] | None = None
-    ereader_social_drm_file: Path | None = None
+    adobe_key_files: ExistingPathList = None
+    b_and_n_key_files: ExistingPathList = None
+    ereader_social_drm_file: ExistingPath = None
     kindle_pidnums: list[str] | None = None
     kindle_serialnums: list[str] | None = None
-    kindle_database_files: list[Path] | None = None
-    kindle_android_files: list[Path] | None = None
+    kindle_database_files: ExistingPathList = None
+    kindle_android_files: ExistingPathList = None
     pdf_passwords: list[str] | None = None
 
 
@@ -87,10 +88,10 @@ def get_config(dirpath: Path) -> Config | None:
     config_file = get_config_filepath(dirpath)
     if not config_file:
         return None
-    
+
     # Start with the primary config data
     raw_data = load_config(config_file)
-    
+
     # Search up the directory tree for parent configs
     current = dirpath.parent.resolve()
     while current != current.parent:
@@ -102,5 +103,5 @@ def get_config(dirpath: Path) -> Config | None:
                 if key not in raw_data:
                     raw_data[key] = value
         current = current.parent
-    
-    return Config(**schema.validate(raw_data))
+
+    return Config(**raw_data)

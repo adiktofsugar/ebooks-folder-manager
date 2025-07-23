@@ -1,13 +1,13 @@
+import sys
+import os
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "DeDRM_tools"))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "kfxlib"))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "adl"))
+
 import argparse
 import logging
-import os
-import re
-import sys
 from pathlib import Path
-
-from rich.color import Color
-from rich.style import Style
-import yaml
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.progress import (
@@ -19,11 +19,9 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
+from efm.database import Db, DbMeta
 from efm.batch import BatchSummary, Duplicated, Failed, Success
-
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", "DeDRM_tools"))
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", "kfxlib"))
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", "adl"))
+from efm.file_selection import get_files_from_dirpath
 
 from efm.config import Config, get_config
 from efm.edit_server import start_edit_server
@@ -45,7 +43,7 @@ def main():
       Generate site from ebook files in a directory, with optional regex filter.
       
       Usage:
-        efm [options] <directory> [regex_filter]
+        efm [options] <directory> [filter][,filter...]
 
       Examples:
         efm my-site                     # Process all books in my-site directory
@@ -77,7 +75,9 @@ def main():
     )
     argparser.add_argument("directory", help="directory containing ebooks to process")
     argparser.add_argument(
-        "regex_filter", nargs="?", help="optional regex pattern to filter files"
+        "filters",
+        nargs="*",
+        help="optional pattern(s) to filter files. can be glob (without **), regex, or substring",
     )
 
     args: argparse.Namespace = argparser.parse_args()
@@ -134,16 +134,6 @@ def main():
         logger.error(f"Argument must be a directory, not a file: {args.directory}")
         return 1
 
-    # Compile regex filter if provided
-    regex_filter = None
-    if args.regex_filter:
-        try:
-            regex_filter = re.compile(args.regex_filter)
-            logger.debug(f"Using regex filter: {args.regex_filter}")
-        except re.error as e:
-            logger.error(f"Invalid regex pattern: {args.regex_filter} - {e}")
-            return 1
-
     config = get_config(directory_path)
     logger.info(f"Using config ${config}" if config else "No config found")
 
@@ -173,35 +163,26 @@ def main():
         tasks_summary.print(console=console)
 
     # Get all files from the directory
-    logger.debug(f"Processing directory: {directory_path}")
-    all_files = get_files_from_dirpath(directory_path)
-
-    files_to_process = []
-    for file_path in all_files:
-        if str(file_path).endswith(".bak"):
-            logger.debug(f"Skipping {file_path} because it's a backup file.")
-            continue
-        if file_path.name in ["efm.toml", "efm.yaml", "efm.yml", "efm.json"]:
-            logger.debug(f"Skipping {file_path} because it's a config file.")
-            continue
-        if file_path.name == "tasks.jsonl":
-            logger.debug(f"Skipping {file_path} because it's a tasks file.")
-            continue
-        if regex_filter:
-            if regex_filter.search(file_path.name):
-                files_to_process.append(file_path)
-                logger.debug(f"File matches filter: {file_path.name}")
-            else:
-                logger.debug(f"File excluded by filter: {file_path.name}")
-            continue
-        files_to_process.append(file_path)
+    all_filters: list[str] = [
+        "!*.bak",
+        "!efm.toml",
+        "!efm.yaml",
+        "!efm.yml",
+        "!efm.json",
+        "!tasks.jsonl",
+    ]
+    if args.filters:
+        for f in args.filters:
+            all_filters.append(f)
+    logger.debug(f"Getting files from: {directory_path} matching {all_filters}")
+    filepaths = get_files_from_dirpath(directory_path, all_filters)
 
     summary = BatchSummary[TransactionSuccess | TransactionError](
         [Success, Failed, Duplicated]
     )
 
     # Process files with progress bar
-    if files_to_process:
+    if filepaths:
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
@@ -211,18 +192,16 @@ def main():
             console=console,
         ) as progress:
             file_progress = progress.add_task(
-                "[green]Processing files...", total=len(files_to_process)
+                "[green]Processing files...", total=len(filepaths)
             )
 
-            for original_filepath in files_to_process:
+            for filepath in filepaths:
                 progress.update(
                     file_progress,
-                    description=f"[green]Processing {original_filepath.name}...",
+                    description=f"[green]Processing {filepath.name}...",
                 )
-                logger.debug(f"Processing {original_filepath}")
-                result = Transaction(
-                    original_filepath, Path(output_dirpath), config
-                ).perform()
+                logger.debug(f"Processing {filepath}")
+                result = Transaction(filepath, Path(output_dirpath), config).perform()
                 if isinstance(result, TransactionSuccess):
                     is_duplicate = result.hash in [
                         r.name for r in summary.results if r.has_category(Success)
@@ -233,7 +212,10 @@ def main():
                         summary.add_result(result.hash, Success, result)
                 elif isinstance(result, TransactionError):
                     summary.add_result(
-                        original_filepath, Failed, result, error=result.error_message
+                        str(filepath),
+                        Failed,
+                        result,
+                        error=result.error_message,
                     )
                 progress.update(file_progress, advance=1)
 
@@ -242,19 +224,12 @@ def main():
 
     site_dirpath = Path(output_dirpath)
     site_dirpath.mkdir(parents=True, exist_ok=True)
-    db_filepath = site_dirpath / "db.yaml"
-
-    # Create database with meta section
-    db_content = {
-        "meta": {"site_dirpath": site_dirpath},
-        "books": [r.result.to_dict() for r in summary.results],
-    }
-
-    if args.edit:
-        db_content["meta"]["edit_api_url"] = f"http://localhost:{edit_api_port}"
-
-    # Write the database
-    db_filepath.write_text(yaml.dump(db_content))
+    db_meta = DbMeta(
+        site_dirpath=site_dirpath,
+        edit_api_url=f"http://localhost:{edit_api_port}" if args.edit else None,
+    )
+    db = Db(meta=db_meta, books=[r.result for r in summary.results])
+    db.save(site_dirpath / "db.yaml")
 
     ui_dist_dirpath = Path(__file__).parent.parent / "site-ui" / "dist"
     if not ui_dist_dirpath.exists():
@@ -276,14 +251,6 @@ def main():
 
     # Return non-zero if there were any failures
     return 1 if did_fail else 0
-
-
-def get_files_from_dirpath(dirpath: Path) -> list[Path]:
-    all_files: list[Path] = []
-    for root, dirs, files in os.walk(dirpath):
-        for file in files:
-            all_files.append((Path(root) / file).resolve())
-    return all_files
 
 
 def get_output_dirpath(arg_out: str | None, config: Config | None) -> Path | None:

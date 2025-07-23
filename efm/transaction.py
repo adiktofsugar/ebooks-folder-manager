@@ -1,4 +1,3 @@
-from dataclasses import asdict, dataclass, field
 import hashlib
 import logging
 from pathlib import Path
@@ -6,16 +5,19 @@ import shutil
 import tempfile
 from typing import List
 import yaml
+from pydantic import BaseModel, ConfigDict
 from efm.action import ALL_ACTIONS
 from efm.config import Config
 from efm.metadata import Metadata, get_metadata, extract_cover_image
 
+
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class TransactionResult:
+class TransactionResult(BaseModel):
     """Base class for transaction results"""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     @classmethod
     def from_file(cls, filepath: Path):
@@ -23,60 +25,33 @@ class TransactionResult:
 
     @classmethod
     def from_dict(cls, d: dict):
-        if "original_filepath" in d:
-            d["original_filepath"] = Path(d["original_filepath"])
-        if "temp_directory" in d and d["temp_directory"]:
-            d["temp_directory"] = Path(d["temp_directory"])
-        if "filename" in d:
-            d["filename"] = Path(d["filename"])
         # Determine which subclass to use based on presence of error field
         if d.get("error", False):
             return TransactionError(**d)
         else:
             return TransactionSuccess(**d)
 
-    def to_dict(self):
-        return asdict(self)
-
     def to_file(self, filepath: Path):
         filepath.parent.mkdir(parents=True, exist_ok=True)
-        filepath.write_text(yaml.safe_dump(self.to_dict()))
+        filepath.write_text(yaml.safe_dump(self.model_dump(mode="json")))
 
 
-@dataclass
 class TransactionSuccess(TransactionResult):
-    # filename is the relative path to the output (book) file
     filename: Path
     metadata: Metadata | None
     hash: str
     original_filepath: Path
     error: bool = False
-    messages: List[str] = field(default_factory=list)
+    messages: List[str] = []
     cover_image_hash: str | None = None
 
-    def to_dict(self):
-        d = super().to_dict()
-        d["filename"] = str(self.filename)
-        d["original_filepath"] = str(self.original_filepath)
-        d["error"] = False
-        return d
 
-
-@dataclass
 class TransactionError(TransactionResult):
     error_message: str
     original_filepath: Path
     temp_directory: Path | None = None
     error: bool = True
-    messages: List[str] = field(default_factory=list)
-
-    def to_dict(self):
-        d = super().to_dict()
-        d["error"] = True
-        d["original_filepath"] = str(self.original_filepath)
-        if self.temp_directory:
-            d["temp_directory"] = str(self.temp_directory)
-        return d
+    messages: List[str] = []
 
 
 class Transaction:

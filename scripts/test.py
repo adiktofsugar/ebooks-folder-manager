@@ -5,18 +5,22 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import List
+
+# Add parent directory to path for efm imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler, FileModifiedEvent
 from rich.console import Console
 from rich.panel import Panel
 
+from efm.file_selection import matches_filter
+
 # Get project root based on script location
 script_dir = Path(__file__).parent
 project_root = script_dir.parent
 
-usage = """Usage: uv run test.py [options] [pytest_args]
+usage = """Usage: uv run test.py [options] [filters...]
 
 Run pytest tests for the project.
 
@@ -24,12 +28,19 @@ Options:
   -w, --watch   Watch for file changes and re-run tests
   -h, --help    Show this help message
   
-Additional arguments are passed directly to pytest.
+Filters:
+  Patterns to filter test files (processed in order):
+  - Substring match by default: 'metadata' matches any file containing 'metadata'
+  - Glob patterns: '*.py', 'test_*.py' (if glob magic chars detected)
+  - Regex patterns: '^test_.*\\.py$' (if not glob and valid regex)
+  - Negation: prefix with ! or - to exclude: '!test_old', '-integration'
+  
 Examples:
   uv run test.py                     # Run all tests
   uv run test.py -w                  # Watch mode
-  uv run test.py -xvs                # Stop on first failure with verbose output
-  uv run test.py tests/test_metadata.py  # Run specific test file
+  uv run test.py metadata            # Run tests containing 'metadata'
+  uv run test.py test_ !test_old     # Test files except old tests
+  uv run test.py -w batch            # Watch mode for batch tests
 """
 
 console = Console()
@@ -38,8 +49,8 @@ console = Console()
 class TestHandler(FileSystemEventHandler):
     """Handle file system events for testing."""
 
-    def __init__(self, pytest_args: List[str]):
-        self.pytest_args = pytest_args
+    def __init__(self, test_files: list[str]):
+        self.test_files = test_files
         self.last_run = 0
         self.pending = False
 
@@ -55,13 +66,40 @@ class TestHandler(FileSystemEventHandler):
                     self.pending = True
 
 
-def run_tests(pytest_args: List[str]) -> int:
-    """Run pytest with given arguments."""
-    cmd = ["pytest"] + pytest_args
+def get_test_files(filters: list[str] | None = None) -> list[str]:
+    """Get all test files, optionally filtered by patterns."""
+    all_files: list[Path] = []
+    
+    # Collect test files from tests/ directory
+    tests_dir = project_root / "tests"
+    if tests_dir.exists():
+        for root, _, files in tests_dir.walk():
+            for file in files:
+                if file.endswith('.py') and file.startswith('test_'):
+                    all_files.append(root / file)
+    
+    # Apply filters if provided
+    if filters:
+        filtered_files = []
+        for filepath in all_files:
+            # Check if all filters match
+            if all(matches_filter(filepath, f) for f in filters):
+                filtered_files.append(filepath)
+        return sorted(str(f) for f in filtered_files)
+    
+    # If no filters, return the tests directory
+    if all_files:
+        return [str(tests_dir)]
+    return []
 
-    if not any(arg in pytest_args for arg in ["-v", "--verbose", "-q", "--quiet"]):
-        # Use pytest-rich for prettier output
-        cmd.extend(["--rich"])
+
+def run_tests(test_files: list[str]) -> int:
+    """Run pytest with given test files."""
+    if not test_files:
+        console.print("[yellow]No test files to run[/yellow]")
+        return 0
+        
+    cmd = ["pytest"] + test_files + ["-v", "--rich"]
 
     console.clear()
     console.print(Panel.fit(f"🧪 Running: {' '.join(cmd)}", style="bold blue"))
@@ -77,9 +115,9 @@ def run_tests(pytest_args: List[str]) -> int:
     return result.returncode
 
 
-def watch_mode(pytest_args: List[str]):
+def watch_mode(test_files: list[str]):
     """Run tests in watch mode."""
-    handler = TestHandler(pytest_args)
+    handler = TestHandler(test_files)
     observer = Observer()
 
     # Watch Python source and test files
@@ -99,7 +137,7 @@ def watch_mode(pytest_args: List[str]):
 
     try:
         # Initial run
-        run_tests(pytest_args)
+        run_tests(test_files)
 
         while True:
             time.sleep(0.5)
@@ -113,7 +151,7 @@ def watch_mode(pytest_args: List[str]):
                         style="bold blue",
                     )
                 )
-                run_tests(pytest_args)
+                run_tests(test_files)
     except KeyboardInterrupt:
         observer.stop()
         console.print("\n[bold red]Stopped watching.[/bold red]")
@@ -122,10 +160,10 @@ def watch_mode(pytest_args: List[str]):
 
 def main():
     """Main entry point."""
-    # Custom argument parsing to handle pytest args
+    # Custom argument parsing to handle filters
     watch = False
     show_help = False
-    pytest_args = []
+    filters = []
 
     i = 1
     while i < len(sys.argv):
@@ -135,8 +173,8 @@ def main():
         elif arg in ["-h", "--help"]:
             show_help = True
         else:
-            # Everything else goes to pytest
-            pytest_args.extend(sys.argv[i:])
+            # Everything else is a filter
+            filters.extend(sys.argv[i:])
             break
         i += 1
 
@@ -144,15 +182,18 @@ def main():
         print(usage)
         return 0
 
-    # Default pytest args if none provided
-    if not pytest_args:
-        pytest_args = [str(project_root / "tests"), "-v"]
+    # Get test files based on filters
+    test_files = get_test_files(filters if filters else None)
+    
+    # Show which files will be tested if filters are provided
+    if filters and test_files:
+        console.print(f"[dim]Running {len(test_files)} test files matching filters: {', '.join(filters)}[/dim]\n")
 
     if watch:
-        watch_mode(pytest_args)
+        watch_mode(test_files)
         return 0
     else:
-        return run_tests(pytest_args)
+        return run_tests(test_files)
 
 
 if __name__ == "__main__":
