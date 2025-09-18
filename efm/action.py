@@ -305,7 +305,7 @@ class DownloadAcsmAction(BaseAction):
                 new_filepath = get_ebook(str(self.filepath), self.temp_dirpath)
                 if new_filepath is None:
                     raise GetEbookException(str(self.filepath), "No file downloaded")
-                logger.info(f"Downloaded {self.filepath}")
+                logger.info(f"Downloaded {self.filepath} to {new_filepath}")
                 new_filepath = Path(new_filepath)
                 # acsm files have no metadata, so we need to try again here...however, it's
                 #  pretty likely that they'll still have drm, so we need to be ok with errors

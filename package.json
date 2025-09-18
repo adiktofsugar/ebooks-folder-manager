@@ -3,7 +3,9 @@
 	"private": true,
 	"version": "1.0.0",
 	"description": "ebooks folder manager",
-	"workspaces": ["site-ui"],
+	"workspaces": [
+		"site-ui"
+	],
 	"packageManager": "npm@10.9.2",
 	"scripts": {
 		"dev": "turbo watch dev",

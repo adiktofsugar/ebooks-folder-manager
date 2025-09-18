@@ -31,6 +31,7 @@ dependencies = [
 
 [project.scripts]
 efm = "efm.__main__:main"
+efm-setup = "efm.setup.__main__:main"
 # NOTE: can only be used directly in wine, windows, or macos
 # finds and saves default adobe encryption keys. save to given output directory (optional)
 # [<outputdir>]
