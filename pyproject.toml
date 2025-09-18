@@ -27,11 +27,13 @@ dependencies = [
     "rich>=14.0.0",
     "pymupdf-stubs>=1.26.1.post1",
     "pydantic>=2.11.7",
+    "cloudflare>=4.3.1",
 ]
 
 [project.scripts]
 efm = "efm.__main__:main"
 efm-setup = "efm.setup.__main__:main"
+efm-upload = "efm.upload.__main__:main"
 # NOTE: can only be used directly in wine, windows, or macos
 # finds and saves default adobe encryption keys. save to given output directory (optional)
 # [<outputdir>]
