@@ -31,6 +31,8 @@ def upload_to_cloudflare_worker(
     #   from r2, but I suspect that's not _quite_ as free
     manifest: Mapping[str, Manifest] = {}
     file_contents: Mapping[str, bytes] = {}
+    skipped_files = []
+    MAX_FILE_SIZE = 25 * 1024 * 1024  # 25MB limit
 
     # Initialize mimetypes
     if not mimetypes.inited:
@@ -48,15 +50,38 @@ def upload_to_cloudflare_worker(
         for root, dirs, files in os.walk(site_dir):
             for file in files:
                 src_file = Path(root) / file
+                file_size = src_file.stat().st_size
                 hash = str(src_file.relative_to(site_dir).as_posix())
+
+                # Skip files that are too large
+                if file_size > MAX_FILE_SIZE:
+                    skipped_files.append((hash, file_size))
+                    continue
+
                 with open(src_file, "rb") as f:
                     content = f.read()
                     file_contents[hash] = content
+                    # Generate hash like in the TS example - first 32 chars of hex
+                    # They hash the base64 content + extension
+                    extension = Path(hash).suffix
+                    content_to_hash = b64encode(content).decode("ascii") + extension
+                    hash_hex = sha256(
+                        content_to_hash.encode(), usedforsecurity=False
+                    ).hexdigest()[:32]
                     manifest[hash] = {
                         "size": len(content),
-                        "hash": sha256(content, usedforsecurity=False).hexdigest(),
+                        "hash": hash_hex,
                     }
         progress.update(scan_task, completed=1, total=1)
+
+        if skipped_files:
+            raise Exception(
+                f"Skipped {len(skipped_files)} files over 25MB:\n"
+                + "\n".join(
+                    f"- {path} ({size / 1024 / 1024:.1f}MB)"
+                    for path, size in skipped_files
+                )
+            )
 
         # Create upload session
         create_task = progress.add_task(
