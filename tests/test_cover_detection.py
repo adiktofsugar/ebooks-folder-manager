@@ -1,9 +1,8 @@
-import pytest
-import tempfile
 from pathlib import Path
 import pymupdf
 from PIL import Image
 import io
+from typing import cast
 
 from efm.cover import CoverImage, embed_cover
 from efm.detection import detect_format
@@ -23,7 +22,6 @@ def create_test_pdf(filepath: Path) -> None:
 def create_test_epub(filepath: Path) -> None:
     """Create a minimal test EPUB."""
     import zipfile
-    import xml.etree.ElementTree as ET
 
     with zipfile.ZipFile(filepath, "w") as epub:
         # Add mimetype
@@ -115,7 +113,7 @@ class TestCoverDetection:
         img = Image.open(cached_cover_path)
         assert img.size == (300, 400)  # Should match our test cover size
         # Check that it's predominantly blue
-        pixels = list(img.getdata())
+        pixels = cast(list[tuple[int, int, int]], list(img.get_flattened_data()))
         blue_pixels = sum(1 for r, g, b in pixels if b > 200 and r < 100 and g < 100)
         assert blue_pixels > len(pixels) * 0.9  # Should be mostly blue
 
