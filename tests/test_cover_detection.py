@@ -4,9 +4,8 @@ from pathlib import Path
 import pymupdf
 from PIL import Image
 import io
-import hashlib
 
-from efm.tasks import TaskSetCover, handle_set_cover, TaskSuccess
+from efm.cover import CoverImage, embed_cover
 from efm.detection import detect_format
 from efm.metadata import extract_cover_image, get_metadata
 
@@ -95,13 +94,8 @@ class TestCoverDetection:
         cover_hash_before = extract_cover_image(pdf_path, metadata_before, cache_dir)
         assert cover_hash_before is not None
 
-        # Set cover using handle_set_cover
-        task = TaskSetCover(
-            key="set_cover", book_filepath=pdf_path, cover_tmp_filepath=cover_path
-        )
-        result = handle_set_cover(task)
-        assert isinstance(result, TaskSuccess)
-        assert "Successfully set cover for" in str(result.messages)
+        # Set cover
+        embed_cover(pdf_path, CoverImage.from_file(cover_path))
 
         # Get metadata after setting cover
         metadata_after = get_metadata(pdf_path)
@@ -144,13 +138,8 @@ class TestCoverDetection:
         cover_hash_before = extract_cover_image(epub_path, metadata_before, cache_dir)
         assert cover_hash_before is not None
 
-        # Set cover using handle_set_cover
-        task = TaskSetCover(
-            key="set_cover", book_filepath=epub_path, cover_tmp_filepath=cover_path
-        )
-        result = handle_set_cover(task)
-        assert isinstance(result, TaskSuccess)
-        assert "Successfully set cover for" in str(result.messages)
+        # Set cover
+        embed_cover(epub_path, CoverImage.from_file(cover_path))
 
         # Get metadata after setting cover
         metadata_after = get_metadata(epub_path)
@@ -175,13 +164,8 @@ class TestCoverDetection:
         cover_data = create_test_cover_image()
         cover_path.write_bytes(cover_data)
 
-        # Set cover - should still work because PyMuPDF detects it's a PDF
-        task = TaskSetCover(
-            key="set_cover", book_filepath=pdf_path, cover_tmp_filepath=cover_path
-        )
-        result = handle_set_cover(task)
-        assert isinstance(result, TaskSuccess)
-        assert "Successfully set cover for" in str(result.messages)
+        # Set cover
+        embed_cover(pdf_path, CoverImage.from_file(cover_path))
 
         assert detect_format(pdf_path) == "pdf"
 
@@ -196,44 +180,3 @@ class TestCoverDetection:
         assert cached_cover_path.exists()
         img = Image.open(cached_cover_path)
         assert img.size == (300, 400)  # Should be our manually set cover
-
-    def test_cover_cache_invalidation(self, tmp_path):
-        """Test that cache is properly invalidated when cover is changed."""
-        # Create test PDF
-        pdf_path = tmp_path / "test.pdf"
-        create_test_pdf(pdf_path)
-
-        # Create site directory structure to match real usage
-        site_dir = tmp_path / "site"
-        site_dir.mkdir()
-        cache_dir = site_dir / "_cache"
-        cache_dir.mkdir()
-
-        # Calculate file hash (matching the real implementation)
-        with open(pdf_path, "rb") as f:
-            file_hash = hashlib.blake2b(f.read(), digest_size=20).hexdigest()
-
-        # Create a fake cached metadata file
-        cached_metadata_path = cache_dir / f"{file_hash}.yaml"
-        cached_metadata_path.write_text("title: Old Title\n")
-        assert cached_metadata_path.exists()
-
-        # Create cover image
-        cover_path = tmp_path / "cover.png"
-        cover_data = create_test_cover_image()
-        cover_path.write_bytes(cover_data)
-
-        # Move PDF to site directory (to match expected structure)
-        new_pdf_path = site_dir / "test.pdf"
-        pdf_path.rename(new_pdf_path)
-
-        # Set cover
-        task = TaskSetCover(
-            book_filepath=new_pdf_path, cover_tmp_filepath=cover_path
-        )
-        result = handle_set_cover(task)
-        assert isinstance(result, TaskSuccess)
-        assert "Cleared metadata cache" in str(result.messages)
-
-        # Verify cache was deleted
-        assert not cached_metadata_path.exists()

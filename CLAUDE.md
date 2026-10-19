@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Ebooks Folder Manager (EFM) is a Calibre replacement that provides minimal metadata management for ebooks and generates a static site for browsing. The project avoids repeatedly rewriting book files, instead generating a read-only static site from the original files.
+Ebooks Folder Manager (EFM) is a Calibre replacement that provides minimal metadata management for ebooks. It is a CLI-only tool: it processes a folder of books into an output library (SHA-named book copies plus a `db.yaml` metadata database) without rewriting the original files. There is no web UI in this repo; `db.yaml` is the intended interface for any external viewer.
 
 ## Architecture
 
@@ -20,17 +20,6 @@ Ebooks Folder Manager (EFM) is a Calibre replacement that provides minimal metad
   - `env.py`: Environment setup utilities
   - `exceptions.py`: Custom exception classes
 
-### React Frontend (`site-ui/`)
-- Static site UI with React 19 and MobX
-- TypeScript with custom ESBuild script (`scripts/esbuild.mts`)
-- Key components:
-  - `App.tsx`: Root component
-  - `BookList.tsx`: Main book list with search
-  - `BookListItem.tsx`: Individual book display
-- Stores:
-  - `DbStore.ts`: Fetches and manages book database
-  - `BookListStore.ts`: Manages book list and fuzzy search
-
 ### External Libraries
 - `DeDRM_tools/`: DRM removal plugins (Calibre plugin)
 - `kfxlib/`: Kindle format handling
@@ -38,20 +27,9 @@ Ebooks Folder Manager (EFM) is a Calibre replacement that provides minimal metad
 
 ## Common Development Commands
 
-### Build and Development
+### Setup
 ```bash
-# Install dependencies and run development servers
-npm install
-npm run dev          # Starts dev server with watch mode (uses Turbo)
-
-# Build the static site
-npm run build
-
-# Lint and fix code
-npm run lint         # Run Biome linter
-npm run fix          # Auto-fix linting issues
-
-# Python development (uses uv package manager)
+git submodule update --init   # adl/ and DeDRM_tools/ are submodules
 uv pip install -e .  # Install in development mode
 efm                  # Run the CLI tool
 ```
@@ -68,7 +46,7 @@ uv run pytest tests/test_metadata.py  # Run specific test file
 ```bash
 # Process ebooks (after installing with uv)
 efm path/to/books    # Process books in directory
-efm book.epub        # Process single book
+efm path/to/books 'foo.+epub'  # Only process files matching a filter
 
 # DRM-related tools
 getadobekey          # Extract Adobe DRM keys
@@ -86,33 +64,26 @@ uv run ruff check efm     # Check Python code
 uv run ruff format efm    # Format Python code
 ```
 
-## Static Site Structure
+## Output Structure
 
-The generated site in `site/` contains:
-- `index.html`: Entry point
-- `books/`: Processed ebooks (named by SHA hash)
+The output directory contains:
+- `books/`: Processed ebooks (named `Author-Title.ext`, falling back to the original stem) and cover images (named by SHA hash)
 - `_cache/`: Individual book metadata (YAML files)
 - `db.yaml`: Consolidated metadata database
-- JavaScript/CSS assets from the UI build
 
 ## Key Technical Considerations
 
-1. **File Safety**: Original files are never modified. Books are copied to `site/books/` with SHA-based names to avoid duplicates.
+1. **File Safety**: Original files are never modified. Books are copied to `<output>/books/`; duplicates are detected by content hash.
 
 2. **Metadata Flow**: 
    - Individual book metadata → `_cache/*.yaml`
    - Consolidated database → `db.yaml`
-   - Frontend reads `db.yaml` to display books
 
 3. **DRM Handling**: The project includes DRM removal tools from Calibre. These should be used responsibly and legally.
 
 4. **Configuration**: Supports `efm.toml`, `efm.yaml`, `efm.yml`, or `efm.json` for configuration (e.g., Adobe key file paths).
 
 5. **Python Version**: Requires Python 3.13+ and uses `uv` as the package manager.
-
-6. **Monorepo Structure**: Uses Turbo for task orchestration across Python backend and JavaScript frontend. Check `package.json` for current workspaces configuration.
-
-7. **Development Server**: The dev command starts both a Python HTTP server (port 8000) and watches for UI changes, automatically copying built assets to the `site/` directory.
 
 ## Testing Resources
 
@@ -139,9 +110,6 @@ The configuration file supports various DRM key paths:
 
 ## Execution Notes
 - You have to run efm with uv run efm
-
-## React Context and Store Guidelines
-- You can add MobX stores to context, but there should be no other kind of react context
 
 ## Execution Warnings
 - You MUST NEVER directly invoke a python script. ALWAYS use uv

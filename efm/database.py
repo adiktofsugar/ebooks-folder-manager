@@ -8,7 +8,6 @@ from efm.transaction import TransactionError, TransactionSuccess
 
 class DbMeta(BaseModel):
     site_dirpath: Path
-    edit_api_url: str | None
 
 
 class Db(BaseModel):
