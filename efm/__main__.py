@@ -1,5 +1,5 @@
-import sys
 import os
+import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "DeDRM_tools"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "kfxlib"))
@@ -7,107 +7,59 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", "adl"))
 
 import argparse
 import logging
-from pathlib import Path
+from datetime import datetime
+from typing import override
+
 from rich.console import Console
 from rich.logging import RichHandler
-from rich.progress import (
-    Progress,
-    SpinnerColumn,
-    TextColumn,
-    BarColumn,
-    TaskProgressColumn,
-    TimeRemainingColumn,
-)
+from rich.text import Text
 
-from efm.database import Db, DbMeta
-from efm.batch import BatchSummary, Duplicated, Failed, Success
-from efm.file_selection import get_files_from_dirpath
-
-from efm.config import Config, get_config
-from efm.transaction import (
-    Transaction,
-    TransactionSuccess,
-    TransactionError,
-)
+from efm.commands import process, setup
 
 
-logger = logging.getLogger(__name__)
+class NarrowScreenRichHandler(RichHandler):
+    @override
+    def render_message(self, record, message):
+        """Render message with timestamp/level on first line, message on second."""
+        # Format time
+        time_format = "[%X]"
+        log_time = datetime.fromtimestamp(record.created).strftime(time_format)
+
+        level_text = Text(
+            record.levelname, style=f"logging.level.{record.levelname.lower()}"
+        )
+        time_text = Text(log_time, style="log.time")
+        first_line = Text.assemble(level_text, " ", time_text)
+        return Text.assemble(first_line, "\n", message)
 
 
-def main():
-    argparser = argparse.ArgumentParser(
-        add_help=True,
-        usage="""
-      Process ebook files in a directory into an output library (books + db.yaml), with optional regex filter.
-      
-      Usage:
-        efm [options] <directory> [filter][,filter...]
+LOG_LEVELS = {
+    "debug": logging.DEBUG,
+    "info": logging.INFO,
+    "error": logging.ERROR,
+}
 
-      Examples:
-        efm my-site                     # Process all books in my-site directory
-        efm my-site problem.+epub       # Only process books matching the given regex
 
-      ### Config files
-      are resolved relative to each file, and must be in a file named "efm.toml", "efm.yaml", "efm.yml", or "efm.json".
-      
-      can have the following keys:
-        - output_dir: output directory for the processed library (required if -o not specified)
-        - adobe_user: email for adobe account, used to download ASCM
-        - adobe_password: password for adobe account, used to download ASCM and to remove adobe DRM
-        - adobe_key_files: list of keyfile paths extracted from from digital editions
-            used in order to remove adobe DRM
-        """,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+def create_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="efm", description="Ebooks Folder Manager")
+    parser.add_argument(
+        "--loglevel", choices=list(LOG_LEVELS), default="info", help="log level"
     )
-    argparser.add_argument(
-        "-o", "--out", help="specify output directory (overrides config file)"
-    )
-    argparser.add_argument(
-        "--loglevel", choices=["debug", "info", "error"], help="log level"
-    )
-    argparser.add_argument("directory", help="directory containing ebooks to process")
-    argparser.add_argument(
-        "filters",
-        nargs="*",
-        help="optional pattern(s) to filter files. can be glob (without **), regex, or substring",
-    )
+    subparsers = parser.add_subparsers(title="commands", metavar="<command>")
+    process.add_parser(subparsers)
+    setup.add_parser(subparsers)
+    return parser
 
-    args: argparse.Namespace = argparser.parse_args()
-    loglevel = logging.INFO
-    if args.loglevel is not None:
-        match args.loglevel.lower():
-            case "debug":
-                loglevel = logging.DEBUG
-            case "info":
-                loglevel = logging.INFO
-            case "error":
-                loglevel = logging.ERROR
-            case level:
-                raise ValueError(f"Unknown log level {level}")
+
+def main() -> int:
+    parser = create_parser()
+    args = parser.parse_args()
+    if not hasattr(args, "run"):
+        parser.print_help()
+        return 1
 
     # Set up console for progress bar and logging
     console = Console()
-
-    # Configure rich logging handler with custom format for narrow screens
-    from rich.text import Text
-    from datetime import datetime
-    from typing import override
-
-    class NarrowScreenRichHandler(RichHandler):
-        @override
-        def render_message(self, record, message):
-            """Render message with timestamp/level on first line, message on second."""
-            # Format time
-            time_format = "[%X]"
-            log_time = datetime.fromtimestamp(record.created).strftime(time_format)
-
-            level_text = Text(
-                record.levelname, style=f"logging.level.{record.levelname.lower()}"
-            )
-            time_text = Text(log_time, style="log.time")
-            first_line = Text.assemble(level_text, " ", time_text)
-            return Text.assemble(first_line, "\n", message)
-
     rich_handler = NarrowScreenRichHandler(
         console=console,
         rich_tracebacks=True,
@@ -116,107 +68,11 @@ def main():
         show_path=False,
         markup=True,
     )
-
-    logging.basicConfig(level=loglevel, handlers=[rich_handler])
-
-    # Validate directory argument
-    directory_path = Path(args.directory).resolve()
-    if not directory_path.exists():
-        logger.error(f"Directory does not exist: {args.directory}")
-        return 1
-    if not directory_path.is_dir():
-        logger.error(f"Argument must be a directory, not a file: {args.directory}")
-        return 1
-
-    config = get_config(directory_path)
-    logger.info(f"Using config ${config}" if config else "No config found")
-
-    output_dirpath = get_output_dirpath(args.out, config)
-    if not output_dirpath:
-        logger.error(
-            "No output directory specified. Use -o option or set output_dir in config file."
-        )
-        return 1
-    logger.info(f"Writing to {output_dirpath}")
-
-    # Get all files from the directory
-    all_filters: list[str] = [
-        "!*.bak",
-        "!efm.toml",
-        "!efm.yaml",
-        "!efm.yml",
-        "!efm.json",
-    ]
-    if args.filters:
-        for f in args.filters:
-            all_filters.append(f)
-    logger.debug(f"Getting files from: {directory_path} matching {all_filters}")
-    filepaths = get_files_from_dirpath(directory_path, all_filters)
-
-    summary = BatchSummary[TransactionSuccess | TransactionError](
-        [Success, Failed, Duplicated]
+    logging.basicConfig(
+        level=LOG_LEVELS[args.loglevel], format="%(message)s", handlers=[rich_handler]
     )
 
-    # Process files with progress bar
-    if filepaths:
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            BarColumn(),
-            TaskProgressColumn(),
-            TimeRemainingColumn(),
-            console=console,
-        ) as progress:
-            file_progress = progress.add_task(
-                "[green]Processing files...", total=len(filepaths)
-            )
-
-            for filepath in filepaths:
-                progress.update(
-                    file_progress,
-                    description=f"[green]Processing {filepath.name}...",
-                )
-                logger.debug(f"Processing {filepath}")
-                result = Transaction(filepath, Path(output_dirpath), config).perform()
-                if isinstance(result, TransactionSuccess):
-                    is_duplicate = result.hash in [
-                        r.name for r in summary.results if r.has_category(Success)
-                    ]
-                    if is_duplicate:
-                        summary.add_result(result.hash, Duplicated, result)
-                    else:
-                        summary.add_result(result.hash, Success, result)
-                elif isinstance(result, TransactionError):
-                    summary.add_result(
-                        str(filepath),
-                        Failed,
-                        result,
-                        error=result.error_message,
-                    )
-                progress.update(file_progress, advance=1)
-
-    did_fail = any([r for r in summary.results if r.has_category(Failed)])
-    summary.print()
-
-    site_dirpath = Path(output_dirpath)
-    site_dirpath.mkdir(parents=True, exist_ok=True)
-    db_meta = DbMeta(site_dirpath=site_dirpath)
-    db = Db(
-        meta=db_meta,
-        books=[r.result for r in summary.results if not r.has_category(Duplicated)],
-    )
-    db.save(site_dirpath / "db.yaml")
-
-    # Return non-zero if there were any failures
-    return 1 if did_fail else 0
-
-
-def get_output_dirpath(arg_out: str | None, config: Config | None) -> Path | None:
-    if arg_out:
-        return Path(arg_out)
-    if config and config.output_dir:
-        return Path(config.output_dir)
-    return None
+    return args.run(args, console)
 
 
 if __name__ == "__main__":

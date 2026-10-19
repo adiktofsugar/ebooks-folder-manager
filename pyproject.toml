@@ -25,24 +25,13 @@ dependencies = [
 
 [project.scripts]
 efm = "efm.__main__:main"
-efm-setup = "efm.setup.__main__:main"
-# NOTE: can only be used directly in wine, windows, or macos
-# finds and saves default adobe encryption keys. save to given output directory (optional)
-# [<outputdir>]
-getadobekey = "efm.DeDRM_plugin.adobekey:cli_main"
-# given this is an epub, test what type of drm this is (adobe, etc)
-# <key>
-epubtest = "efm.DeDRM_plugin.epubtest:main"
-# given this is an epub, and the key, decrypt it
-# <key> <infile> <outfile>
-epubdecrypt = "efm.DeDRM_plugin.ineptepub:cli_main"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.ruff]
-include = ["efm"]
+include = ["efm/**/*.py"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

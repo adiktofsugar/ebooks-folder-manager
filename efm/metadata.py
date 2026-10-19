@@ -1,6 +1,5 @@
 import logging
 from pathlib import Path
-from typing import LiteralString
 from dataclasses import dataclass
 import hashlib
 
@@ -20,7 +19,7 @@ class Metadata:
     title: str | None
     author: str | None
     subject: str | None
-    keywords: list[LiteralString] | None
+    keywords: list[str] | None
     creator: str | None
     producer: str | None
     creation_date: str | None

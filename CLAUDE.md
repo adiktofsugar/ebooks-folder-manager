@@ -9,7 +9,10 @@ Ebooks Folder Manager (EFM) is a Calibre replacement that provides minimal metad
 ## Architecture
 
 ### Python Backend (`efm/`)
-- CLI tool for processing ebooks (entry point: `efm/__main__.py`)
+- Subcommand-based CLI. `efm/__main__.py` sets up `sys.path`, logging, and dispatches to `efm/commands/`:
+  - `commands/process.py`: `efm process` - process a directory of books into an output library
+  - `commands/setup.py`: `efm setup [tool]` - DRM key extraction/config menu (or run one tool directly)
+  - New subcommands expose `add_parser(subparsers)` and `run(args, console) -> int`, and get registered in `create_parser()`
 - Core modules:
   - `transaction.py`: Processes individual ebooks with caching and result handling
   - `metadata.py`: Extracts metadata using PyMuPDF (supports PDF, XPS, EPUB, MOBI, FB2, CBZ, SVG, TXT)
@@ -31,7 +34,7 @@ Ebooks Folder Manager (EFM) is a Calibre replacement that provides minimal metad
 ```bash
 git submodule update --init   # adl/ and DeDRM_tools/ are submodules
 uv sync              # Install deps + efm in development mode
-efm                  # Run the CLI tool
+uv run efm --help    # Run the CLI tool
 ```
 
 ### Testing
@@ -44,14 +47,14 @@ uv run pytest tests/test_metadata.py  # Run specific test file
 
 ### Processing Books
 ```bash
-# Process ebooks (after installing with uv)
-efm path/to/books    # Process books in directory
-efm path/to/books 'foo.+epub'  # Only process files matching a filter
+uv run efm process path/to/books -o out              # Process books in directory
+uv run efm process path/to/books -o out 'foo.+epub'  # Only process files matching a filter
+uv run efm --loglevel debug process path/to/books    # Global options go before the subcommand
 
 # DRM-related tools
-getadobekey          # Extract Adobe DRM keys
-epubtest file.epub   # Test EPUB DRM type
-epubdecrypt file.epub # Decrypt DRM-protected EPUB
+uv run efm setup             # Interactive menu
+uv run efm setup --help      # List tools (adobe-key, epub-test, epub-decrypt, ...)
+uv run efm setup epub-test   # Run one tool directly
 ```
 
 ### Python Development
