@@ -30,7 +30,7 @@ Ebooks Folder Manager (EFM) is a Calibre replacement that provides minimal metad
 ### Setup
 ```bash
 git submodule update --init   # adl/ and DeDRM_tools/ are submodules
-uv pip install -e .  # Install in development mode
+uv sync              # Install deps + efm in development mode
 efm                  # Run the CLI tool
 ```
 

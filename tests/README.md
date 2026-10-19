@@ -4,42 +4,16 @@ This directory contains tests for the Ebooks Folder Manager (efm) application.
 
 ## Running Tests
 
-This project uses Poetry for dependency management and running tests. To run the tests:
-
-1. Make sure you have Poetry installed. If not, follow the instructions at [https://python-poetry.org/docs/#installation](https://python-poetry.org/docs/#installation).
-
-2. Install the project dependencies:
+This project uses [uv](https://docs.astral.sh/uv/). From the repo root:
 
 ```bash
-poetry install
+uv run scripts/test.py              # Run all tests
+uv run scripts/test.py -w           # Re-run on file changes
+uv run scripts/test.py cover        # Only test files matching "cover"
+uv run pytest tests/test_cli.py     # Plain pytest also works
 ```
 
-3. Run the tests using Poetry:
-
-```bash
-poetry run pytest
-```
-
-Or to run with more verbose output (this is the default in our configuration):
-
-```bash
-poetry run pytest
-```
-
-You can also run a specific test file:
-
-```bash
-poetry run pytest tests/test_book.py
-```
-
-## Test Files
-
-- `test_book.py`: Tests for the `Book` class in `efm/book.py`
-  - Tests book initialization
-  - Tests metadata extraction from EPUB and PDF files
-  - Tests DRM removal functionality
-  - Tests book renaming functionality
-  - Tests the processing of various actions
+The DRM code lives in git submodules, so run `git submodule update --init` first.
 
 ## Sample Books
 

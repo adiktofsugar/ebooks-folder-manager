@@ -50,9 +50,10 @@ class Config(BaseModel):
 def load_config(filepath: Path):
     ext = filepath.suffix[1:]
     if ext == "toml":
-        import toml
+        import tomllib
 
-        return toml.load(filepath)
+        with open(filepath, "rb") as f:
+            return tomllib.load(f)
 
     if ext in ["yaml", "yml"]:
         import yaml
