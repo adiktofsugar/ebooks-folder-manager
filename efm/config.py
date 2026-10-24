@@ -26,7 +26,6 @@ def expand_and_validate_path_list(v: list[Path] | None):
     return [expand_and_validate_path(p) for p in v]
 
 
-ExpandedPath = Annotated[Path | None, BeforeValidator(expand_path)]
 ExistingPath = Annotated[Path | None, BeforeValidator(expand_and_validate_path)]
 ExistingPathList = Annotated[
     list[Path] | None, BeforeValidator(expand_and_validate_path_list)
@@ -34,7 +33,6 @@ ExistingPathList = Annotated[
 
 
 class Config(BaseModel):
-    output_dir: ExpandedPath | None = None
     adobe_user: str | None = None
     adobe_password: str | None = None
     adobe_key_files: ExistingPathList = None
