@@ -14,7 +14,7 @@ from rich.console import Console
 from rich.logging import RichHandler
 from rich.text import Text
 
-from efm.commands import process, setup
+from efm.commands import ls, setup
 
 
 class NarrowScreenRichHandler(RichHandler):
@@ -45,8 +45,17 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--loglevel", choices=list(LOG_LEVELS), default="info", help="log level"
     )
+    parser.add_argument(
+        "--store",
+        help="metadata store directory (default: $EFM_STORE, else $XDG_DATA_HOME/efm/store)",
+    )
+    parser.add_argument(
+        "--no-stat-cache",
+        action="store_true",
+        help="always hash files instead of trusting unchanged size/mtime/ctime",
+    )
     subparsers = parser.add_subparsers(title="commands", metavar="<command>")
-    process.add_parser(subparsers)
+    ls.add_parser(subparsers)
     setup.add_parser(subparsers)
     return parser
 
@@ -59,7 +68,8 @@ def main() -> int:
         return 1
 
     # Set up console for progress bar and logging
-    console = Console()
+    # stderr, so logs and progress never mix into stdout output like `ls -f json`
+    console = Console(stderr=True)
     rich_handler = NarrowScreenRichHandler(
         console=console,
         rich_tracebacks=True,

@@ -75,3 +75,20 @@ class UnsupportedEncryptionError(RemoveDrmError):
             filepath,
             f"{encryption_type} encryption is not supported{f' - {message}' if message else ''}",
         )
+
+
+class UnsupportedSchemaError(Exception):
+    """A stored record's schema_version is unknown to this efm (likely written by a newer one)."""
+
+    def __init__(self, version: int, known: list[int]):
+        super().__init__(
+            f"Unsupported schema_version {version} (known: {', '.join(map(str, known))})"
+        )
+        self.version: int = version
+
+
+class InvalidStoreEntryError(Exception):
+    """A store file exists but can't be read as its model."""
+
+    def __init__(self, filepath: Path, original_error: Exception):
+        super().__init__(f"Invalid store file {filepath} - {original_error}")

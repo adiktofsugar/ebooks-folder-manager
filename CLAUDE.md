@@ -4,20 +4,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Ebooks Folder Manager (EFM) is a Calibre replacement that provides minimal metadata management for ebooks. It is a CLI-only tool: it processes a folder of books into an output library (SHA-named book copies plus a `db.yaml` metadata database) without rewriting the original files. There is no web UI in this repo; `db.yaml` is the intended interface for any external viewer.
+Ebooks Folder Manager (EFM) is a Calibre replacement that provides minimal metadata management for ebooks. It is a CLI-only tool. Books stay where they are; efm keeps their metadata in a central store keyed by content hash (see `docs/store.md`). `efm ls <dir>` lists books with their metadata. Actions (dedrm, rename, ...) are meant to be run manually, one subcommand each; they haven't been ported to the store yet.
 
 ## Architecture
 
 ### Python Backend (`efm/`)
-- Subcommand-based CLI. `efm/__main__.py` sets up `sys.path`, logging, and dispatches to `efm/commands/`:
-  - `commands/process.py`: `efm process` - process a directory of books into an output library
+- Subcommand-based CLI. `efm/__main__.py` sets up `sys.path`, logging (to stderr), global options (`--loglevel`, `--store`, `--no-stat-cache`), and dispatches to `efm/commands/`:
+  - `commands/ls.py`: `efm ls <dir>` - list books with metadata (`--raw`, `-f table|json`)
   - `commands/setup.py`: `efm setup [tool]` - DRM key extraction/config menu (or run one tool directly)
   - New subcommands expose `add_parser(subparsers)` and `run(args, console) -> int`, and get registered in `create_parser()`
 - Core modules:
-  - `transaction.py`: Processes individual ebooks with caching and result handling
-  - `metadata.py`: Extracts metadata using PyMuPDF (supports PDF, XPS, EPUB, MOBI, FB2, CBZ, SVG, TXT)
+  - `store.py`: Hash-keyed metadata store (`Store.hash_file`, `load`, `put`; `StoreEntry` with lazy `metadata`/`metadata_internal`/`metadata_raw`)
+  - `stat_cache.py`: path+stat → hash cache so unchanged files aren't re-hashed
+  - `metadata.py`: Versioned metadata models + migrations, and extraction via PyMuPDF (supports PDF, XPS, EPUB, MOBI, FB2, CBZ, SVG, TXT)
   - `dedrm.py`: DRM removal functionality
-  - `action.py`: Base class and implementations for processing actions
+  - `action.py`: Base class and implementations for processing actions (not yet wired to a command)
   - `kfxconvert.py`: Kindle format conversion
   - `config.py`: Configuration management (supports TOML, YAML, JSON)
   - `env.py`: Environment setup utilities
@@ -45,11 +46,14 @@ uv run pytest -xvs          # Stop on first failure with verbose output
 uv run pytest tests/test_metadata.py  # Run specific test file
 ```
 
-### Processing Books
+### Listing Books
 ```bash
-uv run efm process path/to/books -o out              # Process books in directory
-uv run efm process path/to/books -o out 'foo.+epub'  # Only process files matching a filter
-uv run efm --loglevel debug process path/to/books    # Global options go before the subcommand
+uv run efm ls path/to/books                  # Table of books + metadata
+uv run efm ls path/to/books 'foo.+epub'      # Only files matching a filter
+uv run efm ls path/to/books -f json          # JSON on stdout (logs go to stderr)
+uv run efm ls path/to/books --raw            # Raw pymupdf metadata
+uv run efm --store /tmp/store ls path/to/books        # Global options go before the subcommand
+uv run efm --loglevel debug --no-stat-cache ls books  # Timing: hashed vs. cached
 
 # DRM-related tools
 uv run efm setup             # Interactive menu
@@ -67,26 +71,25 @@ uv run ruff check efm     # Check Python code
 uv run ruff format efm    # Format Python code
 ```
 
-## Output Structure
+## Store Layout
 
-The output directory contains:
-- `books/`: Processed ebooks (named `Author-Title.ext`, falling back to the original stem) and cover images (named by SHA hash)
-- `_cache/`: Individual book metadata (YAML files)
-- `db.yaml`: Consolidated metadata database
+See `docs/store.md`. In short:
+- `$store/xx_<hash>/metadata.json`, `metadata_internal.json`, `metadata_raw.json` (store: `--store`, `$EFM_STORE`, or `$XDG_DATA_HOME/efm/store`)
+- `$XDG_CACHE_HOME/efm/stat-cache/<abs path>/<size>-<mtime_ns>-<ctime_ns>` contains the hash
 
 ## Key Technical Considerations
 
-1. **File Safety**: Original files are never modified. Books are copied to `<output>/books/`; duplicates are detected by content hash.
+1. **File Safety**: Original files are never modified. `ls` only reads books and writes to the store and stat cache.
 
-2. **Metadata Flow**: 
-   - Individual book metadata → `_cache/*.yaml`
-   - Consolidated database → `db.yaml`
+2. **Metadata Flow**: file → `Store.hash_file` → `Store.load(h)`, or on a miss `StoreEntry.from_book(path)` + `Store.put(h, entry)`.
 
-3. **DRM Handling**: The project includes DRM removal tools from Calibre. These should be used responsibly and legally.
+3. **Schema versions**: `metadata.json`/`metadata_internal.json` are versioned pydantic models (`MetadataV1`, ...; `Metadata` is the current alias). Changing a stored model means adding a new version plus a migration; see `docs/store.md`.
 
-4. **Configuration**: Supports `efm.toml`, `efm.yaml`, `efm.yml`, or `efm.json` for configuration (e.g., Adobe key file paths).
+4. **DRM Handling**: The project includes DRM removal tools from Calibre. These should be used responsibly and legally.
 
-5. **Python Version**: Requires Python 3.13+ and uses `uv` as the package manager.
+5. **Configuration**: Supports `efm.toml`, `efm.yaml`, `efm.yml`, or `efm.json` for configuration (e.g., Adobe key file paths).
+
+6. **Python Version**: Requires Python 3.13+ and uses `uv` as the package manager.
 
 ## Testing Resources
 
@@ -101,7 +104,7 @@ The configuration file supports various DRM key paths:
 
 ## Known Limitations
 
-- File renaming can overwrite existing files
+- Actions (dedrm, rename, k2pdfopt, ACSM download) exist in `action.py` but have no subcommands yet
 - Some ebooks may lack title/author metadata
 - DRM removal for certain Kindle formats may not work
 - Multiple format support (same book in EPUB/PDF) is planned but not implemented

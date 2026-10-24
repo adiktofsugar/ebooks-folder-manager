@@ -12,7 +12,7 @@ from adl import account, data
 
 from efm.config import Config
 from efm.env import ensure_k2pdfopt
-from efm.metadata import Metadata, get_metadata
+from efm.metadata import Metadata, get_metadata, is_k2pdfopt_file
 from efm.exceptions import (
     BookError,
     GetMetadataError,
@@ -212,7 +212,7 @@ class ReformatPdfAction(BaseAction):
             logger.debug(f"Skipping {self.filepath} because no metadata.")
             return self.filepath
 
-        if metadata.is_k2pdfopt_version:
+        if is_k2pdfopt_file(self.filepath):
             logger.debug(f"Skipping {self.filepath} because it's already reformatted.")
             return self.filepath
 
@@ -254,8 +254,6 @@ class ReformatPdfAction(BaseAction):
         logger.debug(
             f"Added metadata to {temp_filepath_k2pdfopt} and saved to {temp_filepath_metadata}"
         )
-
-        metadata.is_k2pdfopt_version = True
 
         logger.debug(f"Reformatted {self.filepath} with k2pdfopt")
         return temp_filepath_metadata

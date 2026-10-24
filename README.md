@@ -1,22 +1,24 @@
 I'm tired of calibre. All I want is to add minimal metadata to my books and keep them in a folder.
 
-Rewriting the books all the time is not a great idea, though, because sometimes things go wrong, and when that happens, your books get destroyed. So, instead, I'll generate a static site from them.
+Rewriting the books all the time is not a great idea, though, because sometimes things go wrong, and when that happens, your books get destroyed. So, instead, efm leaves your books where they are and keeps metadata in a separate store, keyed by a hash of each book's contents.
 
-The static site is a folder like this:
+```bash
+efm ls ~/ebooks              # table of books with title, author, and other metadata
+efm ls ~/ebooks -f json      # same, as JSON
+efm ls ~/ebooks --raw        # what pymupdf reported, unnormalized
+```
 
-- index.html
-- assets
-  - index.js
-- books
-  - abc123.epub
-- metadata
-  - summary.json
-  - abc123.json
+The store lives in `~/.local/share/efm/store` (override with `--store` or `$EFM_STORE`):
 
-The **index.html** is your entry point. There are no pages in this site, because navigation requires a backend.
-The **assets** directory is where the js / css / images go.
-The **books** directory is where your books, named as a sha of the contents of the original file, go.
-The **metadata** directory is your "database". It's what the JS in the site will use to search and display your meta info.
+- store
+  - xx_3f2a….
+    - metadata.json
+    - metadata_internal.json
+    - metadata_raw.json
+
+Because entries are keyed by content, a book that's renamed or moved keeps its metadata, and an edited book gets a new entry rather than overwriting the old one. See [docs/store.md](docs/store.md) for details.
+
+Actions like DRM removal and renaming will be separate, manually-run commands (`efm dedrm <file>`, `efm rename <file>`, ...).
 
 # Known issues / Future features
 
