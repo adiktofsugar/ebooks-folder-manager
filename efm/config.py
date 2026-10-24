@@ -1,6 +1,7 @@
-from pathlib import Path
 import logging
+from pathlib import Path
 from typing import Annotated
+
 from pydantic import BaseModel, BeforeValidator
 
 logger = logging.getLogger(__name__)

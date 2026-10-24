@@ -1,17 +1,12 @@
 import logging
 import os
-from pathlib import Path
-from textwrap import dedent
 import time
 import traceback
+from pathlib import Path
+from textwrap import dedent
 from typing import TypeGuard
 
-from DeDRM_plugin import ineptepub
-from DeDRM_plugin import epubtest
-from DeDRM_plugin import zipfix
-from DeDRM_plugin import ineptpdf
-from DeDRM_plugin import erdr2pml
-from DeDRM_plugin import k4mobidedrm
+from DeDRM_plugin import epubtest, erdr2pml, ineptepub, ineptpdf, k4mobidedrm, zipfix
 from DeDRM_plugin.topazextract import TopazBook
 
 from efm.exceptions import (
@@ -51,7 +46,7 @@ def decryptepub(infile: Path, outdir: Path, key_files: list[Path]) -> Path:
         else:
             encryption = epubtest.encryption(str(zippath))
             if encryption == "Unencrypted":
-                logger.debug("{0} is not DRMed.".format(filename))
+                logger.debug(f"{filename} is not DRMed.")
                 return infile
             raise UnsupportedEncryptionError(infile, encryption)
     finally:

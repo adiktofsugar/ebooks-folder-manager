@@ -2,6 +2,7 @@
 
 import logging
 from pathlib import Path
+
 import pymupdf
 
 logger = logging.getLogger(__name__)
@@ -31,7 +32,7 @@ def detect_format(filepath: Path) -> str | None:
     
     # Try EPUB detection using ebooklib (content-based)
     try:
-        import ebooklib.epub as epub
+        from ebooklib import epub
         epub.read_epub(filepath)  # pyright: ignore[reportUnknownMemberType]
         return "epub"
     except Exception:

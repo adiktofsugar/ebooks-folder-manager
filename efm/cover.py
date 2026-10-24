@@ -1,15 +1,16 @@
-import logging
-from pathlib import Path
-from dataclasses import dataclass
+import colorsys
 import hashlib
 import io
+import logging
 import random
+from dataclasses import dataclass
+from pathlib import Path
 from typing import cast
-from PIL import Image, ImageDraw, ImageFont
-import colorsys
-import pymupdf
+
 import ebooklib
+import pymupdf
 from ebooklib import epub
+from PIL import Image, ImageDraw, ImageFont
 
 from efm.detection import detect_format
 

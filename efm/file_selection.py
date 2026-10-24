@@ -1,7 +1,7 @@
+import glob
 import logging
 import os
 import re
-import glob
 from pathlib import Path
 
 logger = logging.getLogger(__name__)

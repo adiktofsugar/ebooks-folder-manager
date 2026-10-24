@@ -1,28 +1,29 @@
 import logging
-from pathlib import Path
 import subprocess
-from typing import Sequence, override
-import pymupdf
+from collections.abc import Sequence
+from pathlib import Path
+from typing import override
 
-from efm import dedrm, kfxconvert
+import pymupdf
 from adl.epub_get import get_ebook
 from adl.exceptions import GetEbookException
 from adl.login import login
-from adl import account, data
 
+from adl import account, data
+from efm import dedrm, kfxconvert
 from efm.config import Config
 from efm.env import ensure_k2pdfopt
-from efm.metadata import Metadata, get_metadata, is_k2pdfopt_file
 from efm.exceptions import (
     BookError,
     GetMetadataError,
     RemoveDrmError,
 )
+from efm.metadata import Metadata, get_metadata, is_k2pdfopt_file
 
 logger = logging.getLogger(__name__)
 
 
-class BaseAction(object):
+class BaseAction:
     @classmethod
     def description(cls) -> str:
         raise NotImplementedError

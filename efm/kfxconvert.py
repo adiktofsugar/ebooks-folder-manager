@@ -9,10 +9,11 @@ Notable changes:
 
 import logging
 from typing import cast
+
 from kfxlib import (
     JobLog,
-    set_logger,
     YJ_Book,
+    set_logger,
 )
 
 logger = logging.getLogger(__name__)
