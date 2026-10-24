@@ -25,7 +25,7 @@ efm ls ~/ebooks --raw        # what pymupdf reported, unnormalized
 
 Metadata is extracted with PyMuPDF, so anything it can open works: EPUB, PDF, MOBI, FB2, CBZ, XPS, SVG, TXT.
 
-`efm setup` is a menu of DRM key extraction and decryption tools (Adobe, Kindle, Nook), built on [DeDRM_tools](https://github.com/noDRM/DeDRM_tools). Run `efm setup --help` to list them, or `efm setup <tool>` to run one directly. See [docs/drm.md](docs/drm.md).
+`efm setup` is a menu of DRM key extraction and decryption tools (Adobe, Kindle, Nook), built on [DeDRM_tools](https://github.com/noDRM/DeDRM_tools). Run `efm setup --help` to list them, or `efm setup <tool>` to run one directly. On Linux, getting the Adobe key takes some Wine setup; see [docs/adobe-digital-editions-key.md](docs/adobe-digital-editions-key.md).
 
 # The store
 
