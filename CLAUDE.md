@@ -4,13 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Ebooks Folder Manager (EFM) is a Calibre replacement that provides minimal metadata management for ebooks. It is a CLI-only tool. Books stay where they are; efm keeps their metadata in a central store keyed by content hash (see `docs/store.md`). `efm ls <dir>` lists books with their metadata. Actions (dedrm, rename, ...) are meant to be run manually, one subcommand each; they haven't been ported to the store yet.
+Ebooks Folder Manager (EFM) is a Calibre replacement that provides minimal metadata management for ebooks. It is a CLI-only tool. Books stay where they are; efm keeps their metadata in a central store keyed by content hash (see `docs/store.md`). `efm ls <dir>` lists the books in one directory with their metadata; `efm find <dir>` recurses and filters by path or metadata. Actions (dedrm, rename, ...) are meant to be run manually, one subcommand each; they haven't been ported to the store yet.
 
 ## Architecture
 
 ### Python Backend (`efm/`)
 - Subcommand-based CLI. `efm/__main__.py` sets up `sys.path`, logging (to stderr), global options (`--loglevel`, `--store`, `--no-stat-cache`), and dispatches to `efm/commands/`:
-  - `commands/ls.py`: `efm ls <dir>` - list books with metadata (`--raw`, `-f table|json`)
+  - `commands/ls.py`: `efm ls [path ...]` - list books in one directory (not recursive), like `ls`
+  - `commands/find.py`: `efm find <dir> [pattern ...]` - recursive listing with path and metadata filters (`--title`, `--author`, `--book-format`, `--encrypted`, `--missing`)
+  - Both use `listing.py` for store reads and output (`--raw`, `-f line|table|json`; default `line` is tab-separated file/title/author, one per line)
   - `commands/setup.py`: `efm setup [tool]` - DRM key extraction/config menu (or run one tool directly)
   - New subcommands expose `add_parser(subparsers)` and `run(args, console) -> int`, and get registered in `create_parser()`
 - Core modules:
@@ -48,12 +50,15 @@ uv run pytest tests/test_metadata.py  # Run specific test file
 
 ### Listing Books
 ```bash
-uv run efm ls path/to/books                  # Table of books + metadata
-uv run efm ls path/to/books 'foo.+epub'      # Only files matching a filter
+uv run efm ls path/to/books                  # One line per book directly in the dir (file, title, author)
+uv run efm ls path/to/books -f table         # Table with full metadata
 uv run efm ls path/to/books -f json          # JSON on stdout (logs go to stderr)
-uv run efm ls path/to/books --raw            # Raw pymupdf metadata
-uv run efm --store /tmp/store ls path/to/books        # Global options go before the subcommand
-uv run efm --loglevel debug --no-stat-cache ls books  # Timing: hashed vs. cached
+uv run efm ls path/to/books --raw -f table   # Raw pymupdf metadata
+uv run efm find path/to/books                # Recursive
+uv run efm find path/to/books 'foo.+epub'    # Only paths matching a filter
+uv run efm find path/to/books --author foo   # Metadata filter (case-insensitive regex)
+uv run efm --store /tmp/store ls path/to/books          # Global options go before the subcommand
+uv run efm --loglevel debug --no-stat-cache find books  # Timing: hashed vs. cached
 
 # DRM-related tools
 uv run efm setup             # Interactive menu
@@ -79,7 +84,7 @@ See `docs/store.md`. In short:
 
 ## Key Technical Considerations
 
-1. **File Safety**: Original files are never modified. `ls` only reads books and writes to the store and stat cache.
+1. **File Safety**: Original files are never modified. `ls`/`find` only read books and write to the store and stat cache.
 
 2. **Metadata Flow**: file → `Store.hash_file` → `Store.load(h)`, or on a miss `StoreEntry.from_book(path)` + `Store.put(h, entry)`.
 

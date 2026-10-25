@@ -56,7 +56,8 @@ def get_files_from_dirpath(dirpath: Path, filters: list[str] | None, use_regex_f
     all_files: list[Path] = []
     for root, dirs, files in os.walk(dirpath):
         for file in files:
-            filepath = (Path(root) / file).resolve()
+            # absolute(), not resolve(): a symlink stays under dirpath instead of jumping to its target
+            filepath = (Path(root) / file).absolute()
             does_match = (
                 all([matches_filter(filepath, m, use_regex_first) for m in filters]) if filters else True
             )

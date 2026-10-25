@@ -17,10 +17,17 @@ uv run efm --help
 # Usage
 
 ```bash
-efm ls ~/ebooks              # table of books with title, author, and other metadata
-efm ls ~/ebooks 'cats.+epub' # only files matching a glob, regex, or substring
-efm ls ~/ebooks -f json      # same, as JSON
-efm ls ~/ebooks --raw        # what pymupdf reported, unnormalized
+efm ls ~/ebooks                      # books directly in ~/ebooks: one "file<TAB>title<TAB>author" line each
+efm ls ~/ebooks/*.epub               # just these files
+efm ls ~/ebooks -f table             # table with all the metadata
+efm ls ~/ebooks -f json              # same, as JSON
+efm ls ~/ebooks --raw -f table       # what pymupdf reported, unnormalized
+
+efm find ~/ebooks                    # every book under ~/ebooks, recursively
+efm find ~/ebooks 'cats.+epub'       # only paths matching a glob, regex, or substring (! to exclude)
+efm find ~/ebooks --author pratchett # metadata filters: --title, --author, --book-format,
+efm find ~/ebooks --missing title    #   --encrypted/--no-encrypted, --missing title|author
+efm find ~/ebooks --encrypted | wc -l # the default output pipes cleanly
 ```
 
 Metadata is extracted with PyMuPDF, so anything it can open works: EPUB, PDF, MOBI, FB2, CBZ, XPS, SVG, TXT.

@@ -32,3 +32,15 @@ def test_setup_rejects_unknown_tool(monkeypatch):
     with pytest.raises(SystemExit) as exc:
         main()
     assert exc.value.code == 2
+
+
+def test_find_rejects_missing_path(monkeypatch, tmp_path):
+    monkeypatch.setattr(sys, "argv", ["efm", "find", str(tmp_path / "nope")])
+    assert main() == 1
+
+
+def test_find_rejects_bad_regex(monkeypatch, tmp_path):
+    monkeypatch.setattr(sys, "argv", ["efm", "find", str(tmp_path), "--title", "("])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 2
