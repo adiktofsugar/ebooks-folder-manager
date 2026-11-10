@@ -44,3 +44,10 @@ def test_find_rejects_bad_regex(monkeypatch, tmp_path):
     with pytest.raises(SystemExit) as exc:
         main()
     assert exc.value.code == 2
+
+
+def test_acsm_requires_files(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["efm", "acsm"])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 2

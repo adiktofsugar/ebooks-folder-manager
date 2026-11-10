@@ -105,3 +105,55 @@ def test_default_store_dir(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     assert default_store_dir() == tmp_path / "xdg-data" / "efm" / "store"
     monkeypatch.setenv("EFM_STORE", str(tmp_path / "custom"))
     assert default_store_dir() == tmp_path / "custom"
+
+
+def test_ancestor_round_trips(store: Store):
+    parent = "xx_" + "2" * 32
+    child = "xx_" + "3" * 32
+    store.put(
+        child, StoreEntry(Metadata(size=1), InternalMetadata(), None, ancestor=parent)
+    )
+    store.put(parent, StoreEntry(Metadata(size=1), InternalMetadata(), None))
+
+    loaded_child = store.load(child)
+    loaded_parent = store.load(parent)
+    assert loaded_child is not None and loaded_child.ancestor == parent
+    assert loaded_parent is not None and loaded_parent.ancestor is None
+
+
+def test_put_rejects_bad_ancestor(store: Store):
+    with pytest.raises(ValueError):
+        store.put(
+            "xx_" + "4" * 32,
+            StoreEntry(Metadata(size=1), InternalMetadata(), None, ancestor="../x"),
+        )
+
+
+def test_invalid_ancestor_file(store: Store):
+    h = "xx_" + "5" * 32
+    store.put(h, StoreEntry(Metadata(size=1), InternalMetadata(), None))
+    (store.root / h / "ancestor").write_text("garbage\n")
+    entry = store.load(h)
+    assert entry is not None
+    with pytest.raises(InvalidStoreEntryError):
+        _ = entry.ancestor
+
+
+def test_put_content(store: Store, tmp_path: Path):
+    book = tmp_path / "book"
+    book.write_bytes(b"contents")
+    h = store.hash_file(book)
+    assert not store.has_content(h)
+    store.put_content(h, book)
+    assert store.has_content(h)
+    assert (store.root / h / "content").read_bytes() == b"contents"
+    # Not a complete entry until metadata is put.
+    assert store.load(h) is None
+
+
+def test_put_content_rejects_mismatch(store: Store, tmp_path: Path):
+    book = tmp_path / "book"
+    book.write_bytes(b"contents")
+    with pytest.raises(ValueError):
+        store.put_content("xx_" + "6" * 32, book)
+    assert not store.has_content("xx_" + "6" * 32)

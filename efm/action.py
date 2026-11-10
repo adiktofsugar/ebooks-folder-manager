@@ -5,17 +5,11 @@ from pathlib import Path
 from typing import override
 
 import pymupdf
-from adl.epub_get import get_ebook
-from adl.exceptions import GetEbookException
-from adl.login import login
 
-from adl import account, data
 from efm import dedrm, kfxconvert
 from efm.config import Config
 from efm.env import ensure_k2pdfopt
 from efm.exceptions import (
-    BookError,
-    GetMetadataError,
     RemoveDrmError,
 )
 from efm.metadata import Metadata, get_metadata, is_k2pdfopt_file
@@ -260,70 +254,6 @@ class ReformatPdfAction(BaseAction):
         return temp_filepath_metadata
 
 
-class DownloadAcsmAction(BaseAction):
-    @override
-    @classmethod
-    def description(cls) -> str:
-        return "download an ACSM file"
-
-    @override
-    @classmethod
-    def id(cls) -> str:
-        return "download_acsm"
-
-    @override
-    def perform(self) -> Path:
-        if self.filepath.suffix.lower() == ".acsm":
-            if not self.config:
-                raise BookError(
-                    self.filepath,
-                    message="Can not download ACSM file - no config found",
-                )
-            username = self.config.adobe_user
-            password = self.config.adobe_password
-            if not username or not password:
-                raise BookError(
-                    self.filepath,
-                    message="Can not download ACSM file - no user or password found - add adobe_user and adobe_password to config file",
-                )
-
-            current_user = None
-            user = None
-            for a in data.accounts:
-                if data.config and a.urn == data.config.current_user:
-                    current_user = a
-                if a.sign_id == username:
-                    user = a
-
-            if not user:
-                login(username, password)
-            elif current_user != user:
-                account.set_default_account(user.urn)
-
-            try:
-                new_filepath = get_ebook(str(self.filepath), self.temp_dirpath)
-                if new_filepath is None:
-                    raise GetEbookException(str(self.filepath), "No file downloaded")
-                logger.info(f"Downloaded {self.filepath} to {new_filepath}")
-                new_filepath = Path(new_filepath)
-                # acsm files have no metadata, so we need to try again here...however, it's
-                #  pretty likely that they'll still have drm, so we need to be ok with errors
-                try:
-                    self.metadata = get_metadata(new_filepath)
-                except GetMetadataError as e:
-                    logger.debug(
-                        f"Mildly expected metadata error because ACSM is likely still protected with DRM - {e}"
-                    )
-                    self.metadata = None
-                return new_filepath
-            except Exception as e:
-                if isinstance(e, GetEbookException):
-                    raise BookError(self.filepath, message=str(e))
-                raise
-        logger.debug(f"Skipping {self.filepath} because it's not an ACSM file.")
-        return self.filepath
-
-
 class Kfx2EpubAction(BaseAction):
     @override
     @classmethod
@@ -352,7 +282,6 @@ class Kfx2EpubAction(BaseAction):
 
 
 ALL_ACTIONS: Sequence[type[BaseAction]] = [
-    DownloadAcsmAction,
     DeDrmAction,
     Kfx2EpubAction,
     ReformatPdfAction,

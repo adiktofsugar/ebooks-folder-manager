@@ -87,6 +87,7 @@ def test_garbage_key_file_is_a_miss(cache: StatCache, book: Path, tmp_path: Path
         f"{st.st_size}-{st.st_mtime_ns}-{st.st_ctime_ns}"
     )
     key.write_text("xx_not-a-hash")
+    assert cache.get(book, st) is None
     assert store.hash_file(book) == h
     assert store.stats.hashed == 2
 

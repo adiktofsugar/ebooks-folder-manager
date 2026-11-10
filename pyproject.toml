@@ -51,5 +51,6 @@ dev = [
     "pytest-rich>=0.3.0",
     "pytest-snapshot>=0.9.0",
     "ruff>=0.17.1",
+    "ty>=0.0.100",
     "watchdog>=6.0.0",
 ]

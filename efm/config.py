@@ -84,16 +84,22 @@ def get_config(dirpath: Path) -> Config | None:
     Get the config by searching up the directory tree and merging parent configs.
     Parent values are only added if not present in child configs.
     """
-    # Find config in the given directory first
-    config_file = get_config_filepath(dirpath)
+    # The nearest config, starting from dirpath, is the primary one
+    dirpath = dirpath.resolve()
+    config_file = None
+    while config_file is None:
+        config_file = get_config_filepath(dirpath)
+        if dirpath == dirpath.parent:
+            break
+        if config_file is None:
+            dirpath = dirpath.parent
     if not config_file:
         return None
 
-    # Start with the primary config data
     raw_data = load_config(config_file)
 
     # Search up the directory tree for parent configs
-    current = dirpath.parent.resolve()
+    current = dirpath.parent
     while current != current.parent:
         parent_config = get_config_filepath(current)
         if parent_config:

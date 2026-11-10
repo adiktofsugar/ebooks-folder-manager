@@ -6,6 +6,8 @@ import shutil
 import tempfile
 from pathlib import Path
 
+from efm.hasher import HASH_PATTERN
+
 logger = logging.getLogger(__name__)
 
 
@@ -31,7 +33,9 @@ class StatCache:
             h = self._key_file(book, st).read_text().strip()
         except (OSError, UnicodeDecodeError):
             return None
-        return h or None
+        # A key file cut short by a crash, or written by something else, would otherwise be
+        # returned as the book's hash and silently point it at the wrong store entry.
+        return h if HASH_PATTERN.fullmatch(h) else None
 
     def put(self, book: Path, st: os.stat_result, h: str) -> None:
         book_dir = self._book_dir(book)

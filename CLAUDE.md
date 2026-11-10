@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Ebooks Folder Manager (EFM) is a Calibre replacement that provides minimal metadata management for ebooks. It is a CLI-only tool. Books stay where they are; efm keeps their metadata in a central store keyed by content hash (see `docs/store.md`). `efm ls <dir>` lists the books in one directory with their metadata; `efm find <dir>` recurses and filters by path or metadata. Actions (dedrm, rename, ...) are meant to be run manually, one subcommand each; they haven't been ported to the store yet.
+Ebooks Folder Manager (EFM) is a Calibre replacement that provides minimal metadata management for ebooks. It is a CLI-only tool. Books stay where they are; efm keeps their metadata in a central store keyed by content hash (see `docs/store.md`). `efm ls <dir>` lists the books in one directory with their metadata; `efm find <dir>` recurses and filters by path or metadata. Actions are meant to be run manually, one subcommand each. `efm acsm` is the first one ported to the store; the rest (dedrm, rename, ...) haven't been yet.
 
 ## Architecture
 
@@ -13,11 +13,14 @@ Ebooks Folder Manager (EFM) is a Calibre replacement that provides minimal metad
   - `commands/ls.py`: `efm ls [path ...]` - list books in one directory (not recursive), like `ls`
   - `commands/find.py`: `efm find <dir> [pattern ...]` - recursive listing with path and metadata filters (`--title`, `--author`, `--book-format`, `--encrypted`, `--missing`)
   - Both use `listing.py` for store reads and output (`--raw`, `-f line|table|json`; default `line` is tab-separated file/title/author, one per line)
+  - `commands/acsm.py`: `efm acsm <file ...>` - fulfill .acsm tokens and replace each with the downloaded book (see "Commands that replace books" in `docs/store.md`)
   - `commands/setup.py`: `efm setup [tool]` - DRM key extraction/config menu (or run one tool directly)
   - New subcommands expose `add_parser(subparsers)` and `run(args, console) -> int`, and get registered in `create_parser()`
 - Core modules:
-  - `store.py`: Hash-keyed metadata store (`Store.hash_file`, `load`, `put`; `StoreEntry` with lazy `metadata`/`metadata_internal`/`metadata_raw`)
+  - `store.py`: Hash-keyed metadata store (`Store.hash_file`, `load`, `put`; `put_content`; `StoreEntry` with lazy `metadata`/`metadata_internal`/`metadata_raw`/`ancestor`)
   - `stat_cache.py`: path+stat → hash cache so unchanged files aren't re-hashed
+  - `scratch.py`: `scratch_dir(label)` context manager; deleted on success, kept on failure
+  - `acsm.py`: ACSM fulfillment via `adl` (imported lazily; importing it creates adl's data dir)
   - `metadata.py`: Versioned metadata models + migrations, and extraction via PyMuPDF (supports PDF, XPS, EPUB, MOBI, FB2, CBZ, SVG, TXT)
   - `dedrm.py`: DRM removal functionality
   - `action.py`: Base class and implementations for processing actions (not yet wired to a command)
@@ -64,6 +67,7 @@ uv run efm --loglevel debug --no-stat-cache find books  # Timing: hashed vs. cac
 uv run efm setup             # Interactive menu
 uv run efm setup --help      # List tools (adobe-key, epub-test, epub-decrypt, ...)
 uv run efm setup epub-test   # Run one tool directly
+uv run efm acsm path/to/book.acsm   # Fulfill and replace with book.epub
 ```
 
 ### Python Development
@@ -79,12 +83,12 @@ uv run ruff format efm    # Format Python code
 ## Store Layout
 
 See `docs/store.md`. In short:
-- `$store/xx_<hash>/metadata.json`, `metadata_internal.json`, `metadata_raw.json` (store: `--store`, `$EFM_STORE`, or `$XDG_DATA_HOME/efm/store`)
+- `$store/xx_<hash>/metadata.json`, `metadata_internal.json`, `metadata_raw.json`, optional `ancestor` and `content` (store: `--store`, `$EFM_STORE`, or `$XDG_DATA_HOME/efm/store`)
 - `$XDG_CACHE_HOME/efm/stat-cache/<abs path>/<size>-<mtime_ns>-<ctime_ns>` contains the hash
 
 ## Key Technical Considerations
 
-1. **File Safety**: Original files are never modified. `ls`/`find` only read books and write to the store and stat cache.
+1. **File Safety**: `ls`/`find` only read books and write to the store and stat cache. Commands that replace a book (`acsm`) must first copy the original into the store (`Store.put_content`), and do their work in a `scratch_dir`.
 
 2. **Metadata Flow**: file → `Store.hash_file` → `Store.load(h)`, or on a miss `StoreEntry.from_book(path)` + `Store.put(h, entry)`.
 
@@ -92,7 +96,7 @@ See `docs/store.md`. In short:
 
 4. **DRM Handling**: The project includes DRM removal tools from Calibre. These should be used responsibly and legally.
 
-5. **Configuration**: Supports `efm.toml`, `efm.yaml`, `efm.yml`, or `efm.json` for configuration (e.g., Adobe key file paths).
+5. **Configuration**: Supports `efm.toml`, `efm.yaml`, `efm.yml`, or `efm.json` for configuration (e.g., Adobe key file paths). `get_config(dir)` starts at the nearest config at or above `dir` and fills missing keys from configs further up.
 
 6. **Python Version**: Requires Python 3.13+ and uses `uv` as the package manager.
 
@@ -109,7 +113,7 @@ The configuration file supports various DRM key paths:
 
 ## Known Limitations
 
-- Actions (dedrm, rename, k2pdfopt, ACSM download) exist in `action.py` but have no subcommands yet
+- Actions (dedrm, rename, k2pdfopt) exist in `action.py` but have no subcommands yet
 - Some ebooks may lack title/author metadata
 - DRM removal for certain Kindle formats may not work
 - Multiple format support (same book in EPUB/PDF) is planned but not implemented
