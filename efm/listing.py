@@ -16,7 +16,7 @@ from rich.table import Table
 from rich.text import Text
 
 from efm.exceptions import InvalidStoreEntryError
-from efm.stat_cache import StatCache, default_stat_cache_root
+from efm.hasher import Hasher
 from efm.store import Store, StoreEntry, default_store_dir
 
 logger = logging.getLogger(__name__)
@@ -49,14 +49,17 @@ def add_output_args(parser: argparse.ArgumentParser):
 
 def open_store(args: argparse.Namespace) -> Store:
     store_dir = Path(args.store) if args.store else default_store_dir()
-    stat_cache = None if args.no_stat_cache else StatCache(default_stat_cache_root())
     logger.debug(f"Using store {store_dir}")
     # MuPDF prints recoverable parse noise (bad CSS etc.) straight to stderr.
     pymupdf.TOOLS.mupdf_display_errors(False)
-    return Store(store_dir, stat_cache)
+    return Store(store_dir)
 
 
-def read_rows(store: Store, rows: list[Row], console: Console):
+def open_hasher(args: argparse.Namespace) -> Hasher:
+    return Hasher(None) if args.no_stat_cache else Hasher()
+
+
+def read_rows(store: Store, hasher: Hasher, rows: list[Row], console: Console):
     """Fill in hash and store entry for each non-directory row, extracting on a miss."""
     books = [r for r in rows if not r.is_dir]
     extracted = 0
@@ -73,7 +76,7 @@ def read_rows(store: Store, rows: list[Row], console: Console):
         for r in books:
             progress.update(task, description=r.path.name)
             try:
-                r.hash = store.hash_file(r.path)
+                r.hash = hasher.hash(r.path)
                 entry = store.load(r.hash)
                 if entry is None:
                     entry = StoreEntry.from_book(r.path)
@@ -88,7 +91,7 @@ def read_rows(store: Store, rows: list[Row], console: Console):
                 r.error = str(e)
             progress.advance(task)
 
-    s = store.stats
+    s = hasher.stats
     logger.debug(
         f"{len(books)} files in {time.perf_counter() - started:.3f}s: "
         + f"{s.cache_hits} stat-cache hits, {s.hashed} hashed ({s.bytes_hashed / 1e6:.1f} MB), "

@@ -6,15 +6,13 @@ import os
 import shutil
 import tempfile
 from collections.abc import Callable
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, final
 
-import xxhash
 from pydantic import ValidationError
 
 from efm.exceptions import InvalidStoreEntryError, UnsupportedSchemaError
-from efm.hasher import HASH_PATTERN, HASH_PREFIX
+from efm.hasher import HASH_PATTERN, hash_contents
 from efm.metadata import (
     InternalMetadata,
     Metadata,
@@ -22,11 +20,8 @@ from efm.metadata import (
     load_internal_metadata,
     load_metadata,
 )
-from efm.stat_cache import StatCache
 
 logger = logging.getLogger(__name__)
-
-CHUNK_SIZE = 1 << 20
 
 METADATA_FILE = "metadata.json"
 METADATA_INTERNAL_FILE = "metadata_internal.json"
@@ -175,47 +170,11 @@ def _as_raw(data: object) -> dict[str, Any] | None:
     raise ValueError(f"expected an object or null, got {type(data).__name__}")
 
 
-@dataclass
-class HashStats:
-    cache_hits: int = 0
-    hashed: int = 0
-    bytes_hashed: int = 0
-
-
 class Store:
     root: Path
-    stat_cache: StatCache | None
-    stats: HashStats
 
-    def __init__(self, root: Path, stat_cache: StatCache | None):
+    def __init__(self, root: Path):
         self.root = root
-        self.stat_cache = stat_cache
-        self.stats = HashStats()
-
-    # TODO: hash_file/hash_contents don't use the store; move them to a Hasher. See todo/hasher.md.
-    def hash_file(self, path: Path) -> str:
-        # Stat before reading, so a change during hashing makes the cached key stale.
-        st = path.stat()
-        if self.stat_cache and (h := self.stat_cache.get(path, st)):
-            self.stats.cache_hits += 1
-            return h
-
-        h = self.hash_contents(path)
-        self.stats.hashed += 1
-        self.stats.bytes_hashed += st.st_size
-
-        if self.stat_cache:
-            self.stat_cache.put(path, st, h)
-        return h
-
-    @staticmethod
-    def hash_contents(path: Path) -> str:
-        """Hash without the stat cache, for files that aren't books in place (scratch, store copies)."""
-        hasher = xxhash.xxh3_128()
-        with open(path, "rb") as f:
-            while chunk := f.read(CHUNK_SIZE):
-                hasher.update(chunk)
-        return HASH_PREFIX + hasher.hexdigest()
 
     def _entry_dir(self, h: str) -> Path:
         if not HASH_PATTERN.fullmatch(h):
@@ -263,6 +222,6 @@ class Store:
         entry_dir.mkdir(parents=True, exist_ok=True)
         _copy_atomic(src, entry_dir / CONTENT_FILE)
         # Guards against src changing between hashing and copying.
-        if self.hash_contents(entry_dir / CONTENT_FILE) != h:
+        if hash_contents(entry_dir / CONTENT_FILE) != h:
             (entry_dir / CONTENT_FILE).unlink()
             raise ValueError(f"{src} no longer matches {h}")

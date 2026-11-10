@@ -4,25 +4,14 @@ from pathlib import Path
 import pytest
 
 from efm.exceptions import InvalidStoreEntryError
+from efm.hasher import hash_contents
 from efm.metadata import InternalMetadata, Metadata
 from efm.store import Store, StoreEntry, default_store_dir
 
 
 @pytest.fixture
 def store(tmp_path: Path) -> Store:
-    return Store(tmp_path / "store", None)
-
-
-def test_hash_file_is_stable_and_prefixed(store: Store, tmp_path: Path):
-    a = tmp_path / "a"
-    a.write_bytes(b"hello")
-    b = tmp_path / "b"
-    b.write_bytes(b"hello")
-    h = store.hash_file(a)
-    assert h.startswith("xx_") and len(h) == 35
-    assert store.hash_file(b) == h
-    b.write_bytes(b"hello!")
-    assert store.hash_file(b) != h
+    return Store(tmp_path / "store")
 
 
 def test_load_unknown_hash(store: Store):
@@ -36,7 +25,7 @@ def test_load_rejects_non_hash(store: Store):
 
 def test_put_then_load_round_trips(store: Store, sample_books: Path):
     book = sample_books / "WorldUnbound.epub"
-    h = store.hash_file(book)
+    h = hash_contents(book)
     created = StoreEntry.from_book(book)
     store.put(h, created)
 
@@ -63,7 +52,7 @@ def test_loaded_entry_reads_lazily(store: Store):
 def test_unsupported_format_writes_null_raw(store: Store, tmp_path: Path):
     book = tmp_path / "x.acsm"
     book.write_text("<fulfillmentToken/>")
-    h = store.hash_file(book)
+    h = hash_contents(book)
     store.put(h, StoreEntry.from_book(book))
     assert json.loads((store.root / h / "metadata_raw.json").read_text()) is None
     loaded = store.load(h)
@@ -72,7 +61,7 @@ def test_unsupported_format_writes_null_raw(store: Store, tmp_path: Path):
 
 def test_internal_metadata_written(store: Store, sample_books: Path):
     book = sample_books / "Emotions.pdf"
-    h = store.hash_file(book)
+    h = hash_contents(book)
     store.put(h, StoreEntry.from_book(book))
     data = json.loads((store.root / h / "metadata_internal.json").read_text())
     assert data == {
@@ -142,7 +131,7 @@ def test_invalid_ancestor_file(store: Store):
 def test_put_content(store: Store, tmp_path: Path):
     book = tmp_path / "book"
     book.write_bytes(b"contents")
-    h = store.hash_file(book)
+    h = hash_contents(book)
     assert not store.has_content(h)
     store.put_content(h, book)
     assert store.has_content(h)

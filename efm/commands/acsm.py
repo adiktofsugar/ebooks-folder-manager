@@ -11,7 +11,8 @@ from rich.console import Console
 from efm.acsm import fulfill
 from efm.config import get_config
 from efm.exceptions import BookError, InvalidStoreEntryError
-from efm.listing import open_store
+from efm.hasher import Hasher, hash_contents
+from efm.listing import open_hasher, open_store
 from efm.scratch import scratch_dir
 from efm.store import Store, StoreEntry
 
@@ -36,10 +37,11 @@ examples:
 
 def run(args: argparse.Namespace, console: Console) -> int:
     store = open_store(args)
+    hasher = open_hasher(args)
     failed = False
     for path in args.files:
         try:
-            target = fulfill_in_place(store, path)
+            target = fulfill_in_place(store, hasher, path)
             logger.info(f"{path} -> {target}")
         except (OSError, BookError, InvalidStoreEntryError) as e:
             logger.error(f"{path}: {e}")
@@ -47,12 +49,12 @@ def run(args: argparse.Namespace, console: Console) -> int:
     return 1 if failed else 0
 
 
-def fulfill_in_place(store: Store, path: Path) -> Path:
+def fulfill_in_place(store: Store, hasher: Hasher, path: Path) -> Path:
     if path.suffix.lower() != ".acsm":
         raise BookError(path, message="not an .acsm file")
 
     # The token is about to be deleted, so the store must hold it first.
-    original = store.hash_file(path)
+    original = hasher.hash(path)
     if store.load(original) is None:
         store.put(original, StoreEntry.from_book(path))
     store.put_content(original, path)
@@ -64,12 +66,11 @@ def fulfill_in_place(store: Store, path: Path) -> Path:
         downloaded = fulfill(token, scratch, config)
 
         target = path.with_suffix(downloaded.suffix)
-        h = store.hash_contents(downloaded)
+        h = hash_contents(downloaded)
         store.put(h, StoreEntry.from_book(downloaded, ancestor=original))
 
         _install(downloaded, target)
-        if store.stat_cache:
-            store.stat_cache.put(target, target.stat(), h)
+        hasher.put_cache(target, h)
         path.unlink()
     return target
 

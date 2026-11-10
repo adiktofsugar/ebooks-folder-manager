@@ -10,6 +10,7 @@ import pytest
 from efm.__main__ import main
 from efm.commands import acsm
 from efm.exceptions import BookError
+from efm.hasher import hash_contents
 from efm.store import Store
 
 SAMPLE_EPUB = Path(__file__).parent.parent / "sample-books" / "WorldUnbound.epub"
@@ -61,7 +62,7 @@ def test_replaces_token_and_links_ancestor(
     monkeypatch: pytest.MonkeyPatch, token: Path, store: Path
 ):
     monkeypatch.setattr(acsm, "fulfill", _fake_fulfill)
-    token_hash = Store.hash_contents(token)
+    token_hash = hash_contents(token)
 
     assert _run(store, token) == 0
 
@@ -70,8 +71,8 @@ def test_replaces_token_and_links_ancestor(
     assert target.read_bytes() == SAMPLE_EPUB.read_bytes()
     assert [p.name for p in token.parent.iterdir()] == [target.name]
 
-    s = Store(store, None)
-    entry = s.load(s.hash_file(target))
+    s = Store(store)
+    entry = s.load(hash_contents(target))
     assert entry is not None
     assert entry.ancestor == token_hash
     assert entry.metadata.format is not None

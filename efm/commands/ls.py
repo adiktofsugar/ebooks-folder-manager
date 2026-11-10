@@ -9,6 +9,7 @@ from efm.listing import (
     DEFAULT_EXCLUDES,
     Row,
     add_output_args,
+    open_hasher,
     open_store,
     print_rows,
     read_rows,
@@ -58,7 +59,7 @@ def run(args: argparse.Namespace, console: Console) -> int:
             rows.append(Row(target.absolute(), operand))
 
     if rows or not missing:
-        read_rows(open_store(args), rows, console)
+        read_rows(open_store(args), open_hasher(args), rows, console)
         print_rows(rows, args)
     return 1 if missing or any(r.error for r in rows) else 0
 

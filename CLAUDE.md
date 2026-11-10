@@ -17,8 +17,8 @@ Ebooks Folder Manager (EFM) is a Calibre replacement that provides minimal metad
   - `commands/setup.py`: `efm setup [tool]` - DRM key extraction/config menu (or run one tool directly)
   - New subcommands expose `add_parser(subparsers)` and `run(args, console) -> int`, and get registered in `create_parser()`
 - Core modules:
-  - `store.py`: Hash-keyed metadata store (`Store.hash_file`, `load`, `put`; `put_content`; `StoreEntry` with lazy `metadata`/`metadata_internal`/`metadata_raw`/`ancestor`)
-  - `stat_cache.py`: path+stat → hash cache so unchanged files aren't re-hashed
+  - `store.py`: Hash-keyed metadata store (`load`, `put`, `put_content`; `StoreEntry` with lazy `metadata`/`metadata_internal`/`metadata_raw`/`ancestor`)
+  - `hasher.py`: `Hasher().hash(path)` (uses `StatCache`, a path+stat → hash cache, so unchanged files aren't re-hashed) and uncached `hash_contents(path)`; make one per run and pass it down
   - `scratch.py`: `scratch_dir(label)` context manager; deleted on success, kept on failure
   - `acsm.py`: ACSM fulfillment via `adl` (imported lazily; importing it creates adl's data dir)
   - `metadata.py`: Versioned metadata models + migrations, and extraction via PyMuPDF (supports PDF, XPS, EPUB, MOBI, FB2, CBZ, SVG, TXT)
@@ -90,7 +90,7 @@ See `docs/store.md`. In short:
 
 1. **File Safety**: `ls`/`find` only read books and write to the store and stat cache. Commands that replace a book (`acsm`) must first copy the original into the store (`Store.put_content`), and do their work in a `scratch_dir`.
 
-2. **Metadata Flow**: file → `Store.hash_file` → `Store.load(h)`, or on a miss `StoreEntry.from_book(path)` + `Store.put(h, entry)`.
+2. **Metadata Flow**: file → `Hasher.hash` → `Store.load(h)`, or on a miss `StoreEntry.from_book(path)` + `Store.put(h, entry)`.
 
 3. **Schema versions**: `metadata.json`/`metadata_internal.json` are versioned pydantic models (`MetadataV1`, ...; `Metadata` is the current alias). Changing a stored model means adding a new version plus a migration; see `docs/store.md`.
 

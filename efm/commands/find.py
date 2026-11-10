@@ -10,6 +10,7 @@ from efm.listing import (
     DEFAULT_EXCLUDES,
     Row,
     add_output_args,
+    open_hasher,
     open_store,
     print_rows,
     read_rows,
@@ -90,7 +91,7 @@ def run(args: argparse.Namespace, console: Console) -> int:
         )
 
     rows = [Row(p, str(p.relative_to(base))) for p in filepaths]
-    read_rows(open_store(args), rows, console)
+    read_rows(open_store(args), open_hasher(args), rows, console)
     print_rows([r for r in rows if _keep(r, args)], args)
     return 1 if any(r.error for r in rows) else 0
 
