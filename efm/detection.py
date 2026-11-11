@@ -8,17 +8,15 @@ import pymupdf
 logger = logging.getLogger(__name__)
 
 
-
-
-def detect_format(filepath: Path) -> str | None:
+def detect_format(book_file: Path) -> str | None:
     """Detect the format of an ebook file.
-    
+
     Returns:
         'pdf', 'epub', or None if unknown
     """
     # Try PyMuPDF first as it can detect many formats accurately
     try:
-        doc = pymupdf.open(filepath)
+        doc = pymupdf.open(book_file)
         if doc.metadata:
             format = doc.metadata.get("format")
             doc.close()
@@ -29,21 +27,22 @@ def detect_format(filepath: Path) -> str | None:
         doc.close()
     except Exception:
         pass
-    
+
     # Try EPUB detection using ebooklib (content-based)
     try:
         from ebooklib import epub
-        epub.read_epub(filepath)  # pyright: ignore[reportUnknownMemberType]
+
+        epub.read_epub(book_file)  # pyright: ignore[reportUnknownMemberType]
         return "epub"
     except Exception:
         pass
-    
+
     # Fall back to extension only for known formats
-    ext = filepath.suffix.lower()
+    ext = book_file.suffix.lower()
     if ext == ".pdf":
         return "pdf"
     elif ext == ".epub":
         # Double-check with content-based detection already done above
         return None  # If it wasn't detected as EPUB above, it's not a valid EPUB
-    
+
     return None

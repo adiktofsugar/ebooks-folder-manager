@@ -2,13 +2,11 @@
 """Run linting tools for the project."""
 
 import argparse
-from argparse import Namespace
-import json
 import subprocess
 import sys
 import time
+from argparse import Namespace
 from pathlib import Path
-from typing import cast
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -18,24 +16,22 @@ if TYPE_CHECKING:
 sys.path.insert(0, str(Path(__file__).parent))
 sys.path.insert(0, str(Path(__file__).parent.parent))  # For efm imports
 
-from rich.text import Text
-
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler, FileModifiedEvent
+from rich import box
 from rich.console import Console
 from rich.panel import Panel
-from rich import box
+from rich.text import Text
+from watchdog.events import FileModifiedEvent, FileSystemEventHandler
+from watchdog.observers import Observer
 
-from scripts.interfaces import PyrightOutput, Diagnostic
 from efm.file_selection import matches_filter
 
 # Get project root based on script location
 script_dir = Path(__file__).parent
-project_root = script_dir.parent
+project_root_dir = script_dir.parent
 
 usage = """Usage: uv run lint.py [options] [filters...]
 
-Run linting tools (ruff and basedpyright) on the project.
+Run linting tools (ruff and ty) on the project.
 
 Options:
   -w, --watch   Watch for file changes and re-run linting
@@ -72,202 +68,79 @@ class LintHandler(FileSystemEventHandler):
         if event.is_directory:
             return
         if isinstance(event, FileModifiedEvent):
-            path = Path(str(event.src_path))
-            if path.suffix == ".py" and not path.name.startswith("."):
+            file = Path(str(event.src_path))
+            if file.suffix == ".py" and not file.name.startswith("."):
                 current_time = time.time()
                 if current_time - self.last_run > 1:  # Debounce
                     self.pending = True
 
 
-def get_python_files(filters: list[str] | None = None) -> list[str]:
+def get_python_filepaths(filters: list[str] | None = None) -> list[str]:
     """Get all Python files, optionally filtered by patterns."""
-    all_files: list[Path] = []
+    python_files: list[Path] = []
 
-    # Collect Python files from efm/ and tests/
-    for dir_name in ["efm", "tests"]:
-        dir_path = project_root / dir_name
-        if dir_path.exists():
-            for root, _, files in dir_path.walk():
-                for file in files:
-                    if file.endswith(".py"):
-                        all_files.append(root / file)
+    for dir_name in ["efm", "tests", "scripts"]:
+        source_dir = project_root_dir / dir_name
+        if source_dir.exists():
+            for dir, _dirnames, filenames in source_dir.walk():
+                for filename in filenames:
+                    if filename.endswith(".py"):
+                        python_files.append(dir / filename)
 
     # Add any .py files in root directory
-    all_files.extend(f for f in project_root.glob("*.py") if f.is_file())
+    python_files.extend(
+        file for file in project_root_dir.glob("*.py") if file.is_file()
+    )
 
-    # Apply filters if provided
     if filters:
-        filtered_files = []
-        for filepath in all_files:
-            # Check if all filters match
-            if all(matches_filter(filepath, f) for f in filters):
-                filtered_files.append(filepath)
-        return sorted(str(f) for f in filtered_files)
-
-    return sorted(str(f) for f in all_files)
+        python_files = [
+            file
+            for file in python_files
+            if all(matches_filter(file, pattern) for pattern in filters)
+        ]
+    return sorted(str(file) for file in python_files)
 
 
-def run_ruff(files: list[str], fix: bool = False) -> tuple[int, str]:
+def run_tool(cmd: list[str]) -> tuple[int, str]:
+    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    return result.returncode, result.stdout + result.stderr
+
+
+def run_ruff(filepaths: list[str], fix: bool = False) -> tuple[int, str]:
     """Run ruff linter."""
-    if not files:
+    if not filepaths:
         return 0, "No files to lint"
-
-    cmd = ["ruff", "check"] + files
-
-    if fix:
-        cmd.append("--fix")
-
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    output = result.stdout + result.stderr
-    return result.returncode, output
+    return run_tool(["ruff", "check", *filepaths, *(["--fix"] if fix else [])])
 
 
-def run_ruff_format(files: list[str], fix: bool = False) -> tuple[int, str]:
+def run_ruff_format(filepaths: list[str], fix: bool = False) -> tuple[int, str]:
     """Run ruff formatter."""
-    if not files:
+    if not filepaths:
         return 0, "No files to format"
-
-    cmd = ["ruff", "format"] + files
-
-    if not fix:
-        cmd.append("--check")
-
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    output = result.stdout + result.stderr
-    return result.returncode, output
+    return run_tool(["ruff", "format", *filepaths, *([] if fix else ["--check"])])
 
 
-def run_basedpyright(files: list[str]) -> tuple[int, str]:
-    """Run basedpyright type checker."""
-    if not files:
+def run_ty(filepaths: list[str], fix: bool = False) -> tuple[int, str]:
+    """Run ty type checker. Rules are in pyproject.toml's [tool.ty]."""
+    if not filepaths:
         return 0, "No files to type check"
-
-    cmd = ["basedpyright", "--outputjson"] + files
-
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    output = result.stdout + result.stderr
-    return result.returncode, output
-
-
-def get_code_snippet(
-    file_path: Path, line_num: int, start_col: int, end_col: int
-) -> Text | None:
-    """Get a code snippet from the file with highlighting."""
-    try:
-        with open(file_path, "r") as f:
-            lines = f.readlines()
-
-        if line_num < 1 or line_num > len(lines):
-            return None
-
-        # Get the problematic line (0-indexed)
-        line = lines[line_num - 1].rstrip()
-
-        # Create a marker line with squiggles
-        marker = " " * start_col + "^" * max(1, end_col - start_col)
-        indent = "    "
-        empty_line_num = " " * len(str(line_num))
-        text = Text()
-        text.append(f"{indent}{line_num} | {line}\n")
-        text.append(f"{indent}{empty_line_num} | {marker}\n")
-        return text
-    except:
-        return None
-
-
-def format_pyright_output(json_output: str, console: Console) -> None:
-    """Format basedpyright JSON output and print it."""
-    try:
-        data = cast(PyrightOutput, json.loads(json_output))
-        if "generalDiagnostics" not in data:
-            console.print(json_output)
-            return
-
-        diagnostics = data.get("generalDiagnostics", [])
-        if not diagnostics:
-            console.print("No type errors")
-            return
-
-        # Group diagnostics by file
-        by_file: dict[str, list[Diagnostic]] = {}
-        for diag in diagnostics:
-            file_path = diag.get("file", "unknown")
-            # Make path relative to project root
-            try:
-                rel_path = Path(file_path).relative_to(project_root)
-                file_path = str(rel_path)
-            except ValueError:
-                pass
-
-            if file_path not in by_file:
-                by_file[file_path] = []
-            by_file[file_path].append(diag)
-
-        # Print diagnostics for each file
-        for file_path, file_diags in by_file.items():
-            console.print()
-            console.print(file_path, style="bold cyan")
-
-            # Sort diagnostics by line number
-            file_diags.sort(
-                key=lambda d: (
-                    d.get("range", {}).get("start", {}).get("line", 0),
-                    d.get("range", {}).get("start", {}).get("character", 0),
-                )
-            )
-
-            # Show all errors
-            for diag in file_diags:
-                severity = diag.get("severity", "error")
-                message = diag.get("message", "unknown error")
-                rule = diag.get("rule", "")
-
-                range_info = diag.get("range", {})
-                start = range_info.get("start", {})
-                end = range_info.get("end", {})
-                line = start.get("line", 0) + 1  # Convert to 1-based
-                col = start.get("character", 0)
-                end_col = end.get("character", col + 1)
-
-                # Color based on severity
-                if severity == "error":
-                    style = "bold red"
-                    symbol = "❌"
-                else:
-                    style = "bold yellow"
-                    symbol = "⚠️"
-
-                console.print(f"\n  {symbol} ", end="")
-                console.print(f"{line}:{col}", style=style, end="")
-                console.print(f" - {message}")
-
-                if rule:
-                    console.print(f"     ({rule})", style="dim")
-
-                # Add code snippet
-                full_path = project_root / file_path
-                snippet = get_code_snippet(full_path, line, col, end_col)
-                if snippet:
-                    console.print(snippet, style="dim", overflow="ignore")
-
-        # Add summary
-        total = len(diagnostics)
-        errors = sum(1 for d in diagnostics if d.get("severity") == "error")
-        warnings = total - errors
-
-        console.print()
-        console.print("[bold]Summary:[/bold] ", end="")
-        console.print(f"{errors} errors, {warnings} warnings in {len(by_file)} files")
-
-    except (json.JSONDecodeError, KeyError, TypeError):
-        # If we can't parse JSON, print original output
-        console.print(json_output)
+    return run_tool(
+        [
+            "ty",
+            "check",
+            "--color",
+            "always",
+            "--no-progress",
+            *filepaths,
+            *(["--fix"] if fix else []),
+        ]
+    )
 
 
 def display_results(
     ruff_result: tuple[int, str],
     format_result: tuple[int, str],
-    pyright_result: tuple[int, str],
+    ty_result: tuple[int, str],
     fix: bool,
 ) -> int:
     """Display linting results."""
@@ -301,33 +174,32 @@ def display_results(
         if format_result[1].strip():
             console.print(Panel(format_result[1].strip(), style="red", box=box.MINIMAL))
 
-    # Basedpyright
-    if pyright_result[0] == 0:
-        console.print("✅ [green]Basedpyright[/green]: No type errors")
+    # ty. Its output is already formatted with code snippets; from_ansi so rich keeps its colors
+    # and doesn't read `[rule-name]` as markup.
+    if ty_result[0] == 0:
+        console.print("✅ [green]ty[/green]: No type errors")
     else:
-        console.print("❌ [red]Basedpyright[/red]:")
-        if pyright_result[1].strip():
-            # Format and print the pyright output
-            format_pyright_output(pyright_result[1].strip(), console)
+        console.print("❌ [red]ty[/red]:")
+    if ty_result[1].strip() and "All checks passed" not in ty_result[1]:
+        console.print(Text.from_ansi(ty_result[1].strip()))
 
     console.print()
 
     # Return non-zero if any tool failed
-    return max(ruff_result[0], format_result[0], pyright_result[0])
+    return max(ruff_result[0], format_result[0], ty_result[0])
 
 
 def run_lint(fix: bool = False, filters: list[str] | None = None) -> int:
     """Run all linting tools."""
     console.clear()
 
-    # Get the list of files to lint
-    files = get_python_files(filters)
+    filepaths = get_python_filepaths(filters)
 
     # Show which files will be linted if filters are provided
     if filters:
-        if files:
+        if filepaths:
             console.print(
-                f"[dim]Linting {len(files)} files matching filters: {', '.join(filters)}[/dim]\n"
+                f"[dim]Linting {len(filepaths)} files matching filters: {', '.join(filters)}[/dim]\n"
             )
         else:
             console.print(
@@ -336,11 +208,11 @@ def run_lint(fix: bool = False, filters: list[str] | None = None) -> int:
             return 0
 
     with console.status("[bold green]Running linters...", spinner="dots"):
-        ruff_result = run_ruff(files, fix)
-        format_result = run_ruff_format(files, fix)
-        pyright_result = run_basedpyright(files)
+        ruff_result = run_ruff(filepaths, fix)
+        format_result = run_ruff_format(filepaths, fix)
+        ty_result = run_ty(filepaths, fix)
 
-    return display_results(ruff_result, format_result, pyright_result, fix)
+    return display_results(ruff_result, format_result, ty_result, fix)
 
 
 def watch_mode(fix: bool, filters: list[str] | None = None):
@@ -348,14 +220,13 @@ def watch_mode(fix: bool, filters: list[str] | None = None):
     handler = LintHandler(fix, filters)
     observer = Observer()
 
-    # Watch Python files
-    for path_name in ["efm", "tests"]:
-        path = project_root / path_name
-        if path.exists():
-            observer.schedule(handler, str(path), recursive=True)
+    for dir_name in ["efm", "tests", "scripts"]:
+        watch_dir = project_root_dir / dir_name
+        if watch_dir.exists():
+            observer.schedule(handler, str(watch_dir), recursive=True)
 
     # Also watch root directory for .py files
-    observer.schedule(handler, str(project_root), recursive=False)
+    observer.schedule(handler, str(project_root_dir), recursive=False)
 
     observer.start()
 

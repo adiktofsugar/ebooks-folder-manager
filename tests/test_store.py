@@ -23,10 +23,10 @@ def test_load_rejects_non_hash(store: Store):
         store.load("../etc")
 
 
-def test_put_then_load_round_trips(store: Store, sample_books: Path):
-    book = sample_books / "WorldUnbound.epub"
-    h = hash_contents(book)
-    created = StoreEntry.from_book(book)
+def test_put_then_load_round_trips(store: Store, sample_books_dir: Path):
+    book_file = sample_books_dir / "WorldUnbound.epub"
+    h = hash_contents(book_file)
+    created = StoreEntry.from_book(book_file)
     store.put(h, created)
 
     loaded = store.load(h)
@@ -39,7 +39,7 @@ def test_put_then_load_round_trips(store: Store, sample_books: Path):
 def test_loaded_entry_reads_lazily(store: Store):
     h = "xx_" + "1" * 32
     store.put(h, StoreEntry(Metadata(size=1), InternalMetadata(), None))
-    entry_dir = store.root / h
+    entry_dir = store.root_dir / h
     (entry_dir / "metadata_raw.json").write_text("{broken")
 
     entry = store.load(h)
@@ -50,20 +50,20 @@ def test_loaded_entry_reads_lazily(store: Store):
 
 
 def test_unsupported_format_writes_null_raw(store: Store, tmp_path: Path):
-    book = tmp_path / "x.acsm"
-    book.write_text("<fulfillmentToken/>")
-    h = hash_contents(book)
-    store.put(h, StoreEntry.from_book(book))
-    assert json.loads((store.root / h / "metadata_raw.json").read_text()) is None
+    book_file = tmp_path / "x.acsm"
+    book_file.write_text("<fulfillmentToken/>")
+    h = hash_contents(book_file)
+    store.put(h, StoreEntry.from_book(book_file))
+    assert json.loads((store.root_dir / h / "metadata_raw.json").read_text()) is None
     loaded = store.load(h)
     assert loaded is not None and loaded.metadata_raw is None
 
 
-def test_internal_metadata_written(store: Store, sample_books: Path):
-    book = sample_books / "Emotions.pdf"
-    h = hash_contents(book)
-    store.put(h, StoreEntry.from_book(book))
-    data = json.loads((store.root / h / "metadata_internal.json").read_text())
+def test_internal_metadata_written(store: Store, sample_books_dir: Path):
+    book_file = sample_books_dir / "Emotions.pdf"
+    h = hash_contents(book_file)
+    store.put(h, StoreEntry.from_book(book_file))
+    data = json.loads((store.root_dir / h / "metadata_internal.json").read_text())
     assert data == {
         "schema_version": 1,
         "is_k2pdfopt_version": False,
@@ -73,21 +73,21 @@ def test_internal_metadata_written(store: Store, sample_books: Path):
 
 def test_incomplete_entry_counts_as_missing(store: Store):
     h = "xx_" + "2" * 32
-    (store.root / h).mkdir(parents=True)
-    (store.root / h / "metadata_raw.json").write_text("null")
+    (store.root_dir / h).mkdir(parents=True)
+    (store.root_dir / h / "metadata_raw.json").write_text("null")
     assert store.load(h) is None
 
 
 def test_newer_schema_is_an_error_not_a_regen(store: Store):
     h = "xx_" + "3" * 32
     store.put(h, StoreEntry(Metadata(size=1), InternalMetadata(), None))
-    path = store.root / h / "metadata.json"
-    path.write_text(json.dumps({"schema_version": 99}))
+    metadata_file = store.root_dir / h / "metadata.json"
+    metadata_file.write_text(json.dumps({"schema_version": 99}))
     entry = store.load(h)
     assert entry is not None
     with pytest.raises(InvalidStoreEntryError):
         _ = entry.metadata
-    assert json.loads(path.read_text()) == {"schema_version": 99}
+    assert json.loads(metadata_file.read_text()) == {"schema_version": 99}
 
 
 def test_default_store_dir(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
@@ -121,7 +121,7 @@ def test_put_rejects_bad_ancestor(store: Store):
 def test_invalid_ancestor_file(store: Store):
     h = "xx_" + "5" * 32
     store.put(h, StoreEntry(Metadata(size=1), InternalMetadata(), None))
-    (store.root / h / "ancestor").write_text("garbage\n")
+    (store.root_dir / h / "ancestor").write_text("garbage\n")
     entry = store.load(h)
     assert entry is not None
     with pytest.raises(InvalidStoreEntryError):
@@ -129,20 +129,20 @@ def test_invalid_ancestor_file(store: Store):
 
 
 def test_put_content(store: Store, tmp_path: Path):
-    book = tmp_path / "book"
-    book.write_bytes(b"contents")
-    h = hash_contents(book)
+    book_file = tmp_path / "book"
+    book_file.write_bytes(b"contents")
+    h = hash_contents(book_file)
     assert not store.has_content(h)
-    store.put_content(h, book)
+    store.put_content(h, book_file)
     assert store.has_content(h)
-    assert (store.root / h / "content").read_bytes() == b"contents"
+    assert (store.root_dir / h / "content").read_bytes() == b"contents"
     # Not a complete entry until metadata is put.
     assert store.load(h) is None
 
 
 def test_put_content_rejects_mismatch(store: Store, tmp_path: Path):
-    book = tmp_path / "book"
-    book.write_bytes(b"contents")
+    book_file = tmp_path / "book"
+    book_file.write_bytes(b"contents")
     with pytest.raises(ValueError):
-        store.put_content("xx_" + "6" * 32, book)
+        store.put_content("xx_" + "6" * 32, book_file)
     assert not store.has_content("xx_" + "6" * 32)

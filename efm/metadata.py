@@ -109,14 +109,14 @@ class Extracted(NamedTuple):
     raw: dict[str, Any] | None
 
 
-def read_raw_metadata(filepath: Path) -> dict[str, Any] | None:
+def read_raw_metadata(book_file: Path) -> dict[str, Any] | None:
     """What pymupdf reports, unmodified. None if pymupdf can't open the file.
 
     Raises pymupdf.FileDataError for files it recognizes but can't parse.
     """
-    if filepath.suffix[1:].upper() not in SUPPORTED_FORMATS:
+    if book_file.suffix[1:].upper() not in SUPPORTED_FORMATS:
         return None
-    with pymupdf.open(filepath) as doc:
+    with pymupdf.open(book_file) as doc:
         return {
             "metadata": doc.metadata,
             "page_count": None if doc.is_reflowable else doc.page_count,
@@ -132,14 +132,14 @@ def _clean(value: object) -> str | None:
 
 
 def normalize(
-    raw: dict[str, Any] | None, filepath: Path, error: str | None = None
+    raw: dict[str, Any] | None, book_file: Path, error: str | None = None
 ) -> Metadata:
-    size = filepath.stat().st_size
+    size = book_file.stat().st_size
     if raw is None:
         return Metadata(
             size=size,
-            format=filepath.suffix[1:].upper() or None,
-            error=error or f"Unsupported format: {filepath.suffix or '(none)'}",
+            format=book_file.suffix[1:].upper() or None,
+            error=error or f"Unsupported format: {book_file.suffix or '(none)'}",
         )
     m: dict[str, Any] = raw.get("metadata") or {}
     keywords = _clean(m.get("keywords"))
@@ -167,35 +167,35 @@ def internal_from(raw: dict[str, Any] | None) -> InternalMetadata:
     return InternalMetadata(is_k2pdfopt_version=K2PDFOPT_MARKER in embfiles)
 
 
-def extract(filepath: Path) -> Extracted:
+def extract(book_file: Path) -> Extracted:
     try:
-        raw = read_raw_metadata(filepath)
+        raw = read_raw_metadata(book_file)
         error = None
     except (pymupdf.FileDataError, RuntimeError) as e:
-        logger.debug(f"pymupdf couldn't open {filepath}: {e}")
+        logger.debug(f"pymupdf couldn't open {book_file}: {e}")
         raw = None
         error = f"Couldn't read metadata: {e}"
-    return Extracted(normalize(raw, filepath, error), internal_from(raw), raw)
+    return Extracted(normalize(raw, book_file, error), internal_from(raw), raw)
 
 
-def get_metadata(filepath: Path) -> Metadata:
-    return extract(filepath).metadata
+def get_metadata(book_file: Path) -> Metadata:
+    return extract(book_file).metadata
 
 
-def is_k2pdfopt_file(filepath: Path) -> bool:
+def is_k2pdfopt_file(book_file: Path) -> bool:
     try:
-        return internal_from(read_raw_metadata(filepath)).is_k2pdfopt_version
+        return internal_from(read_raw_metadata(book_file)).is_k2pdfopt_version
     except (pymupdf.FileDataError, RuntimeError):
         return False
 
 
 def extract_cover_image(
-    filepath: Path, metadata: Metadata | None, cache_dir: Path
+    book_file: Path, metadata: Metadata | None, cache_dir: Path
 ) -> str | None:
     """Extract or generate cover image and return hash.
 
     Args:
-        filepath: Path to the ebook file
+        book_file: Path to the ebook file
         metadata: Book metadata (for title/author in generated covers)
         cache_dir: Directory to save cover images
 
@@ -205,12 +205,12 @@ def extract_cover_image(
     cache_dir.mkdir(parents=True, exist_ok=True)
 
     # Try to extract cover
-    cover = extract_cover(filepath)
+    cover = extract_cover(book_file)
 
     # If no cover found, generate one
     if not cover:
         # Use file hash as seed
-        file_hash = hashlib.sha256(filepath.read_bytes()).hexdigest()
+        file_hash = hashlib.sha256(book_file.read_bytes()).hexdigest()
 
         # Extract title and author from metadata
         title = metadata.title if metadata else None
@@ -218,15 +218,15 @@ def extract_cover_image(
 
         # If no metadata, use filename
         if not title:
-            title = filepath.stem
+            title = book_file.stem
 
-        logger.debug(f"Generating cover for {filepath.name}")
+        logger.debug(f"Generating cover for {book_file.name}")
         cover = generate_cover(file_hash, title, author)
 
     # Save cover if not already cached
-    cover_path = cache_dir / f"{cover.hash}.png"
-    if not cover_path.exists():
-        cover.save(cover_path)
-        logger.debug(f"Saved cover image to {cover_path}")
+    cover_file = cache_dir / f"{cover.hash}.png"
+    if not cover_file.exists():
+        cover.save(cover_file)
+        logger.debug(f"Saved cover image to {cover_file}")
 
     return cover.hash

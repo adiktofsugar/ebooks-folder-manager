@@ -9,16 +9,16 @@ from pathlib import Path
 # Add parent directory to path for efm imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler, FileModifiedEvent
 from rich.console import Console
 from rich.panel import Panel
+from watchdog.events import FileModifiedEvent, FileSystemEventHandler
+from watchdog.observers import Observer
 
 from efm.file_selection import matches_filter
 
 # Get project root based on script location
 script_dir = Path(__file__).parent
-project_root = script_dir.parent
+project_root_dir = script_dir.parent
 
 usage = """Usage: uv run test.py [options] [filters...]
 
@@ -49,63 +49,59 @@ console = Console()
 class TestHandler(FileSystemEventHandler):
     """Handle file system events for testing."""
 
-    def __init__(self, test_files: list[str]):
-        self.test_files = test_files
-        self.last_run = 0
+    def __init__(self, test_paths: list[Path]):
+        self.test_paths = test_paths
+        self.last_run: float = 0
         self.pending = False
 
     def on_modified(self, event):
         if event.is_directory:
             return
         if isinstance(event, FileModifiedEvent):
-            path = Path(event.src_path)
+            file = Path(event.src_path)
             # Watch Python files and test files
-            if path.suffix == ".py" and not path.name.startswith("."):
+            if file.suffix == ".py" and not file.name.startswith("."):
                 current_time = time.time()
                 if current_time - self.last_run > 1:  # Debounce
                     self.pending = True
 
 
-def get_test_files(filters: list[str] | None = None) -> list[str]:
-    """Get all test files, optionally filtered by patterns."""
-    all_files: list[Path] = []
-    
-    # Collect test files from tests/ directory
-    tests_dir = project_root / "tests"
+def get_test_paths(filters: list[str] | None = None) -> list[Path]:
+    """Test files matching the filters, or the whole tests dir when unfiltered."""
+    test_files: list[Path] = []
+
+    tests_dir = project_root_dir / "tests"
     if tests_dir.exists():
-        for root, _, files in tests_dir.walk():
-            for file in files:
-                if file.endswith('.py') and file.startswith('test_'):
-                    all_files.append(root / file)
-    
-    # Apply filters if provided
+        for dir, _dirnames, filenames in tests_dir.walk():
+            for filename in filenames:
+                if filename.endswith(".py") and filename.startswith("test_"):
+                    test_files.append(dir / filename)
+
     if filters:
-        filtered_files = []
-        for filepath in all_files:
-            # Check if all filters match
-            if all(matches_filter(filepath, f) for f in filters):
-                filtered_files.append(filepath)
-        return sorted(str(f) for f in filtered_files)
-    
-    # If no filters, return the tests directory
-    if all_files:
-        return [str(tests_dir)]
+        return sorted(
+            file
+            for file in test_files
+            if all(matches_filter(file, pattern) for pattern in filters)
+        )
+
+    if test_files:
+        return [tests_dir]
     return []
 
 
-def run_tests(test_files: list[str]) -> int:
-    """Run pytest with given test files."""
-    if not test_files:
+def run_tests(test_paths: list[Path]) -> int:
+    """Run pytest with given test files or dirs."""
+    if not test_paths:
         console.print("[yellow]No test files to run[/yellow]")
         return 0
-        
-    cmd = ["pytest"] + test_files + ["-v", "--rich"]
+
+    cmd = ["pytest", *map(str, test_paths), "-v", "--rich"]
 
     console.clear()
     console.print(Panel.fit(f"🧪 Running: {' '.join(cmd)}", style="bold blue"))
 
     # Run pytest directly
-    result = subprocess.run(cmd)
+    result = subprocess.run(cmd, check=False)
 
     if result.returncode == 0:
         console.print(Panel.fit("✅ All tests passed!", style="bold green"))
@@ -115,19 +111,19 @@ def run_tests(test_files: list[str]) -> int:
     return result.returncode
 
 
-def watch_mode(test_files: list[str]):
+def watch_mode(test_paths: list[Path]):
     """Run tests in watch mode."""
-    handler = TestHandler(test_files)
+    handler = TestHandler(test_paths)
     observer = Observer()
 
     # Watch Python source and test files
-    for path_name in ["efm", "tests"]:
-        path = project_root / path_name
-        if path.exists():
-            observer.schedule(handler, str(path), recursive=True)
-    
+    for dir_name in ["efm", "tests"]:
+        watch_dir = project_root_dir / dir_name
+        if watch_dir.exists():
+            observer.schedule(handler, str(watch_dir), recursive=True)
+
     # Also watch root directory for .py files
-    observer.schedule(handler, str(project_root), recursive=False)
+    observer.schedule(handler, str(project_root_dir), recursive=False)
 
     observer.start()
 
@@ -137,7 +133,7 @@ def watch_mode(test_files: list[str]):
 
     try:
         # Initial run
-        run_tests(test_files)
+        run_tests(test_paths)
 
         while True:
             time.sleep(0.5)
@@ -151,7 +147,7 @@ def watch_mode(test_files: list[str]):
                         style="bold blue",
                     )
                 )
-                run_tests(test_files)
+                run_tests(test_paths)
     except KeyboardInterrupt:
         observer.stop()
         console.print("\n[bold red]Stopped watching.[/bold red]")
@@ -183,17 +179,19 @@ def main():
         return 0
 
     # Get test files based on filters
-    test_files = get_test_files(filters if filters else None)
-    
+    test_paths = get_test_paths(filters if filters else None)
+
     # Show which files will be tested if filters are provided
-    if filters and test_files:
-        console.print(f"[dim]Running {len(test_files)} test files matching filters: {', '.join(filters)}[/dim]\n")
+    if filters and test_paths:
+        console.print(
+            f"[dim]Running {len(test_paths)} test files matching filters: {', '.join(filters)}[/dim]\n"
+        )
 
     if watch:
-        watch_mode(test_files)
+        watch_mode(test_paths)
         return 0
     else:
-        return run_tests(test_files)
+        return run_tests(test_paths)
 
 
 if __name__ == "__main__":

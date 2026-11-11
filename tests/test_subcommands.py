@@ -19,10 +19,10 @@ def test_ls_rejects_missing_path(monkeypatch, tmp_path):
 
 
 def test_ls_empty_dir(monkeypatch, tmp_path):
-    books = tmp_path / "books"
-    books.mkdir()
+    books_dir = tmp_path / "books"
+    books_dir.mkdir()
     monkeypatch.setattr(
-        sys, "argv", ["efm", "--store", str(tmp_path / "store"), "ls", str(books)]
+        sys, "argv", ["efm", "--store", str(tmp_path / "store"), "ls", str(books_dir)]
     )
     assert main() == 0
 

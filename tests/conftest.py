@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 # Define any shared fixtures here that might be used across multiple test files
 @pytest.fixture
-def project_root():
+def project_root_dirpath():
     """Return the project root directory path"""
     return os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -32,9 +32,9 @@ def isolated_dirs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 @pytest.fixture
-def sample_books(tmp_path: Path) -> Path:
+def sample_books_dir(tmp_path: Path) -> Path:
     """A writable copy of sample-books/."""
-    src = Path(__file__).parent.parent / "sample-books"
-    dst = tmp_path / "books"
-    shutil.copytree(src, dst)
-    return dst
+    src_dir = Path(__file__).parent.parent / "sample-books"
+    dst_dir = tmp_path / "books"
+    shutil.copytree(src_dir, dst_dir)
+    return dst_dir

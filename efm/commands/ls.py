@@ -49,14 +49,14 @@ def run(args: argparse.Namespace, console: Console) -> int:
     # Like ls: a lone directory's entries are shown bare, otherwise prefixed by the operand.
     bare = len(args.paths) == 1
     for operand in args.paths:
-        target = Path(operand)
-        if not target.exists():
+        target_path = Path(operand)
+        if not target_path.exists():
             logger.error(f"Does not exist: {operand}")
             missing = True
-        elif target.is_dir():
-            rows += _dir_rows(target, operand, bare)
+        elif target_path.is_dir():
+            rows += _dir_rows(target_path, operand, bare)
         else:
-            rows.append(Row(target.absolute(), operand))
+            rows.append(Row(target_path.absolute(), operand))
 
     if rows or not missing:
         read_rows(open_store(args), open_hasher(args), rows, console)
@@ -64,14 +64,14 @@ def run(args: argparse.Namespace, console: Console) -> int:
     return 1 if missing or any(r.error for r in rows) else 0
 
 
-def _dir_rows(directory: Path, operand: str, bare: bool) -> list[Row]:
+def _dir_rows(dir: Path, operand: str, bare: bool) -> list[Row]:
     rows: list[Row] = []
-    for child in sorted(directory.iterdir()):
-        if child.name.startswith("."):
+    for child_path in sorted(dir.iterdir()):
+        if child_path.name.startswith("."):
             continue
-        name = child.name if bare else str(Path(operand) / child.name)
-        if child.is_dir():
-            rows.append(Row(child.absolute(), name, is_dir=True))
-        elif all(matches_filter(child, f) for f in DEFAULT_EXCLUDES):
-            rows.append(Row(child.absolute(), name))
+        name = child_path.name if bare else str(Path(operand) / child_path.name)
+        if child_path.is_dir():
+            rows.append(Row(child_path.absolute(), name, is_dir=True))
+        elif all(matches_filter(child_path, f) for f in DEFAULT_EXCLUDES):
+            rows.append(Row(child_path.absolute(), name))
     return rows

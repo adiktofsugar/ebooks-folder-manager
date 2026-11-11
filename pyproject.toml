@@ -43,7 +43,6 @@ addopts = "-v"
 
 [dependency-groups]
 dev = [
-    "basedpyright>=1.40.2",
     "debugpy>=1.8.22",
     "mock>=5.2.0",
     "pymupdf-stubs>=1.28.2",
@@ -54,3 +53,15 @@ dev = [
     "ty>=0.0.100",
     "watchdog>=6.0.0",
 ]
+
+[tool.ty.src]
+include = ["efm", "tests"]
+
+[tool.ty.environment]
+extra-paths = ["adl", "DeDRM_tools", "kfxlib"]
+
+# Migrated from pyrightconfig.json by hand (no automated migrator exists). Those rules with no ty
+# equivalent: unused imports are ruff's F401; import cycles have no check; the rest were disabled.
+[tool.ty.rules]
+# Was reportAttributeAccessIssue = "none": pymupdf/ebooklib stubs are missing members.
+missing-attribute = "ignore"

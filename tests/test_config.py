@@ -5,13 +5,13 @@ from efm.config import get_config
 
 def test_config_found_in_parent_dir(tmp_path: Path):
     (tmp_path / "efm.toml").write_text('adobe_user = "parent"\nadobe_password = "p"\n')
-    sub = tmp_path / "incoming"
-    sub.mkdir()
-    (sub / "efm.toml").write_text('adobe_user = "child"\n')
-    deeper = sub / "deeper"
-    deeper.mkdir()
+    sub_dir = tmp_path / "incoming"
+    sub_dir.mkdir()
+    (sub_dir / "efm.toml").write_text('adobe_user = "child"\n')
+    deeper_dir = sub_dir / "deeper"
+    deeper_dir.mkdir()
 
-    config = get_config(deeper)
+    config = get_config(deeper_dir)
     assert config is not None
     assert config.adobe_user == "child"
     assert config.adobe_password == "p"

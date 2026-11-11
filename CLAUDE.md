@@ -18,7 +18,7 @@ Ebooks Folder Manager (EFM) is a Calibre replacement that provides minimal metad
   - New subcommands expose `add_parser(subparsers)` and `run(args, console) -> int`, and get registered in `create_parser()`
 - Core modules:
   - `store.py`: Hash-keyed metadata store (`load`, `put`, `put_content`; `StoreEntry` with lazy `metadata`/`metadata_internal`/`metadata_raw`/`ancestor`)
-  - `hasher.py`: `Hasher().hash(path)` (uses `StatCache`, a path+stat → hash cache, so unchanged files aren't re-hashed) and uncached `hash_contents(path)`; make one per run and pass it down
+  - `hasher.py`: `Hasher().hash(file)` (uses `StatCache`, a path+stat → hash cache, so unchanged files aren't re-hashed) and uncached `hash_contents(file)`; make one per run and pass it down
   - `scratch.py`: `scratch_dir(label)` context manager; deleted on success, kept on failure
   - `acsm.py`: ACSM fulfillment via `adl` (imported lazily; importing it creates adl's data dir)
   - `metadata.py`: Versioned metadata models + migrations, and extraction via PyMuPDF (supports PDF, XPS, EPUB, MOBI, FB2, CBZ, SVG, TXT)
@@ -73,7 +73,7 @@ uv run efm acsm path/to/book.acsm   # Fulfill and replace with book.epub
 ### Python Development
 ```bash
 # Type checking
-uv run pyright       # Run Python type checker
+uv run ty check      # Run Python type checker (config: [tool.ty] in pyproject.toml)
 
 # Linting
 uv run ruff check efm     # Check Python code
@@ -90,7 +90,7 @@ See `docs/store.md`. In short:
 
 1. **File Safety**: `ls`/`find` only read books and write to the store and stat cache. Commands that replace a book (`acsm`) must first copy the original into the store (`Store.put_content`), and do their work in a `scratch_dir`.
 
-2. **Metadata Flow**: file → `Hasher.hash` → `Store.load(h)`, or on a miss `StoreEntry.from_book(path)` + `Store.put(h, entry)`.
+2. **Metadata Flow**: file → `Hasher.hash` → `Store.load(h)`, or on a miss `StoreEntry.from_book(book_file)` + `Store.put(h, entry)`.
 
 3. **Schema versions**: `metadata.json`/`metadata_internal.json` are versioned pydantic models (`MetadataV1`, ...; `Metadata` is the current alias). Changing a stored model means adding a new version plus a migration; see `docs/store.md`.
 
@@ -143,3 +143,9 @@ The configuration file supports various DRM key paths:
 
 ## Python Development Memories
 - don't use List from typing. it's deprecated
+
+## Naming Paths
+- `str` paths: `filepath` / `<x>_filepath` for files, `dirpath` / `<x>_dirpath` for directories (e.g. `book_filepath`, `output_dirpath`). Lists: `<x>_filepaths`.
+- `Path` objects: `<x>_file` or `<x>_dir` (e.g. `book_file`, `temp_dir`), and `<x>_path` only when it can be either (e.g. an `ls` operand). With no prefix: `file`, `dir`, or `path`. Lists: `<x>_files`, `<x>_dirs`, `<x>_paths`.
+- Don't give a path a name without one of these (`src`, `target`, `infile`, `tmp`, `acsm`, `p`). Bare filenames/stems aren't paths and keep names like `filename`/`stem`.
+- Exceptions: external names (config keys like `adobe_key_files`, argparse dests, pytest's `tmp_path` fixture, library attributes like watchdog's `event.src_path`). Function names only need to avoid contradicting this (`get_files_from_dir(dir: Path)`, not `..._dirpath`).

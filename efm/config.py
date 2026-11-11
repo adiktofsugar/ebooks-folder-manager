@@ -7,24 +7,24 @@ from pydantic import BaseModel, BeforeValidator
 logger = logging.getLogger(__name__)
 
 
-def expand_path(v: Path | str | None):
-    if v:
-        return Path(v).expanduser()
+def expand_path(path: Path | str | None):
+    if path:
+        return Path(path).expanduser()
 
 
-def expand_and_validate_path(v: Path | None):
+def expand_and_validate_path(path: Path | None):
     """Expand user paths and validate they exist"""
-    v = expand_path(v)
-    if v and not v.exists():
-        raise ValueError(f"Path {v} does not exist")
-    return v
+    path = expand_path(path)
+    if path and not path.exists():
+        raise ValueError(f"Path {path} does not exist")
+    return path
 
 
-def expand_and_validate_path_list(v: list[Path] | None):
+def expand_and_validate_path_list(paths: list[Path] | None):
     """Expand user paths in a list and validate they exist"""
-    if v is None:
+    if paths is None:
         return None
-    return [expand_and_validate_path(p) for p in v]
+    return [expand_and_validate_path(path) for path in paths]
 
 
 ExistingPath = Annotated[Path | None, BeforeValidator(expand_and_validate_path)]
@@ -46,68 +46,68 @@ class Config(BaseModel):
     pdf_passwords: list[str] | None = None
 
 
-def load_config(filepath: Path):
-    ext = filepath.suffix[1:]
+def load_config(config_file: Path):
+    ext = config_file.suffix[1:]
     if ext == "toml":
         import tomllib
 
-        with open(filepath, "rb") as f:
+        with open(config_file, "rb") as f:
             return tomllib.load(f)
 
     if ext in ["yaml", "yml"]:
         import yaml
 
-        with open(filepath) as f:
+        with open(config_file) as f:
             return yaml.safe_load(f)
 
     if ext == "json":
         import json
 
-        with open(filepath) as f:
+        with open(config_file) as f:
             return json.load(f)
     raise ValueError(f"Unknown config file extension: {ext}")
 
 
-def get_config_filepath(dirpath: Path) -> Path | None:
+def get_config_file(dir: Path) -> Path | None:
     """
-    Get the config filepath in the given directory if it exists.
+    Get the config file in the given directory if it exists.
     """
     for ext in ["toml", "yaml", "yml", "json"]:
-        config_file = dirpath / f"efm.{ext}"
+        config_file = dir / f"efm.{ext}"
         if config_file.exists():
             return config_file
     return None
 
 
-def get_config(dirpath: Path) -> Config | None:
+def get_config(dir: Path) -> Config | None:
     """
     Get the config by searching up the directory tree and merging parent configs.
     Parent values are only added if not present in child configs.
     """
-    # The nearest config, starting from dirpath, is the primary one
-    dirpath = dirpath.resolve()
+    # The nearest config, starting from dir, is the primary one
+    dir = dir.resolve()
     config_file = None
     while config_file is None:
-        config_file = get_config_filepath(dirpath)
-        if dirpath == dirpath.parent:
+        config_file = get_config_file(dir)
+        if dir == dir.parent:
             break
         if config_file is None:
-            dirpath = dirpath.parent
+            dir = dir.parent
     if not config_file:
         return None
 
     raw_data = load_config(config_file)
 
     # Search up the directory tree for parent configs
-    current = dirpath.parent
-    while current != current.parent:
-        parent_config = get_config_filepath(current)
-        if parent_config:
-            parent_data = load_config(parent_config)
+    current_dir = dir.parent
+    while current_dir != current_dir.parent:
+        parent_config_file = get_config_file(current_dir)
+        if parent_config_file:
+            parent_data = load_config(parent_config_file)
             # Only add parent values if not present in child
             for key, value in parent_data.items():
                 if key not in raw_data:
                     raw_data[key] = value
-        current = current.parent
+        current_dir = current_dir.parent
 
     return Config(**raw_data)

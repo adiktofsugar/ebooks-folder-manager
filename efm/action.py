@@ -28,20 +28,20 @@ class BaseAction:
 
     config: Config | None
     metadata: Metadata | None
-    filepath: Path
-    temp_dirpath: Path
+    book_file: Path
+    temp_dir: Path
 
     def __init__(
         self,
         config: Config | None,
         metadata: Metadata | None,
-        filepath: Path,
-        temp_dirpath: Path,
+        book_file: Path,
+        temp_dir: Path,
     ):
         self.config = config
         self.metadata = metadata
-        self.filepath = filepath
-        self.temp_dirpath = temp_dirpath
+        self.book_file = book_file
+        self.temp_dir = temp_dir
 
     def perform(self) -> Path:
         raise NotImplementedError
@@ -60,15 +60,15 @@ class DeDrmAction(BaseAction):
 
     @override
     def perform(self) -> Path:
-        booktype = self.filepath.suffix.lower()[1:]
-        new_filepath = self._perform_for_type(booktype)
-        if new_filepath is None:
+        booktype = self.book_file.suffix.lower()[1:]
+        new_book_file = self._perform_for_type(booktype)
+        if new_book_file is None:
             logger.info(f"No DeDRM support for format {booktype} files.")
-            return self.filepath
+            return self.book_file
         # it's almost guaranteed I'll need to change the metadata now because it's impossible to do
         #  before removing the DRM
-        self.metadata = get_metadata(new_filepath)
-        return new_filepath
+        self.metadata = get_metadata(new_book_file)
+        return new_book_file
 
     def _perform_for_type(self, booktype: str):
         if booktype in [
@@ -94,7 +94,7 @@ class DeDrmAction(BaseAction):
     def _perform_k4mobi(self) -> Path:
         if not self.config:
             raise RemoveDrmError(
-                self.filepath,
+                self.book_file,
                 message="No config found, but kindle_* config keys are required",
             )
         kindle_android_files = []
@@ -113,11 +113,11 @@ class DeDrmAction(BaseAction):
         if self.config.kindle_serialnums:
             logger.debug("Using kindle_serialnums from config")
             kindle_serials = self.config.kindle_serialnums
-        logger.debug(f"Removing DRM from k4mobi file {self.filepath}...")
+        logger.debug(f"Removing DRM from k4mobi file {self.book_file}...")
         return Path(
             dedrm.decryptk4mobi(
-                self.filepath,
-                outdir=self.temp_dirpath,
+                self.book_file,
+                out_dir=self.temp_dir,
                 kindle_android_files=kindle_android_files,
                 kindle_db_files=kindle_db_files,
                 kindle_pids=kindle_pids,
@@ -126,28 +126,28 @@ class DeDrmAction(BaseAction):
         )
 
     def _perform_pdb(self) -> Path:
-        logger.debug(f"Removing DRM from pdb file {self.filepath}...")
+        logger.debug(f"Removing DRM from pdb file {self.book_file}...")
         if not self.config:
             raise RemoveDrmError(
-                self.filepath,
+                self.book_file,
                 message="No config found, but ereader_social_drm_file key is required",
             )
         social_drm_file = self.config.ereader_social_drm_file
         if not social_drm_file:
             raise RemoveDrmError(
-                self.filepath,
+                self.book_file,
                 message="ereader_social_drm_file is a required config key",
             )
         return Path(
             dedrm.decryptpdb(
-                self.filepath,
-                outdir=self.temp_dirpath,
+                self.book_file,
+                out_dir=self.temp_dir,
                 social_drm_file=social_drm_file,
             )
         )
 
     def _perform_pdf(self) -> Path:
-        logger.debug(f"Removing DRM from pdf file {self.filepath}...")
+        logger.debug(f"Removing DRM from pdf file {self.book_file}...")
         # I think it's possible to remove drm from pdf in rare cases, so we allow it in this case
         key_files: list[Path] = []
         passwords: list[str] = []
@@ -166,15 +166,15 @@ class DeDrmAction(BaseAction):
                 passwords.append(*self.config.pdf_passwords)
         return Path(
             dedrm.decryptpdf(
-                self.filepath,
-                outdir=self.temp_dirpath,
+                self.book_file,
+                out_dir=self.temp_dir,
                 key_files=key_files,
                 passwords=passwords,
             )
         )
 
     def _perform_epub(self) -> Path:
-        logger.debug(f"Removing DRM from epub file {self.filepath}")
+        logger.debug(f"Removing DRM from epub file {self.book_file}")
         # I think it's possible to remove drm from epub in rare cases, so we allow it in this case
         key_files: list[Path] = []
         if self.config:
@@ -185,7 +185,7 @@ class DeDrmAction(BaseAction):
                 logger.debug("Using b_and_n_files from config")
                 key_files.append(*self.config.b_and_n_key_files)
         return dedrm.decryptepub(
-            self.filepath, outdir=self.temp_dirpath, key_files=key_files
+            self.book_file, out_dir=self.temp_dir, key_files=key_files
         )
 
 
@@ -204,21 +204,21 @@ class ReformatPdfAction(BaseAction):
     def perform(self) -> Path:
         metadata = self.metadata
         if not metadata:
-            logger.debug(f"Skipping {self.filepath} because no metadata.")
-            return self.filepath
+            logger.debug(f"Skipping {self.book_file} because no metadata.")
+            return self.book_file
 
-        if is_k2pdfopt_file(self.filepath):
-            logger.debug(f"Skipping {self.filepath} because it's already reformatted.")
-            return self.filepath
+        if is_k2pdfopt_file(self.book_file):
+            logger.debug(f"Skipping {self.book_file} because it's already reformatted.")
+            return self.book_file
 
         if not metadata.is_pdf:
             logger.debug(
-                f"Skipping {self.filepath} because it's not a PDF. Format is {metadata.format}."
+                f"Skipping {self.book_file} because it's not a PDF. Format is {metadata.format}."
             )
-            return self.filepath
+            return self.book_file
 
         ensure_k2pdfopt()
-        temp_filepath_k2pdfopt = self.temp_dirpath / "post_reformat_pdf_k2pdfopt.pdf"
+        temp_k2pdfopt_file = self.temp_dir / "post_reformat_pdf_k2pdfopt.pdf"
         subprocess.run(
             [
                 "k2pdfopt",
@@ -231,27 +231,27 @@ class ReformatPdfAction(BaseAction):
                 "-h",
                 "1680",
                 "-o",
-                str(temp_filepath_k2pdfopt),
-                str(self.filepath),
+                str(temp_k2pdfopt_file),
+                str(self.book_file),
             ],
             stdin=subprocess.DEVNULL,
             check=True,
         )
         logger.debug(
-            f"Reformated {self.filepath} with k2pdfopt to {temp_filepath_k2pdfopt}"
+            f"Reformated {self.book_file} with k2pdfopt to {temp_k2pdfopt_file}"
         )
 
-        f: pymupdf.Document = pymupdf.open(temp_filepath_k2pdfopt)
+        f: pymupdf.Document = pymupdf.open(temp_k2pdfopt_file)
         f.embfile_add("__ebooks-folder-manager.json", b'{"k2pdfopt_version": true}')
 
-        temp_filepath_metadata = self.temp_dirpath / "post_reformat_pdf_metadata.pdf"
-        f.save(str(temp_filepath_metadata))
+        temp_metadata_file = self.temp_dir / "post_reformat_pdf_metadata.pdf"
+        f.save(str(temp_metadata_file))
         logger.debug(
-            f"Added metadata to {temp_filepath_k2pdfopt} and saved to {temp_filepath_metadata}"
+            f"Added metadata to {temp_k2pdfopt_file} and saved to {temp_metadata_file}"
         )
 
-        logger.debug(f"Reformatted {self.filepath} with k2pdfopt")
-        return temp_filepath_metadata
+        logger.debug(f"Reformatted {self.book_file} with k2pdfopt")
+        return temp_metadata_file
 
 
 class Kfx2EpubAction(BaseAction):
@@ -268,17 +268,17 @@ class Kfx2EpubAction(BaseAction):
     @override
     def perform(self) -> Path:
         valid_extensions = ["kfx", "kfx-zip", "kpf"]
-        ext = self.filepath.suffix.lower()[1:]
+        ext = self.book_file.suffix.lower()[1:]
         if ext in valid_extensions:
-            filepath = self.temp_dirpath / "after_kfx2epub.epub"
-            with open(filepath, "wb") as f:
-                f.write(kfxconvert.convert_to_epub(str(self.filepath)))
-            logger.debug(f"Converted {self.filepath} to {filepath}")
-            return filepath
+            epub_file = self.temp_dir / "after_kfx2epub.epub"
+            with open(epub_file, "wb") as f:
+                f.write(kfxconvert.convert_to_epub(str(self.book_file)))
+            logger.debug(f"Converted {self.book_file} to {epub_file}")
+            return epub_file
         logger.debug(
-            f"Skipping {self.filepath} because it's not a KFX-ZIP file (extensions {', '.join(valid_extensions)})."
+            f"Skipping {self.book_file} because it's not a KFX-ZIP file (extensions {', '.join(valid_extensions)})."
         )
-        return self.filepath
+        return self.book_file
 
 
 ALL_ACTIONS: Sequence[type[BaseAction]] = [

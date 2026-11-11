@@ -5,7 +5,7 @@ from pathlib import Path
 
 from rich.console import Console
 
-from efm.file_selection import get_files_from_dirpath
+from efm.file_selection import get_files_from_dir
 from efm.listing import (
     DEFAULT_EXCLUDES,
     Row,
@@ -76,21 +76,21 @@ def _regex(pattern: str) -> re.Pattern[str]:
 
 
 def run(args: argparse.Namespace, console: Console) -> int:
-    target = Path(args.directory).resolve()
-    if not target.exists():
+    target_path = Path(args.directory).resolve()
+    if not target_path.exists():
         logger.error(f"Does not exist: {args.directory}")
         return 1
 
-    if target.is_file():
-        base = target.parent
-        filepaths = [target]
+    if target_path.is_file():
+        base_dir = target_path.parent
+        book_files = [target_path]
     else:
-        base = target
-        filepaths = sorted(
-            get_files_from_dirpath(target, [*DEFAULT_EXCLUDES, *args.filters])
+        base_dir = target_path
+        book_files = sorted(
+            get_files_from_dir(target_path, [*DEFAULT_EXCLUDES, *args.filters])
         )
 
-    rows = [Row(p, str(p.relative_to(base))) for p in filepaths]
+    rows = [Row(path, str(path.relative_to(base_dir))) for path in book_files]
     read_rows(open_store(args), open_hasher(args), rows, console)
     print_rows([r for r in rows if _keep(r, args)], args)
     return 1 if any(r.error for r in rows) else 0

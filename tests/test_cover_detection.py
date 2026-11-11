@@ -1,29 +1,29 @@
+import io
 from pathlib import Path
+from typing import cast
+
 import pymupdf
 from PIL import Image
-import io
-from typing import cast
 
 from efm.cover import CoverImage, embed_cover
 from efm.detection import detect_format
 from efm.metadata import extract_cover_image, get_metadata
 
 
-
-def create_test_pdf(filepath: Path) -> None:
+def create_test_pdf(file: Path) -> None:
     """Create a simple test PDF."""
     doc: pymupdf.Document = pymupdf.open()
     page = doc.new_page(width=612, height=792)
     page.insert_text((50, 50), "Test PDF Document")
-    doc.save(filepath)
+    doc.save(file)
     doc.close()
 
 
-def create_test_epub(filepath: Path) -> None:
+def create_test_epub(file: Path) -> None:
     """Create a minimal test EPUB."""
     import zipfile
 
-    with zipfile.ZipFile(filepath, "w") as epub:
+    with zipfile.ZipFile(file, "w") as epub:
         # Add mimetype
         epub.writestr(
             "mimetype", "application/epub+zip", compress_type=zipfile.ZIP_STORED
@@ -73,44 +73,44 @@ class TestCoverDetection:
     def test_pdf_cover_detection_after_manual_set(self, tmp_path):
         """Test that PDF cover added as first page is detected by extract_cover_image."""
         # Create test PDF
-        pdf_path = tmp_path / "test.pdf"
-        create_test_pdf(pdf_path)
+        pdf_file = tmp_path / "test.pdf"
+        create_test_pdf(pdf_file)
 
         # Verify it will actually be detected as a pdf...
-        assert detect_format(pdf_path) == "pdf"
+        assert detect_format(pdf_file) == "pdf"
 
         # Create cover image
-        cover_path = tmp_path / "cover.png"
+        cover_file = tmp_path / "cover.png"
         cover_data = create_test_cover_image()
-        cover_path.write_bytes(cover_data)
+        cover_file.write_bytes(cover_data)
 
         # Get metadata before setting cover
-        metadata_before = get_metadata(pdf_path)
+        metadata_before = get_metadata(pdf_file)
         cache_dir = tmp_path / "_cache" / "covers"
 
         # Extract cover before setting (should generate one)
-        cover_hash_before = extract_cover_image(pdf_path, metadata_before, cache_dir)
+        cover_hash_before = extract_cover_image(pdf_file, metadata_before, cache_dir)
         assert cover_hash_before is not None
 
         # Set cover
-        embed_cover(pdf_path, CoverImage.from_file(cover_path))
+        embed_cover(pdf_file, CoverImage.from_file(cover_file))
 
         # Get metadata after setting cover
-        metadata_after = get_metadata(pdf_path)
+        metadata_after = get_metadata(pdf_file)
 
         # Extract cover after setting (should find our manually set cover)
-        cover_hash_after = extract_cover_image(pdf_path, metadata_after, cache_dir)
+        cover_hash_after = extract_cover_image(pdf_file, metadata_after, cache_dir)
         assert cover_hash_after is not None
 
         # The hashes should be different (generated vs manually set)
         assert cover_hash_before != cover_hash_after
 
         # Verify the extracted cover matches what we set
-        cached_cover_path = cache_dir / f"{cover_hash_after}.png"
-        assert cached_cover_path.exists()
+        cached_cover_file = cache_dir / f"{cover_hash_after}.png"
+        assert cached_cover_file.exists()
 
         # Load and verify it's our blue cover
-        img = Image.open(cached_cover_path)
+        img = Image.open(cached_cover_file)
         assert img.size == (300, 400)  # Should match our test cover size
         # Check that it's predominantly blue
         pixels = cast(list[tuple[int, int, int]], list(img.get_flattened_data()))
@@ -120,32 +120,32 @@ class TestCoverDetection:
     def test_epub_cover_detection_after_manual_set(self, tmp_path):
         """Test that EPUB cover added as embedded file is detected by extract_cover_image."""
         # Create test EPUB
-        epub_path = tmp_path / "test.epub"
-        create_test_epub(epub_path)
+        epub_file = tmp_path / "test.epub"
+        create_test_epub(epub_file)
 
         # Create cover image
-        cover_path = tmp_path / "cover.png"
+        cover_file = tmp_path / "cover.png"
         cover_data = create_test_cover_image()
-        cover_path.write_bytes(cover_data)
+        cover_file.write_bytes(cover_data)
 
         # Get metadata before setting cover
-        metadata_before = get_metadata(epub_path)
+        metadata_before = get_metadata(epub_file)
         cache_dir = tmp_path / "_cache" / "covers"
 
         # Extract cover before setting (should generate one)
-        cover_hash_before = extract_cover_image(epub_path, metadata_before, cache_dir)
+        cover_hash_before = extract_cover_image(epub_file, metadata_before, cache_dir)
         assert cover_hash_before is not None
 
         # Set cover
-        embed_cover(epub_path, CoverImage.from_file(cover_path))
+        embed_cover(epub_file, CoverImage.from_file(cover_file))
 
         # Get metadata after setting cover
-        metadata_after = get_metadata(epub_path)
+        metadata_after = get_metadata(epub_file)
 
         # Extract cover after setting
         # NOTE: Current implementation may not detect embedded __cover_ files
         # This test documents the current behavior
-        cover_hash_after = extract_cover_image(epub_path, metadata_after, cache_dir)
+        cover_hash_after = extract_cover_image(epub_file, metadata_after, cache_dir)
         assert cover_hash_after is not None
 
         # TODO: Once extract_cover_image is updated to check embedded __cover_ files,
@@ -154,27 +154,27 @@ class TestCoverDetection:
     def test_format_detection_not_file_extension(self, tmp_path):
         """Test that format detection uses PyMuPDF metadata, not file extension."""
         # Create a PDF with wrong extension
-        pdf_path = tmp_path / "test.epub"  # Wrong extension!
-        create_test_pdf(pdf_path)
+        pdf_file = tmp_path / "test.epub"  # Wrong extension!
+        create_test_pdf(pdf_file)
 
         # Create cover image
-        cover_path = tmp_path / "cover.png"
+        cover_file = tmp_path / "cover.png"
         cover_data = create_test_cover_image()
-        cover_path.write_bytes(cover_data)
+        cover_file.write_bytes(cover_data)
 
         # Set cover
-        embed_cover(pdf_path, CoverImage.from_file(cover_path))
+        embed_cover(pdf_file, CoverImage.from_file(cover_file))
 
-        assert detect_format(pdf_path) == "pdf"
+        assert detect_format(pdf_file) == "pdf"
 
         # Verify extract_cover_image works correctly despite wrong extension
-        metadata = get_metadata(pdf_path)
+        metadata = get_metadata(pdf_file)
         cache_dir = tmp_path / "_cache" / "covers"
-        cover_hash = extract_cover_image(pdf_path, metadata, cache_dir)
+        cover_hash = extract_cover_image(pdf_file, metadata, cache_dir)
         assert cover_hash is not None
 
         # Verify the extracted cover
-        cached_cover_path = cache_dir / f"{cover_hash}.png"
-        assert cached_cover_path.exists()
-        img = Image.open(cached_cover_path)
+        cached_cover_file = cache_dir / f"{cover_hash}.png"
+        assert cached_cover_file.exists()
+        img = Image.open(cached_cover_file)
         assert img.size == (300, 400)  # Should be our manually set cover

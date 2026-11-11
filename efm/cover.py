@@ -31,14 +31,14 @@ class CoverImage:
         return cls(data=data, hash=cover_hash)
 
     @classmethod
-    def from_file(cls, filepath: Path) -> "CoverImage":
+    def from_file(cls, file: Path) -> "CoverImage":
         """Create a CoverImage from a file."""
-        data = filepath.read_bytes()
+        data = file.read_bytes()
         return cls.from_bytes(data)
 
-    def save(self, filepath: Path) -> None:
+    def save(self, file: Path) -> None:
         """Save the cover image to a file."""
-        filepath.write_bytes(self.data)
+        file.write_bytes(self.data)
 
     def validate(self) -> None:
         """Validate that this is a valid image."""
@@ -49,10 +49,10 @@ class CoverImage:
             raise ValueError(f"Invalid image data: {e}")
 
 
-def extract_epub_cover(filepath: Path) -> CoverImage | None:
+def extract_epub_cover(book_file: Path) -> CoverImage | None:
     """Extract cover image from EPUB using ebooklib."""
     try:
-        book = epub.read_epub(filepath)
+        book = epub.read_epub(book_file)
         # Get cover image
         cover_items: list[epub.EpubCover | epub.EpubImage] = []
         items = cast(list[epub.EpubItem], book.get_items())  # pyright: ignore[reportInvalidCast]
@@ -84,10 +84,10 @@ def extract_epub_cover(filepath: Path) -> CoverImage | None:
     return None
 
 
-def extract_pdf_cover(filepath: Path) -> CoverImage | None:
+def extract_pdf_cover(book_file: Path) -> CoverImage | None:
     """Extract cover image from PDF by looking for embedded images."""
     try:
-        doc = pymupdf.open(filepath)
+        doc = pymupdf.open(book_file)
         if doc.page_count == 0:
             doc.close()
             return None
@@ -123,23 +123,23 @@ def extract_pdf_cover(filepath: Path) -> CoverImage | None:
     return None
 
 
-def extract_cover(filepath: Path) -> CoverImage | None:
+def extract_cover(book_file: Path) -> CoverImage | None:
     """Extract cover image from any supported format."""
     # Detect actual format
-    format = detect_format(filepath)
+    format = detect_format(book_file)
 
     if format == "epub":
-        cover = extract_epub_cover(filepath)
+        cover = extract_epub_cover(book_file)
         if cover:
             return cover
     elif format == "pdf":
-        cover = extract_pdf_cover(filepath)
+        cover = extract_pdf_cover(book_file)
         if cover:
             return cover
     else:
         # Try generic extraction with PyMuPDF for other formats
         try:
-            doc = pymupdf.open(filepath)
+            doc = pymupdf.open(book_file)
             if doc.page_count > 0:
                 page = doc[0]
                 image_list = page.get_images()
@@ -680,9 +680,9 @@ def generate_cover(
     return CoverImage.from_bytes(output.getvalue())
 
 
-def embed_pdf_cover(filepath: Path, cover: CoverImage) -> None:
+def embed_pdf_cover(book_file: Path, cover: CoverImage) -> None:
     """Embed cover image as first page of a PDF."""
-    doc = pymupdf.open(filepath)
+    doc = pymupdf.open(book_file)
 
     # Load the image as a PyMuPDF pixmap
     img_doc = pymupdf.open(stream=cover.data, filetype="png")
@@ -695,14 +695,14 @@ def embed_pdf_cover(filepath: Path, cover: CoverImage) -> None:
     img_doc.close()
 
     # Save the modified document
-    doc.save(filepath, incremental=True, encryption=0)
+    doc.save(book_file, incremental=True, encryption=0)
     doc.close()
-    logger.info(f"Inserted cover image as first page of PDF: {filepath}")
+    logger.info(f"Inserted cover image as first page of PDF: {book_file}")
 
 
-def embed_epub_cover(filepath: Path, cover: CoverImage) -> None:
+def embed_epub_cover(book_file: Path, cover: CoverImage) -> None:
     """Embed cover image in an EPUB file using ebooklib."""
-    book = epub.read_epub(filepath)
+    book = epub.read_epub(book_file)
 
     # Remove existing cover items
     items_to_remove: list[epub.EpubItem] = []
@@ -721,23 +721,23 @@ def embed_epub_cover(filepath: Path, cover: CoverImage) -> None:
     book.set_cover("cover.jpg", cover.data)
 
     # Write the updated EPUB
-    epub.write_epub(filepath, book)
-    logger.info(f"Set EPUB cover using ebooklib: {filepath}")
+    epub.write_epub(book_file, book)
+    logger.info(f"Set EPUB cover using ebooklib: {book_file}")
 
 
-def embed_cover(filepath: Path, cover: CoverImage) -> None:
+def embed_cover(book_file: Path, cover: CoverImage) -> None:
     """Embed cover image in an ebook file.
 
     Raises:
         ValueError: If format is not supported
     """
     # Detect actual format
-    format = detect_format(filepath)
+    format = detect_format(book_file)
 
     if format == "pdf":
-        embed_pdf_cover(filepath, cover)
+        embed_pdf_cover(book_file, cover)
     elif format == "epub":
-        embed_epub_cover(filepath, cover)
+        embed_epub_cover(book_file, cover)
     else:
         # Format not supported for cover embedding
         raise ValueError(f"Cannot set cover for format: {format}")

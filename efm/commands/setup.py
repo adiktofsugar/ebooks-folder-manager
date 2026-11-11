@@ -22,7 +22,7 @@ def get_adobe_key():
     console.print("-" * 40)
     console.print()
 
-    output_dir = Prompt.ask("Output directory", default=".")
+    output_dirpath = Prompt.ask("Output directory", default=".")
 
     console.print(
         "\n[yellow]Searching for Adobe Digital Editions installation...[/yellow]"
@@ -36,14 +36,14 @@ def get_adobe_key():
         console.print("  • ~/Library/Application Support/Adobe/Digital Editions")
         console.print("  • /Applications/Adobe Digital Editions.app")
 
-    console.print(f"\n[yellow]Extracting keys to: {output_dir}[/yellow]")
+    console.print(f"\n[yellow]Extracting keys to: {output_dirpath}[/yellow]")
 
     # Run the actual extraction
-    success = run_dedrm_script("adobekey", "cli_main", [output_dir])
+    success = run_dedrm_script("adobekey", "cli_main", [output_dirpath])
 
     if success:
         console.print("\n[green]✓ Keys extracted successfully![/green]")
-        console.print(f"Check {output_dir} for .der key files")
+        console.print(f"Check {output_dirpath} for .der key files")
 
     return success
 
@@ -54,13 +54,13 @@ def test_epub_drm():
     console.print("-" * 40)
     console.print()
 
-    epub_path = Prompt.ask("EPUB file path")
+    epub_filepath = Prompt.ask("EPUB file path")
 
-    console.print(f"\n[yellow]Analyzing: {epub_path}[/yellow]")
+    console.print(f"\n[yellow]Analyzing: {epub_filepath}[/yellow]")
     console.print("Checking for DRM signatures...")
 
     # Run the test
-    success = run_dedrm_script("epubtest", "main", [epub_path])
+    success = run_dedrm_script("epubtest", "main", [epub_filepath])
 
     return success
 
@@ -71,18 +71,18 @@ def decrypt_adobe_epub():
     console.print("-" * 40)
     console.print()
 
-    key_file = Prompt.ask("Key file path")
-    input_epub = Prompt.ask("Input EPUB file")
-    output_epub = Prompt.ask("Output EPUB file")
+    key_filepath = Prompt.ask("Key file path")
+    input_filepath = Prompt.ask("Input EPUB file")
+    output_filepath = Prompt.ask("Output EPUB file")
 
     console.print("\n[yellow]Processing Adobe DRM removal...[/yellow]")
-    console.print(f"Key file: {key_file}")
-    console.print(f"Input: {input_epub}")
-    console.print(f"Output: {output_epub}")
+    console.print(f"Key file: {key_filepath}")
+    console.print(f"Input: {input_filepath}")
+    console.print(f"Output: {output_filepath}")
 
     # Run decryption
     success = run_dedrm_script(
-        "ineptepub", "cli_main", [key_file, input_epub, output_epub]
+        "ineptepub", "cli_main", [key_filepath, input_filepath, output_filepath]
     )
 
     if success:
@@ -97,18 +97,18 @@ def decrypt_adobe_pdf():
     console.print("-" * 40)
     console.print()
 
-    key_file = Prompt.ask("Key file path")
-    input_pdf = Prompt.ask("Input PDF file")
-    output_pdf = Prompt.ask("Output PDF file")
+    key_filepath = Prompt.ask("Key file path")
+    input_filepath = Prompt.ask("Input PDF file")
+    output_filepath = Prompt.ask("Output PDF file")
 
     console.print("\n[yellow]Processing Adobe DRM removal...[/yellow]")
-    console.print(f"Key file: {key_file}")
-    console.print(f"Input: {input_pdf}")
-    console.print(f"Output: {output_pdf}")
+    console.print(f"Key file: {key_filepath}")
+    console.print(f"Input: {input_filepath}")
+    console.print(f"Output: {output_filepath}")
 
     # Run decryption
     success = run_dedrm_script(
-        "ineptpdf", "cli_main", [key_file, input_pdf, output_pdf]
+        "ineptpdf", "cli_main", [key_filepath, input_filepath, output_filepath]
     )
 
     if success:
@@ -151,7 +151,7 @@ def get_android_kindle_keys():
     console.print("-" * 40)
     console.print()
 
-    output_dir = Prompt.ask("Output directory", default=".")
+    output_dirpath = Prompt.ask("Output directory", default=".")
 
     console.print("\n[yellow]Instructions:[/yellow]")
     console.print("1. Enable USB debugging on your Android device")
@@ -159,10 +159,10 @@ def get_android_kindle_keys():
     console.print("3. Run 'adb backup com.amazon.kindle' to create backup")
     console.print("4. This tool will extract keys from the backup")
 
-    console.print(f"\n[yellow]Extracting keys to: {output_dir}[/yellow]")
+    console.print(f"\n[yellow]Extracting keys to: {output_dirpath}[/yellow]")
 
     # Run extraction
-    success = run_dedrm_script("androidkindlekey", "cli_main", [output_dir])
+    success = run_dedrm_script("androidkindlekey", "cli_main", [output_dirpath])
 
     if success:
         console.print("\n[green]✓ Android keys extracted successfully![/green]")
@@ -192,18 +192,18 @@ def remove_mobi_drm():
     console.print("-" * 40)
     console.print()
 
-    input_mobi = Prompt.ask("Input Mobi file")
-    output_mobi = Prompt.ask("Output Mobi file")
+    input_filepath = Prompt.ask("Input Mobi file")
+    output_filepath = Prompt.ask("Output Mobi file")
     pid_or_key = Prompt.ask("PID or key file")
 
     console.print("\n[yellow]Processing Mobi DRM removal...[/yellow]")
-    console.print(f"Input: {input_mobi}")
-    console.print(f"Output: {output_mobi}")
+    console.print(f"Input: {input_filepath}")
+    console.print(f"Output: {output_filepath}")
     console.print(f"PID/Key: {pid_or_key}")
 
     # Run removal
     success = run_dedrm_script(
-        "mobidedrm", "cli_main", [input_mobi, output_mobi, pid_or_key]
+        "mobidedrm", "cli_main", [input_filepath, output_filepath, pid_or_key]
     )
 
     if success:
@@ -218,16 +218,18 @@ def remove_kindle_drm():
     console.print("-" * 40)
     console.print()
 
-    input_file = Prompt.ask("Input file")
-    output_dir = Prompt.ask("Output directory", default=".")
+    input_filepath = Prompt.ask("Input file")
+    output_dirpath = Prompt.ask("Output directory", default=".")
 
     console.print("\n[yellow]Processing Kindle DRM removal...[/yellow]")
-    console.print(f"Input: {input_file}")
-    console.print(f"Output directory: {output_dir}")
+    console.print(f"Input: {input_filepath}")
+    console.print(f"Output directory: {output_dirpath}")
     console.print("Supported formats: AZW, AZW3, AZW4, KFX, Mobi")
 
     # Run removal
-    success = run_dedrm_script("k4mobidedrm", "cli_main", [input_file, output_dir])
+    success = run_dedrm_script(
+        "k4mobidedrm", "cli_main", [input_filepath, output_dirpath]
+    )
 
     if success:
         console.print("\n[green]✓ Kindle DRM removed successfully![/green]")
@@ -310,16 +312,16 @@ def save_config():
     updated = False
     for name, key, description in key_types:
         console.print(f"\n{description}")
-        path = Prompt.ask(f"{name} path (leave empty to skip)", default="")
+        key_filepath = Prompt.ask(f"{name} path (leave empty to skip)", default="")
 
-        if path:
-            path_obj = Path(path).expanduser().resolve()
-            if path_obj.exists():
-                setattr(config, key, str(path_obj))
+        if key_filepath:
+            key_file = Path(key_filepath).expanduser().resolve()
+            if key_file.exists():
+                setattr(config, key, str(key_file))
                 updated = True
-                console.print(f"[green]✓ {name} set to: {path_obj}[/green]")
+                console.print(f"[green]✓ {name} set to: {key_file}[/green]")
             else:
-                console.print(f"[red]✗ File not found: {path}[/red]")
+                console.print(f"[red]✗ File not found: {key_filepath}[/red]")
 
     if updated:
         config.save()
@@ -562,8 +564,8 @@ def run_dedrm_script(module, function, args):
     """Run a DeDRM script with the given arguments."""
     try:
         # Try to import and run directly first
-        module_path = f"DeDRM_plugin.{module}"
-        mod = __import__(module_path, fromlist=[function])
+        module_name = f"DeDRM_plugin.{module}"
+        mod = __import__(module_name, fromlist=[function])
         func = getattr(mod, function)
 
         # Call with args

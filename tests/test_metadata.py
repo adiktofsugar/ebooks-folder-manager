@@ -58,8 +58,8 @@ def test_is_pdf_derived_from_format():
 
 
 def test_normalize_cleans_empty_strings(tmp_path: Path):
-    book = tmp_path / "x.epub"
-    book.write_bytes(b"x")
+    book_file = tmp_path / "x.epub"
+    book_file.write_bytes(b"x")
     raw = {
         "metadata": {
             "format": "EPUB",
@@ -71,7 +71,7 @@ def test_normalize_cleans_empty_strings(tmp_path: Path):
         "page_count": None,
         "embfile_names": [],
     }
-    m = normalize(raw, book)
+    m = normalize(raw, book_file)
     assert m.title == "Cats"
     assert m.author is None
     assert m.encryption is None
@@ -80,18 +80,18 @@ def test_normalize_cleans_empty_strings(tmp_path: Path):
 
 
 def test_extract_unsupported_format(tmp_path: Path):
-    book = tmp_path / "x.acsm"
-    book.write_text("<fulfillmentToken/>")
-    extracted = extract(book)
+    book_file = tmp_path / "x.acsm"
+    book_file.write_text("<fulfillmentToken/>")
+    extracted = extract(book_file)
     assert extracted.raw is None
     assert extracted.metadata.format == "ACSM"
     assert extracted.metadata.error
 
 
 def test_extract_unreadable_file(tmp_path: Path):
-    book = tmp_path / "x.pdf"
-    book.write_text("not a pdf")
-    extracted = extract(book)
+    book_file = tmp_path / "x.pdf"
+    book_file.write_text("not a pdf")
+    extracted = extract(book_file)
     assert extracted.raw is None
     assert (
         extracted.metadata.error
@@ -99,8 +99,8 @@ def test_extract_unreadable_file(tmp_path: Path):
     )
 
 
-def test_extract_sample_epub(sample_books: Path):
-    extracted = extract(sample_books / "InterestingTimes.epub")
+def test_extract_sample_epub(sample_books_dir: Path):
+    extracted = extract(sample_books_dir / "InterestingTimes.epub")
     assert extracted.metadata.title == "Interesting Times"
     assert extracted.metadata.author == "Terry Pratchett"
     # Reflowable: page_count would need a full layout pass, so it's skipped.

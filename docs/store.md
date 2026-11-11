@@ -64,7 +64,7 @@ The filesystem is the key-value store. A lookup is a single small file read. On 
 - `MetadataV1`, `MetadataV2`, ... are frozen, `extra="forbid"`, with `schema_version: Literal[n]`.
 - `Metadata` is an alias for the current version; code outside `metadata.py` only uses the alias.
 - `AnyMetadata` is the union of all versions, and `METADATA_MODELS` maps version numbers to models.
-- `migrate_metadata(m: AnyMetadata) -> Metadata` is a `match` ending in `assert_never`, so pyright fails if a version in the union isn't handled.
+- `migrate_metadata(m: AnyMetadata) -> Metadata` is a `match` ending in `assert_never`, so the type checker (ty) fails if a version in the union isn't handled.
 
 `InternalMetadata` follows the same pattern.
 
