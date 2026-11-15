@@ -61,15 +61,17 @@ def test_normalize_cleans_empty_strings(tmp_path: Path):
     book_file = tmp_path / "x.epub"
     book_file.write_bytes(b"x")
     raw = {
-        "metadata": {
-            "format": "EPUB",
-            "title": " Cats ",
-            "author": "",
-            "keywords": "a, b,,",
-            "encryption": "",
-        },
-        "page_count": None,
-        "embfile_names": [],
+        "pymupdf_fields": {
+            "metadata": {
+                "format": "EPUB",
+                "title": " Cats ",
+                "author": "",
+                "keywords": "a, b,,",
+                "encryption": "",
+            },
+            "page_count": None,
+            "embfile_names": [],
+        }
     }
     m = normalize(raw, book_file)
     assert m.title == "Cats"

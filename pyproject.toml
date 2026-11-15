@@ -21,6 +21,7 @@ dependencies = [
     "pyyaml>=6.0.3",
     "requests>=2.34.2",
     "rich>=15.0.0",
+    "simpleeval>=1.0.8",
     "xxhash>=4.0.2",
 ]
 
@@ -32,7 +33,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.ruff]
-include = ["efm/**/*.py"]
+include = ["efm/**/*.py", "tests/**/*.py"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -44,6 +45,7 @@ addopts = "-v"
 [dependency-groups]
 dev = [
     "debugpy>=1.8.22",
+    "lxml-stubs>=0.5.1",
     "mock>=5.2.0",
     "pymupdf-stubs>=1.28.2",
     "pytest>=9.1.1",

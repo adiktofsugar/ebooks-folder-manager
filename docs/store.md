@@ -7,7 +7,7 @@ $store/                                   # --store, else $EFM_STORE, else $XDG_
   xx_<hash>/
     metadata.json                         # normalized, user-facing (Metadata)
     metadata_internal.json                # efm bookkeeping, not shown by ls (InternalMetadata)
-    metadata_raw.json                     # what pymupdf reported, unmodified; null if it couldn't open the file
+    metadata_raw.json                     # what was read, unmodified; null if pymupdf couldn't open the file
     ancestor                              # optional: the hash this version was derived from
     content                               # optional: a copy of the book's bytes
 ```
@@ -68,7 +68,13 @@ The filesystem is the key-value store. A lookup is a single small file read. On 
 
 `InternalMetadata` follows the same pattern.
 
-Migrations run in memory on every load; files on disk aren't rewritten. A record with an unknown (newer) version, or one that fails validation, raises `InvalidStoreEntryError` instead of being regenerated, so hand-edited records are never clobbered.
+Migrations run in memory on every load; files on disk aren't rewritten. A record with an unknown (newer) version, or one that fails validation, raises `InvalidStoreEntryError` instead of being regenerated.
+
+### Raw metadata and re-extraction
+
+`metadata_raw.json` isn't versioned. It holds `pymupdf_fields` (what pymupdf reported: `metadata`, `page_count`, `embfile_names`), plus `epub_fields` or `cbz_fields` when pymupdf reports an EPUB or a zip (CBZ) and that format's own metadata (OPF, `ComicInfo.xml`) could be read. That's where `series` comes from.
+
+`metadata_internal.json` records the `extractor_version` that made the entry. When extraction learns something new, `EXTRACTOR_VERSION` in `efm/metadata.py` is bumped, and `ls`/`find`/`rename` re-extract older entries on their next read (`listing.load_or_create_entry`), keeping `ancestor`. This rewrites the `metadata*.json` files, which is fine while they're purely extracted. Once there are user edits to metadata, those will need to live somewhere re-extraction doesn't touch.
 
 ### Adding a version
 

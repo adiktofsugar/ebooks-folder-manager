@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Ebooks Folder Manager (EFM) is a Calibre replacement that provides minimal metadata management for ebooks. It is a CLI-only tool. Books stay where they are; efm keeps their metadata in a central store keyed by content hash (see `docs/store.md`). `efm ls <dir>` lists the books in one directory with their metadata; `efm find <dir>` recurses and filters by path or metadata. Actions are meant to be run manually, one subcommand each. `efm acsm` is the first one ported to the store; the rest (dedrm, rename, ...) haven't been yet.
+Ebooks Folder Manager (EFM) is a Calibre replacement that provides minimal metadata management for ebooks. It is a CLI-only tool. Books stay where they are; efm keeps their metadata in a central store keyed by content hash (see `docs/store.md`). `efm ls <dir>` lists the books in one directory with their metadata; `efm find <dir>` recurses and filters by path or metadata. Actions are meant to be run manually, one subcommand each. `efm acsm` and `efm rename` use the store; the rest (dedrm, ...) haven't been ported yet.
 
 ## Architecture
 
@@ -14,6 +14,7 @@ Ebooks Folder Manager (EFM) is a Calibre replacement that provides minimal metad
   - `commands/find.py`: `efm find <dir> [pattern ...]` - recursive listing with path and metadata filters (`--title`, `--author`, `--book-format`, `--encrypted`, `--missing`)
   - Both use `listing.py` for store reads and output (`--raw`, `-f line|table|json`; default `line` is tab-separated file/title/author, one per line)
   - `commands/acsm.py`: `efm acsm <file ...>` - fulfill .acsm tokens and replace each with the downloaded book (see "Commands that replace books" in `docs/store.md`)
+  - `commands/rename.py`: `efm rename [-p preset | -f template] [--root dir] [-n] <path ...>` (alias `rnm`) - move books to paths built from metadata templates/presets (see `docs/rename.md`)
   - `commands/setup.py`: `efm setup [tool]` - DRM key extraction/config menu (or run one tool directly)
   - New subcommands expose `add_parser(subparsers)` and `run(args, console) -> int`, and get registered in `create_parser()`
 - Core modules:
@@ -21,7 +22,9 @@ Ebooks Folder Manager (EFM) is a Calibre replacement that provides minimal metad
   - `hasher.py`: `Hasher().hash(file)` (uses `StatCache`, a path+stat → hash cache, so unchanged files aren't re-hashed) and uncached `hash_contents(file)`; make one per run and pass it down
   - `scratch.py`: `scratch_dir(label)` context manager; deleted on success, kept on failure
   - `acsm.py`: ACSM fulfillment via `adl` (imported lazily; importing it creates adl's data dir)
-  - `metadata.py`: Versioned metadata models + migrations, and extraction via PyMuPDF (supports PDF, XPS, EPUB, MOBI, FB2, CBZ, SVG, TXT)
+  - `metadata.py`: Versioned metadata models + migrations, and extraction via PyMuPDF (supports PDF, XPS, EPUB, MOBI, FB2, CBZ, SVG, TXT); `EXTRACTOR_VERSION` triggers re-extraction of older entries
+  - `formats.py`: EPUB OPF / CBZ ComicInfo readers for what pymupdf doesn't report (series, EPUB version)
+  - `template.py`: Rename templates (`{expr:spec}`, simpleeval) and preset variants
   - `dedrm.py`: DRM removal functionality
   - `action.py`: Base class and implementations for processing actions (not yet wired to a command)
   - `kfxconvert.py`: Kindle format conversion
@@ -68,6 +71,7 @@ uv run efm setup             # Interactive menu
 uv run efm setup --help      # List tools (adobe-key, epub-test, epub-decrypt, ...)
 uv run efm setup epub-test   # Run one tool directly
 uv run efm acsm path/to/book.acsm   # Fulfill and replace with book.epub
+uv run efm rename -n path/to/books -f '{author}/{title}{ext}'   # Dry run; drop -n to move
 ```
 
 ### Python Development
@@ -113,7 +117,7 @@ The configuration file supports various DRM key paths:
 
 ## Known Limitations
 
-- Actions (dedrm, rename, k2pdfopt) exist in `action.py` but have no subcommands yet
+- Actions (dedrm, k2pdfopt, kfx2epub) exist in `action.py` but have no subcommands yet
 - Some ebooks may lack title/author metadata
 - DRM removal for certain Kindle formats may not work
 - Multiple format support (same book in EPUB/PDF) is planned but not implemented

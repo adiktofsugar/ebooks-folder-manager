@@ -1,8 +1,8 @@
 import logging
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, ClassVar
 
-from pydantic import BaseModel, BeforeValidator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,24 @@ ExistingPathList = Annotated[
 ]
 
 
+class RenameVariant(BaseModel):
+    model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid")
+
+    if_: str | None = Field(None, alias="if")
+    value: str
+
+
+# A template, or variants tried in order (a plain string always matches).
+Preset = str | list[str | RenameVariant]
+
+
+class RenameConfig(BaseModel):
+    model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid")
+
+    presets: dict[str, Preset] = {}
+    default_preset: str | None = None
+
+
 class Config(BaseModel):
     adobe_user: str | None = None
     adobe_password: str | None = None
@@ -44,6 +62,7 @@ class Config(BaseModel):
     kindle_database_files: ExistingPathList = None
     kindle_android_files: ExistingPathList = None
     pdf_passwords: list[str] | None = None
+    rename: RenameConfig | None = None
 
 
 def load_config(config_file: Path):

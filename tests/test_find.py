@@ -104,7 +104,10 @@ def test_raw_json_output(
     args = (str(sample_books_dir), "--raw", "-f", "json")
     assert run_find(monkeypatch, tmp_path / "store", *args) == 0
     by_name = {Path(d["path"]).name: d for d in json.loads(capsys.readouterr().out)}
-    assert by_name["Emotions.pdf"]["metadata"]["metadata"]["format"] == "PDF 1.3"
+    assert (
+        by_name["Emotions.pdf"]["metadata"]["pymupdf_fields"]["metadata"]["format"]
+        == "PDF 1.3"
+    )
     assert by_name["token.acsm"]["metadata"] is None
 
 

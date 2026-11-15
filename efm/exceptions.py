@@ -85,3 +85,16 @@ class InvalidStoreEntryError(Exception):
 
     def __init__(self, file: Path, original_error: Exception):
         super().__init__(f"Invalid store file {file} - {original_error}")
+
+
+class TemplateError(Exception):
+    """A rename template that can't be parsed or evaluated."""
+
+
+class MissingValueError(TemplateError):
+    """A template placeholder needs metadata the book doesn't have."""
+
+    def __init__(self, expr: str, missing: list[str]):
+        names = ", ".join(missing) if missing else "value"
+        super().__init__(f"{{{expr}}}: missing {names}")
+        self.missing: list[str] = missing

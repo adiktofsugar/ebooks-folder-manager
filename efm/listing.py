@@ -17,6 +17,7 @@ from rich.text import Text
 
 from efm.exceptions import InvalidStoreEntryError
 from efm.hasher import Hasher
+from efm.metadata import EXTRACTOR_VERSION
 from efm.store import Store, StoreEntry, default_store_dir
 
 logger = logging.getLogger(__name__)
@@ -59,6 +60,25 @@ def open_hasher(args: argparse.Namespace) -> Hasher:
     return Hasher(None) if args.no_stat_cache else Hasher()
 
 
+def load_or_create_entry(
+    store: Store, h: str, book_file: Path
+) -> tuple[StoreEntry, bool]:
+    """The book's store entry, extracting it on a miss or when an older extractor made it.
+
+    Returns the entry and whether it was (re-)extracted.
+    """
+    entry = store.load(h)
+    if entry is not None:
+        if entry.metadata_internal.extractor_version >= EXTRACTOR_VERSION:
+            return entry, False
+        logger.debug(f"Re-extracting {book_file}: made by an older extractor")
+        entry = StoreEntry.from_book(book_file, ancestor=entry.ancestor)
+    else:
+        entry = StoreEntry.from_book(book_file)
+    store.put(h, entry)
+    return entry, True
+
+
 def read_rows(store: Store, hasher: Hasher, rows: list[Row], console: Console):
     """Fill in hash and store entry for each non-directory row, extracting on a miss."""
     books = [r for r in rows if not r.is_dir]
@@ -77,11 +97,8 @@ def read_rows(store: Store, hasher: Hasher, rows: list[Row], console: Console):
             progress.update(task, description=r.path.name)
             try:
                 r.hash = hasher.hash(r.path)
-                entry = store.load(r.hash)
-                if entry is None:
-                    entry = StoreEntry.from_book(r.path)
-                    store.put(r.hash, entry)
-                    extracted += 1
+                entry, created = load_or_create_entry(store, r.hash, r.path)
+                extracted += created
                 # Surface a broken store entry here rather than mid-render.
                 _ = entry.metadata
                 r.entry = entry
@@ -117,7 +134,7 @@ def to_lines(rows: list[Row], raw: bool) -> list[str]:
             continue
         title, author = "", ""
         if r.entry is not None and raw:
-            meta: dict[str, Any] = (r.entry.metadata_raw or {}).get("metadata") or {}
+            meta = _raw_pymupdf_metadata(r.entry.metadata_raw)
             title, author = str(meta.get("title") or ""), str(meta.get("author") or "")
         elif r.entry is not None:
             title = r.entry.metadata.title or ""
@@ -125,6 +142,10 @@ def to_lines(rows: list[Row], raw: bool) -> list[str]:
         # Empty fields are kept so `cut -f` columns line up.
         lines.append("\t".join(_field(v) for v in (r.name, title, author)))
     return lines
+
+
+def _raw_pymupdf_metadata(raw: dict[str, Any] | None) -> dict[str, Any]:
+    return ((raw or {}).get("pymupdf_fields") or {}).get("metadata") or {}
 
 
 def _field(value: str) -> str:
@@ -197,6 +218,9 @@ def to_table(rows: list[Row], raw: bool) -> Table:
         else:
             m = r.entry.metadata
             pairs: list[tuple[str, object]] = [
+                ("series", m.series),
+                ("series_index", m.series_index),
+                ("kind", m.kind),
                 ("format", m.format),
                 # Spelled out so DRM-free is visible, not just absent.
                 ("encryption", m.encryption or (None if m.error else "none")),
@@ -219,10 +243,14 @@ def to_table(rows: list[Row], raw: bool) -> Table:
 def _raw_cells(raw: dict[str, Any] | None, h: str | None) -> tuple[str, str, Text]:
     if raw is None:
         return "", "", Text("(no raw metadata)", style="dim")
-    meta: dict[str, Any] = raw.get("metadata") or {}
+    pymupdf_fields: dict[str, Any] = raw.get("pymupdf_fields") or {}
+    meta = _raw_pymupdf_metadata(raw)
     pairs: list[tuple[str, object]] = [
         (k, v) for k, v in meta.items() if k not in ("title", "author")
     ]
-    pairs += [(k, v) for k, v in raw.items() if k != "metadata"]
+    pairs += [(k, v) for k, v in pymupdf_fields.items() if k != "metadata"]
+    for section, fields in raw.items():
+        if section != "pymupdf_fields" and isinstance(fields, dict):
+            pairs += [(f"{section}.{k}", v) for k, v in fields.items()]
     pairs.append(("hash", h))
     return str(meta.get("title") or ""), str(meta.get("author") or ""), _details(pairs)
