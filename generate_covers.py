@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 import argparse
+import colorsys
 import hashlib
 import random
+import shutil
 from datetime import datetime
 from pathlib import Path
-import shutil
-import colorsys
 
 from efm.cover import generate_cover
 
