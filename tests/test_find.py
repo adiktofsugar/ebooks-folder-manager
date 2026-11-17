@@ -32,7 +32,7 @@ def test_default_is_one_line_per_book(
     lines = capsys.readouterr().out.splitlines()
     assert len(lines) == 4
     assert "InterestingTimes.epub\tInteresting Times\tTerry Pratchett" in lines
-    assert len(list((tmp_path / "store").iterdir())) == 4
+    assert len(list((tmp_path / "store" / "books").iterdir())) == 4
 
 
 def test_table_lists_titles(
@@ -47,7 +47,7 @@ def test_table_lists_titles(
     assert "Interesting Times" in out
     assert "Terry Pratchett" in out
     assert "encryption: none" in out
-    assert len(list((tmp_path / "store").iterdir())) == 4
+    assert len(list((tmp_path / "store" / "books").iterdir())) == 4
 
 
 def test_second_run_uses_store(
@@ -154,7 +154,7 @@ def test_broken_store_entry_reported(
 ):
     store_dir = tmp_path / "store"
     assert run_find(monkeypatch, store_dir, str(sample_books_dir / "Emotions.pdf")) == 0
-    (entry_dir,) = store_dir.iterdir()
+    (entry_dir,) = (store_dir / "books").iterdir()
     (entry_dir / "metadata.json").write_text("{broken")
     _ = capsys.readouterr()
     args = (str(sample_books_dir / "Emotions.pdf"), "-f", "json")
@@ -227,7 +227,7 @@ def test_line_fields_stay_on_one_line(
 ):
     store_dir = tmp_path / "store"
     assert run_find(monkeypatch, store_dir, str(sample_books_dir / "Emotions.pdf")) == 0
-    (entry_dir,) = store_dir.iterdir()
+    (entry_dir,) = (store_dir / "books").iterdir()
     meta = json.loads((entry_dir / "metadata.json").read_text())
     meta["title"] = "Two\nLines\tand a tab"
     (entry_dir / "metadata.json").write_text(json.dumps(meta))

@@ -16,9 +16,13 @@ Ebooks Folder Manager (EFM) is a Calibre replacement that provides minimal metad
   - `commands/acsm.py`: `efm acsm <file ...>` - fulfill .acsm tokens and replace each with the downloaded book (see "Commands that replace books" in `docs/store.md`)
   - `commands/rename.py`: `efm rename [-p preset | -f template] [--root dir] [-n] <path ...>` (alias `rnm`) - move books to paths built from metadata templates/presets (see `docs/rename.md`)
   - `commands/setup.py`: `efm setup [tool]` - DRM key extraction/config menu (or run one tool directly)
+  - `commands/store.py`: `efm store show|ancestor|ls|info` - inspect the store by hash (every other command takes paths)
   - New subcommands expose `add_parser(subparsers)` and `run(args, console) -> int`, and get registered in `create_parser()`
 - Core modules:
-  - `store.py`: Hash-keyed metadata store (`load`, `put`, `put_content`; `StoreEntry` with lazy `metadata`/`metadata_internal`/`metadata_raw`/`ancestor`)
+  - `store.py`: Hash-keyed metadata store (`load`, `put`, `hashes`, `put_content`/`get_content`/`restore_content`; `StoreEntry` with lazy `metadata`/`metadata_internal`/`metadata_raw`/`ancestor`)
+  - `content_store.py`: `ContentStore` (`Store.content`) - book bytes as FastCDC chunk manifests over deduplicated blobs
+  - `atomic_util.py`: temp-file + rename writes (`open_atomic`, `write_json_atomic`, ...)
+  - `number_util.py`: `format_bytes` for human-readable sizes
   - `hasher.py`: `Hasher().hash(file)` (uses `StatCache`, a path+stat → hash cache, so unchanged files aren't re-hashed) and uncached `hash_contents(file)`; make one per run and pass it down
   - `scratch.py`: `scratch_dir(label)` context manager; deleted on success, kept on failure
   - `acsm.py`: ACSM fulfillment via `adl` (imported lazily; importing it creates adl's data dir)
@@ -87,7 +91,7 @@ uv run ruff format efm    # Format Python code
 ## Store Layout
 
 See `docs/store.md`. In short:
-- `$store/xx_<hash>/metadata.json`, `metadata_internal.json`, `metadata_raw.json`, optional `ancestor` and `content` (store: `--store`, `$EFM_STORE`, or `$XDG_DATA_HOME/efm/store`)
+- `$store/books/xx_<hash>/metadata.json`, `metadata_internal.json`, `metadata_raw.json`, optional `ancestor` and `content.json` (chunk ids in `$store/blobs/xx_<chunk hash>`) (store: `--store`, `$EFM_STORE`, or `$XDG_DATA_HOME/efm/store`)
 - `$XDG_CACHE_HOME/efm/stat-cache/<abs path>/<size>-<mtime_ns>-<ctime_ns>` contains the hash
 
 ## Key Technical Considerations

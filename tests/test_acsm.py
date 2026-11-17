@@ -77,7 +77,9 @@ def test_replaces_token_and_links_ancestor(
     assert entry.ancestor == token_hash
     assert entry.metadata.format is not None
     # The deleted token is recoverable from the store.
-    assert (store_dir / token_hash / "content").read_text() == "<fulfillmentToken/>"
+    restored_file = token_file.parent.parent / "restored.acsm"
+    s.restore_content(token_hash, restored_file)
+    assert restored_file.read_text() == "<fulfillmentToken/>"
     original = s.load(token_hash)
     assert original is not None and original.ancestor is None
 

@@ -42,7 +42,7 @@ def test_does_not_recurse(
     ]
     assert data[-1] == {"path": str(nested_books_dir / "sub"), "directory": True}
     # The subdirectory's book was never read.
-    assert len(list((tmp_path / "store").iterdir())) == 3
+    assert len(list((tmp_path / "store" / "books").iterdir())) == 3
 
 
 def test_table_shows_dirs(

@@ -3,16 +3,16 @@
 import json
 import logging
 import os
-import shutil
-import tempfile
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from pathlib import Path
-from typing import Any, final
+from typing import Any, BinaryIO, final
 
 from pydantic import ValidationError
 
+from efm.atomic_util import write_json_atomic, write_text_atomic
+from efm.content_store import BOOKS_DIRNAME, ContentStore
 from efm.exceptions import InvalidStoreEntryError, UnsupportedSchemaError
-from efm.hasher import HASH_PATTERN, hash_contents
+from efm.hasher import HASH_PATTERN
 from efm.metadata import (
     InternalMetadata,
     Metadata,
@@ -27,7 +27,6 @@ METADATA_FILENAME = "metadata.json"
 METADATA_INTERNAL_FILENAME = "metadata_internal.json"
 METADATA_RAW_FILENAME = "metadata_raw.json"
 ANCESTOR_FILENAME = "ancestor"
-CONTENT_FILENAME = "content"
 
 
 def default_store_dir() -> Path:
@@ -37,40 +36,6 @@ def default_store_dir() -> Path:
         os.environ.get("XDG_DATA_HOME") or Path.home() / ".local" / "share"
     )
     return data_home_dir / "efm" / "store"
-
-
-def _write_json_atomic(file: Path, data: object) -> None:
-    fd, tmp_filepath = tempfile.mkstemp(dir=file.parent, prefix=".tmp-")
-    try:
-        with os.fdopen(fd, "w") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-            f.write("\n")
-        os.replace(tmp_filepath, file)
-    except BaseException:
-        Path(tmp_filepath).unlink(missing_ok=True)
-        raise
-
-
-def _write_text_atomic(file: Path, text: str) -> None:
-    fd, tmp_filepath = tempfile.mkstemp(dir=file.parent, prefix=".tmp-")
-    try:
-        with os.fdopen(fd, "w") as f:
-            f.write(text)
-        os.replace(tmp_filepath, file)
-    except BaseException:
-        Path(tmp_filepath).unlink(missing_ok=True)
-        raise
-
-
-def _copy_atomic(src_file: Path, dst_file: Path) -> None:
-    fd, tmp_filepath = tempfile.mkstemp(dir=dst_file.parent, prefix=".tmp-")
-    os.close(fd)
-    try:
-        shutil.copyfile(src_file, tmp_filepath)
-        os.replace(tmp_filepath, dst_file)
-    except BaseException:
-        Path(tmp_filepath).unlink(missing_ok=True)
-        raise
 
 
 @final
@@ -174,17 +139,28 @@ def _as_raw(data: object) -> dict[str, Any] | None:
 
 class Store:
     root_dir: Path
+    books_dir: Path
+    content: ContentStore
 
     def __init__(self, root_dir: Path):
         self.root_dir = root_dir
+        self.books_dir = root_dir / BOOKS_DIRNAME
+        self.content = ContentStore(root_dir)
 
-    def _entry_dir(self, h: str) -> Path:
+    def entry_dir(self, h: str) -> Path:
         if not HASH_PATTERN.fullmatch(h):
             raise ValueError(f"Not a store hash: {h!r}")
-        return self.root_dir / h
+        return self.books_dir / h
+
+    def hashes(self) -> Iterator[str]:
+        if not self.books_dir.is_dir():
+            return
+        for entry_dir in sorted(self.books_dir.iterdir()):
+            if HASH_PATTERN.fullmatch(entry_dir.name):
+                yield entry_dir.name
 
     def load(self, h: str) -> StoreEntry | None:
-        entry_dir = self._entry_dir(h)
+        entry_dir = self.entry_dir(h)
         # metadata.json is written last by put(), so its presence means the entry is complete.
         if not (entry_dir / METADATA_FILENAME).is_file():
             return None
@@ -196,34 +172,32 @@ class Store:
         detectable. For instance, if there is no metadata.json file, that's the same as a
         nonexistent entry, except for maybe data recovery.
         """
-        entry_dir = self._entry_dir(h)
+        entry_dir = self.entry_dir(h)
         entry_dir.mkdir(parents=True, exist_ok=True)
         if entry.ancestor is not None:
-            _ = self._entry_dir(entry.ancestor)  # validates
-            _write_text_atomic(entry_dir / ANCESTOR_FILENAME, entry.ancestor + "\n")
-        _write_json_atomic(entry_dir / METADATA_RAW_FILENAME, entry.metadata_raw)
-        _write_json_atomic(
+            _ = self.entry_dir(entry.ancestor)  # validates
+            write_text_atomic(entry_dir / ANCESTOR_FILENAME, entry.ancestor + "\n")
+        write_json_atomic(entry_dir / METADATA_RAW_FILENAME, entry.metadata_raw)
+        write_json_atomic(
             entry_dir / METADATA_INTERNAL_FILENAME,
             entry.metadata_internal.model_dump(mode="json"),
         )
-        _write_json_atomic(
+        write_json_atomic(
             entry_dir / METADATA_FILENAME, entry.metadata.model_dump(mode="json")
         )
 
     def has_content(self, h: str) -> bool:
-        return (self._entry_dir(h) / CONTENT_FILENAME).is_file()
+        return self.content.has(h)
 
     def put_content(self, h: str, book_file: Path) -> None:
         """
-        Keep a copy of the book's bytes, so commands that replace a book can't lose it. Callers must
-        do this before they delete the original.
+        Keep the book's bytes, so commands that replace a book can't lose it. Callers must do this
+        before they delete the original.
         """
-        entry_dir = self._entry_dir(h)
-        if (entry_dir / CONTENT_FILENAME).is_file():
-            return
-        entry_dir.mkdir(parents=True, exist_ok=True)
-        _copy_atomic(book_file, entry_dir / CONTENT_FILENAME)
-        # Guards against the book changing between hashing and copying.
-        if hash_contents(entry_dir / CONTENT_FILENAME) != h:
-            (entry_dir / CONTENT_FILENAME).unlink()
-            raise ValueError(f"{book_file} no longer matches {h}")
+        self.content.put(h, book_file)
+
+    def get_content(self, h: str, out: BinaryIO) -> None:
+        self.content.get(h, out)
+
+    def restore_content(self, h: str, dst_file: Path) -> None:
+        self.content.restore(h, dst_file)

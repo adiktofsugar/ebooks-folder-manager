@@ -27,6 +27,10 @@ def hash_contents(file: Path) -> str:
     return HASH_PREFIX + hasher.hexdigest()
 
 
+def hash_bytes(data: bytes) -> str:
+    return HASH_PREFIX + xxhash.xxh3_128_hexdigest(data)
+
+
 def default_stat_cache_root() -> Path:
     cache_home_dir = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache")
     return cache_home_dir / "efm" / "stat-cache"

@@ -14,7 +14,7 @@ from rich.console import Console
 from rich.logging import RichHandler
 from rich.text import Text
 
-from efm.commands import acsm, find, ls, rename, setup
+from efm.commands import acsm, find, ls, rename, setup, store
 
 
 class NarrowScreenRichHandler(RichHandler):
@@ -60,6 +60,7 @@ def create_parser() -> argparse.ArgumentParser:
     acsm.add_parser(subparsers)
     rename.add_parser(subparsers)
     setup.add_parser(subparsers)
+    store.add_parser(subparsers)
     return parser
 
 

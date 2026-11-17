@@ -87,6 +87,10 @@ class InvalidStoreEntryError(Exception):
         super().__init__(f"Invalid store file {file} - {original_error}")
 
 
+class ContentError(Exception):
+    """A book's stored content is missing, or doesn't reassemble to its hash."""
+
+
 class TemplateError(Exception):
     """A rename template that can't be parsed or evaluated."""
 

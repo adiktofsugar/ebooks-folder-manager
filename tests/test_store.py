@@ -1,3 +1,4 @@
+import io
 import json
 from pathlib import Path
 
@@ -41,7 +42,7 @@ def test_put_then_load_round_trips(store: Store, sample_books_dir: Path):
 def test_loaded_entry_reads_lazily(store: Store):
     h = "xx_" + "1" * 32
     store.put(h, StoreEntry(Metadata(size=1), InternalMetadata(), None))
-    entry_dir = store.root_dir / h
+    entry_dir = store.books_dir / h
     (entry_dir / "metadata_raw.json").write_text("{broken")
 
     entry = store.load(h)
@@ -56,7 +57,7 @@ def test_unsupported_format_writes_null_raw(store: Store, tmp_path: Path):
     book_file.write_text("<fulfillmentToken/>")
     h = hash_contents(book_file)
     store.put(h, StoreEntry.from_book(book_file))
-    assert json.loads((store.root_dir / h / "metadata_raw.json").read_text()) is None
+    assert json.loads((store.books_dir / h / "metadata_raw.json").read_text()) is None
     loaded = store.load(h)
     assert loaded is not None and loaded.metadata_raw is None
 
@@ -65,7 +66,7 @@ def test_internal_metadata_written(store: Store, sample_books_dir: Path):
     book_file = sample_books_dir / "Emotions.pdf"
     h = hash_contents(book_file)
     store.put(h, StoreEntry.from_book(book_file))
-    data = json.loads((store.root_dir / h / "metadata_internal.json").read_text())
+    data = json.loads((store.books_dir / h / "metadata_internal.json").read_text())
     assert data == {
         "schema_version": 2,
         "is_k2pdfopt_version": False,
@@ -76,15 +77,15 @@ def test_internal_metadata_written(store: Store, sample_books_dir: Path):
 
 def test_incomplete_entry_counts_as_missing(store: Store):
     h = "xx_" + "2" * 32
-    (store.root_dir / h).mkdir(parents=True)
-    (store.root_dir / h / "metadata_raw.json").write_text("null")
+    (store.books_dir / h).mkdir(parents=True)
+    (store.books_dir / h / "metadata_raw.json").write_text("null")
     assert store.load(h) is None
 
 
 def test_newer_schema_is_an_error_not_a_regen(store: Store):
     h = "xx_" + "3" * 32
     store.put(h, StoreEntry(Metadata(size=1), InternalMetadata(), None))
-    metadata_file = store.root_dir / h / "metadata.json"
+    metadata_file = store.books_dir / h / "metadata.json"
     metadata_file.write_text(json.dumps({"schema_version": 99}))
     entry = store.load(h)
     assert entry is not None
@@ -124,7 +125,7 @@ def test_put_rejects_bad_ancestor(store: Store):
 def test_invalid_ancestor_file(store: Store):
     h = "xx_" + "5" * 32
     store.put(h, StoreEntry(Metadata(size=1), InternalMetadata(), None))
-    (store.root_dir / h / "ancestor").write_text("garbage\n")
+    (store.books_dir / h / "ancestor").write_text("garbage\n")
     entry = store.load(h)
     assert entry is not None
     with pytest.raises(InvalidStoreEntryError):
@@ -138,7 +139,9 @@ def test_put_content(store: Store, tmp_path: Path):
     assert not store.has_content(h)
     store.put_content(h, book_file)
     assert store.has_content(h)
-    assert (store.root_dir / h / "content").read_bytes() == b"contents"
+    out = io.BytesIO()
+    store.get_content(h, out)
+    assert out.getvalue() == b"contents"
     # Not a complete entry until metadata is put.
     assert store.load(h) is None
 
@@ -158,7 +161,7 @@ def test_old_entry_is_re_extracted_keeping_ancestor(store: Store, tmp_path: Path
     )
     h = hash_contents(book_file)
     ancestor = "xx_" + "a" * 32
-    entry_dir = store.root_dir / h
+    entry_dir = store.books_dir / h
     entry_dir.mkdir(parents=True)
     # As written before series extraction: V1 records and the old raw shape.
     (entry_dir / "ancestor").write_text(ancestor + "\n")

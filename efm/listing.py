@@ -18,6 +18,7 @@ from rich.text import Text
 from efm.exceptions import InvalidStoreEntryError
 from efm.hasher import Hasher
 from efm.metadata import EXTRACTOR_VERSION
+from efm.number_util import format_bytes
 from efm.store import Store, StoreEntry, default_store_dir
 
 logger = logging.getLogger(__name__)
@@ -111,7 +112,7 @@ def read_rows(store: Store, hasher: Hasher, rows: list[Row], console: Console):
     s = hasher.stats
     logger.debug(
         f"{len(books)} files in {time.perf_counter() - started:.3f}s: "
-        + f"{s.cache_hits} stat-cache hits, {s.hashed} hashed ({s.bytes_hashed / 1e6:.1f} MB), "
+        + f"{s.cache_hits} stat-cache hits, {s.hashed} hashed ({format_bytes(s.bytes_hashed)}), "
         + f"{extracted} extracted"
     )
 
@@ -176,17 +177,6 @@ def _format_value(value: object) -> str:
     return str(value)
 
 
-def _format_size(size: int) -> str:
-    if size < 1000:
-        return f"{size} B"
-    n = size / 1000
-    for unit in ("KB", "MB"):
-        if n < 1000:
-            return f"{n:.1f} {unit}"
-        n /= 1000
-    return f"{n:.1f} GB"
-
-
 def _details(pairs: list[tuple[str, object]], error: str | None = None) -> Text:
     text = Text()
     if error:
@@ -224,7 +214,7 @@ def to_table(rows: list[Row], raw: bool) -> Table:
                 ("format", m.format),
                 # Spelled out so DRM-free is visible, not just absent.
                 ("encryption", m.encryption or (None if m.error else "none")),
-                ("size", _format_size(m.size)),
+                ("size", format_bytes(m.size)),
                 ("page_count", m.page_count),
                 ("subject", m.subject),
                 ("keywords", m.keywords),
